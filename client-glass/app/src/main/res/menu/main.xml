@@ -1,0 +1,21 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item
+        android:id="@+id/gold_menu_item"
+        android:title="@string/gold_color" />
+    <item
+        android:id="@+id/fuchsia_menu_item"
+        android:title="@string/fuchsia_color" />
+    <item
+        android:id="@+id/green_menu_item"
+        android:title="@string/green_color" />
+    <item
+        android:id="@+id/blue_menu_item"
+        android:title="@string/blue_color" />
+
+    <!--<item-->
+        <!--android:id="@+id/action_settings"-->
+        <!--android:orderInCategory="100"-->
+        <!--android:showAsAction="never"-->
+        <!--android:title="@string/action_settings"/>-->
+
+</menu>
