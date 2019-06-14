@@ -41,10 +41,13 @@ import ribloc_task
 import util
 import tpod_wrapper
 
+from handtracking.utils import detector_utils
+
 LOG = gabriel.logging.getLogger(__name__)
 ANDROID_CLIENT = True
 config.setup(is_streaming=True)
 display_list = config.DISPLAY_LIST_TASK
+detection_graph, sess = detector_utils.load_inference_graph()
 
 
 def process_command_line(argv):
@@ -132,6 +135,9 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
             img = cv2.resize(img, (720, 480))
 
         objects = tpod_wrapper.detect_object(img, "http://0.0.0.0:8000")
+        hands = tpod_wrapper.detect_hand(img, detection_graph, sess)
+        objects.extend(hands)
+
         print("object detection result: %s" % [obj["class_name"] for obj in objects])
         LOG.info("object detection result: %s" % objects)
 

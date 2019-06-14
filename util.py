@@ -50,8 +50,10 @@ def vis_detections(img, dets, thresh=0.5):
     img_detections = img.copy()
 
     for obj in dets:
+        color = (77, 255, 9) if obj["class_name"] == "hand" else (0, 0, 255)
+
         bbox = obj["dimensions"]
-        cv2.rectangle(img_detections, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 0, 255), 8)
+        cv2.rectangle(img_detections, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color, 8)
         text = "%s : %f" % (obj["class_name"], obj["confidence"])
         cv2.putText(img_detections, text, (int(bbox[0]), int(bbox[1])), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
 

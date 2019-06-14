@@ -2,6 +2,32 @@ import requests
 import cv2
 import ast
 
+import handtracking.utils.detector_utils as detector_utils
+
+
+def detect_hand(img, detection_graph, sess):
+    detected_hands = []
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    width, height = img.shape[1], img.shape[0]
+
+    boxes, scores = detector_utils.detect_objects(rgb, detection_graph, sess)
+
+    for i in range(min(2, len(boxes))):
+        if scores[i] > 0.3:
+            (left, right, top, bottom) = (boxes[i][1] * width, boxes[i][3] * width, boxes[i][0] * height, boxes[i][2] * height)
+            detected_hands.append({
+                "class_name": "hand",
+                "dimensions": (left, top, right, bottom),
+                "confidence": scores[i]})
+
+    if len(detected_hands) > 1:
+        intersecting = intersecting_bbox(detected_hands[0], detected_hands[1])
+        if intersecting is not False:
+            detected_hands = [intersecting]
+
+    return detected_hands
+
+
 def detect_object(img, url):
     headers = {'User-Agent': 'Mozilla/5.0'}
     payload = {"confidence": 0.5, "format": "box"}
