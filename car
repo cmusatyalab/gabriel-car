@@ -132,7 +132,7 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
             img = cv2.resize(img, (720, 480))
 
         objects = tpod_wrapper.detect_object(img, "http://0.0.0.0:8000")
-        print("object detection result: %s" % [obj["name"] for obj in objects])
+        print("object detection result: %s" % [obj["class_name"] for obj in objects])
         LOG.info("object detection result: %s" % objects)
 
         header['status'] = 'success'
