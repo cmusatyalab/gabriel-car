@@ -13,6 +13,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Random;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -58,6 +59,8 @@ public class VideoStreamingThread extends Thread {
     private Handler networkHandler = null;
     private TokenController tokenController = null;
     private LogicalTime logicalTime = null;
+
+    private int task_id;
 
     public VideoStreamingThread(String serverIP, int port, Handler handler, TokenController tokenController, LogicalTime logicalTime) {
         isRunning = false;
@@ -119,6 +122,10 @@ public class VideoStreamingThread extends Thread {
     }
 
     public void run() {
+        //creating random task_id
+        Random rand = new Random();
+        task_id = rand.nextInt(10000000);
+
         this.isRunning = true;
         Log.i(LOG_TAG, "Video streaming thread running");
         try {
@@ -183,7 +190,7 @@ public class VideoStreamingThread extends Thread {
                 // make it as a single packet
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 DataOutputStream dos = new DataOutputStream(baos);
-                byte[] header = ("{\"" + NetworkProtocol.HEADER_MESSAGE_FRAME_ID + "\":" + sendingFrameID + "}").getBytes();
+                byte[] header = ("{\"" + NetworkProtocol.HEADER_MESSAGE_FRAME_ID + "\":" + sendingFrameID + ",\"task_id\":" + task_id+ "}").getBytes();
                 dos.writeInt(header.length);
                 dos.write(header);
                 dos.writeInt(data.length);
