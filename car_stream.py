@@ -38,7 +38,6 @@ import cv2
 import gabriel
 import gabriel.proxy
 import car_task
-import ribloc_task
 import util
 import tpod_wrapper
 
@@ -139,23 +138,16 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
         hands = tpod_wrapper.detect_hand(img, detection_graph, sess)
         objects.extend(hands)
 
-        print("object detection result: %s" % [obj["class_name"] for obj in objects])
-        LOG.info("object detection result: %s" % objects)
-
-        vis_objects, instruction = self.task.get_instruction(objects, header)
         header['status'] = 'success'
 
-        if instruction.get('image', None) is not None:
-            rtn_data['image'] = b64encode(util.cv_image2raw_jpg(instruction['image']))
-        if instruction.get('speech', None) is not None:
-            rtn_data['speech'] = instruction['speech']
+        print("object detection result: %s" % [obj["class_name"] for obj in objects])
+        LOG.info("object detection result: %s" % objects)
 
         if config.VISUALIZE_ALL:
             vis_objects = objects
 
-        if len(objects) > 0:
-            img_object = util.vis_detections(img, objects)
-            # rtn_data['image'] = b64encode(util.cv_image2raw(img_object))
+        img_object = util.vis_detections(img, objects)
+        rtn_data['image'] = b64encode(util.cv_image2raw_png(img_object))
 
         return json.dumps(rtn_data)
 

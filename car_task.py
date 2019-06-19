@@ -1,0 +1,140 @@
+import math
+from collections import defaultdict, deque
+import numpy as np
+import cv2
+import os
+
+import config
+
+OBJECTS = config.LABELS
+STATES = ["start", "wheel-stage", "wheel-compare"]
+images_store = os.path.abspath("images_feedback")
+stable_threshold = 50
+
+
+class FrameRecorder:
+    def __init__(self, size):
+        self.deque = deque()
+        self.size = size
+        self.clear_count = 0
+
+    def add(self, obj):
+        self.deque.append(obj)
+
+        if len(self.deque) > self.size:
+            self.deque.popleft()
+
+        self.clear_count = 0
+
+    def is_center_stable(self, threshold):
+        if len(self.deque) != self.size:
+            return False
+
+        prev_frame = self.deque[0]
+        for i in range(1, len(self.deque)):
+            frame = self.deque[i]
+            diff = bbox_diff(frame["dimensions"], prev_frame["dimensions"])
+
+            if diff > threshold:
+                return False
+
+            prev_frame = frame
+
+        return True
+
+    def staged_clear(self):
+        self.clear_count += 1
+        if self.clear_count > self.size / 2:
+            self.deque = deque()
+
+
+class Task:
+    def __init__(self, init_state=None):
+        if init_state is None:
+            self.current_state = "start"
+        else:
+            if init_state not in STATES:
+                raise ValueError('Unknown init state: {}'.format(init_state))
+            self.current_state = init_state
+
+        self.left_frames = FrameRecorder(10)
+        self.right_frames = FrameRecorder(10)
+
+
+    def get_instruction(self, objects, header=None):
+        result = defaultdict(lambda: None)
+        result['status'] = "success"
+        vis_objects = np.asarray([])
+
+        # the start
+        if self.current_state == "start":
+            result['speech'] = "Please grab one each of the big and small wheels."
+            image_path = os.path.join(images_store, "wheel-stage-1.jpg")
+            result['image'] = cv2.imread(image_path)
+            self.current_state = "wheel-stage-1"
+
+        elif self.current_state == "wheel-stage-1":
+            wheels = get_objects_by_categories(objects, {"thick_wheel_top", "thin_wheel_top"})
+            if len(wheels) == 2:
+                result["speech"] = "Excellent! Please line them up with the legend."
+                image_path = os.path.join(images_store, "tire-legend.png")
+                result['legend'] = cv2.imread(image_path)
+                self.current_state = "wheel-stage-2"
+
+        elif self.current_state == "wheel-stage-2":
+            wheels = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side", "thick_tire", "thin_tire"})
+            if len(wheels) == 2:
+                left, right = separate_left_right(objects)
+
+                self.left_frames.add(left)
+                self.right_frames.add(right)
+
+                if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold):
+                    left_speech, right_speech = ("bigger", "smaller") if bbox_taller(left["dimensions"], right["dimensions"]) else ("smaller", "bigger")
+
+                    result["speech"] = "Great job! The one on the left is the %s wheel and the one on the right is the %s wheel" % (left_speech, right_speech)
+                    self.current_state = "nothing"
+            else:
+                self.left_frames.staged_clear()
+                self.right_frames.staged_clear()
+
+
+        return vis_objects, result
+
+
+
+def get_objects_by_categories(objects, categories):
+    out = []
+    for obj in objects:
+        if obj["class_name"] in categories:
+            out.append(obj)
+    return out
+
+
+def separate_left_right(objects):
+    obj1 = objects[0]
+    obj2 = objects[1]
+
+    if obj1["dimensions"][0] < obj2["dimensions"][0]:
+        left = obj1
+        right = obj2
+    else:
+        left = obj2
+        right = obj1
+
+    return left, right
+
+def bbox_center(dims):
+    return dims[2] - dims[0], dims[3] - dims[1]
+
+def bbox_diff(box1, box2):
+    center1 = bbox_center(box1)
+    center2 = bbox_center(box2)
+
+    x_diff = abs(center1[0] - center2[0])
+    y_diff = abs(center1[1] - center2[1])
+
+    return math.sqrt(x_diff**2 + y_diff**2)
+
+def bbox_taller(box1, box2):
+    return box1[1] + box1[3] > box2[1] + box2[3]

@@ -38,8 +38,13 @@ def raw2cv_image(raw_data, gray_scale=False):
     return cv_image
 
 
-def cv_image2raw(img, jpeg_quality=95):
+def cv_image2raw_jpg(img, jpeg_quality=95):
     result, data = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality])
+    raw_data = data.tostring()
+    return raw_data
+
+def cv_image2raw_png(img):
+    result, data = cv2.imencode('.png', img)
     raw_data = data.tostring()
     return raw_data
 

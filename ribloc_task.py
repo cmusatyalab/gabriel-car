@@ -157,133 +157,133 @@ class Task:
             self.current_state = "nothing"
             return vis_objects, result
 
-        # objects is an numpy array of (detect_idx, 6)
-        if len(objects.shape) < 2:  # nothing detected
-            return vis_objects, result
-
-        # get the count of detected objects
-        object_counts = defaultdict(lambda: 0)
-        for i in xrange(len(OBJECTS)):
-            object_counts[OBJECTS[i]] = sum(objects[:, -1] == i)
-
-        print('objects:{}'.format(object_counts))
-        if self.current_state == "nothing":
-            vis_objects = self.get_objects_by_categories(objects, ['bone'])
-            if object_counts['bone'] > 0:
-                result['speech'] = "Now find the gauge and put it on the table"
-                image_path = "images_feedback/bone-gauge.png"
-                result['image'] = cv2.imread(image_path) if image_path else None
-                self.current_state = "gauge"
-        elif self.current_state == "gauge":
-            vis_objects = self.get_objects_by_categories(objects, ['gauge'])
-            if object_counts['gauge'] > 0:
-                result['speech'] = "Good job. Now measure the bone thickness"
-                image_path = "images_feedback/measure.png"
-                result['image'] = cv2.imread(image_path) if image_path else None
-                self.current_state = "measure"
-        elif self.current_state == "measure":
-            vis_objects = self.get_objects_by_categories(objects, ['bone', 'gauge'])
-            if object_counts['bone'] > 0 and object_counts['gauge'] > 0:
-                if self._check_measure(objects) == True:
-                    result['speech'] = "Great. Please read the color on the gauge"
-                    image_path = "images_feedback/read.png"
-                    result['image'] = cv2.imread(image_path) if image_path else None
-                    self.current_state = "read"
-                elif self._check_measure(objects) == "wrong position":
-                    result['speech'] = "Please place the gauge near the fracture"
-        elif self.current_state == "read":
-            if header != None and ('gaugeColor' in header):
-                if header['gaugeColor'] == 'green':
-                    result['speech'] = "Great. Please put the green ribplate and two target guides on the table"
-                    image_path = "images_feedback/grp-tg.png"
-                    result['image'] = cv2.imread(image_path) if image_path else None
-                    header['clear_color'] = True
-                    self.current_state = "grp-tg"
-                else:
-                    # should be green
-                    result['speech'] = "The color is wrong. Please measure again and tell me the reading"
-                    image_path = "images_feedback/measure.png"
-                    result['image'] = cv2.imread(image_path) if image_path else None
-                    header['clear_color'] = True
-                    self.current_state = "read"
-        elif self.current_state == "grp-tg":
-            vis_objects = self.get_objects_by_categories(objects, ['brp', 'frp', 'grp', 'tg'])
-            if object_counts['brp'] > 0 or object_counts['frp'] > 0:
-                result['speech'] = "You are using the wrong ribplate. Please find the green one"
-            elif object_counts['grp'] > 0 and object_counts['tg'] > 1:
-                result['speech'] = "Great. Now assemble the target guides onto the ribplate"
-                image_path = "images_feedback/assembled.png"
-                result['image'] = cv2.imread(image_path) if image_path else None
-                self.current_state = "assemble"
-        elif self.current_state == "assemble":
-            vis_objects = self.get_objects_by_categories(objects, ['grp', 'tg'])
-            if object_counts['grp'] > 0 and object_counts['tg'] > 1:
-                if self._check_assemble(objects):
-                    result['speech'] = "Good. Put the ribplate onto the fracture. Show me the sideview."
-                    image_path = "images_feedback/bone-grp-tg-sbv.png"
-                    result['image'] = cv2.imread(image_path) if image_path else None
-                    self.current_state = "bone-grp-tg"
-        elif self.current_state == "bone-grp-tg":
-            vis_objects = self.get_objects_by_categories(objects, ['sa', 'saf', 'sbv'])
-            sa_bxes = self.get_objects_by_category(objects, 'sa')
-            if len(sa_bxes) < 1:
-                self.cnt = 0
-            saf_bxes = self.get_objects_by_category(objects, 'saf')
-            if object_counts['sbv'] > 0 and len(saf_bxes) > 0 and saf_bxes[0][-2] > 0.6 and (
-                    object_counts['sa'] == 0 or (len(sa_bxes) > 0 and sa_bxes[0][-2] < 0.6)):
-                self.cnt = 0
-                result['speech'] = "You are putting the ribplate upside down. Please put it on the top edge"
-            elif object_counts['sbv'] > 0 and object_counts['sa'] > 0 and sa_bxes[0][-2] > 0.7:
-                if self._check_secure(objects) == True:
-                    if self.cnt < 1:
-                        self.cnt += 1
-                    else:
-                        self.cnt = 0
-                        result['speech'] = "Great. Put the green drill driver onto the power drill"
-                        image_path = "images_feedback/gdd.png"
-                        result['image'] = cv2.imread(image_path) if image_path else None
-                        self.current_state = "gdd"
-                elif self._check_secure(objects) == "wrong position":
-                    self.cnt = 0
-                    result['speech'] = "Please place the ribplate onto the fracture"
-
-        elif self.current_state == "gdd":
-            vis_objects = self.get_objects_by_categories(objects, ['dh', 'bd', 'fd', 'gd'])
-            if object_counts['dh'] > 0:
-                if object_counts['bd'] > 0 or object_counts['fd'] > 0:
-                    result['speech'] = "You are using the wrong drill driver. Please find the green one."
-                elif object_counts['gd'] > 0:
-                    result['speech'] = "Good. Drill through the target guides and put away the power drill when done"
-                    image_path = "images_feedback/bone-grp-tg.png"
-                    result['image'] = cv2.imread(image_path) if image_path else None
-                    self.current_state = "drill"
-        elif self.current_state == "drill":
-            vis_objects = self.get_objects_by_categories(objects, ['bone', 'dh'])
-            if object_counts['bone'] > 0 or object_counts['dh'] > 0:
-                if self._check_drill(objects):
-                    result['speech'] = "Good. Show me a few green screws"
-                    image_path = "images_feedback/gn.png"
-                    result['image'] = cv2.imread(image_path) if image_path else None
-                    self.current_state = "gn"
-        elif self.current_state == "gn":
-            vis_objects = self.get_objects_by_categories(objects, ['gn', 'bn', 'fn'])
-            bn_bxes = self.get_objects_by_category(objects, 'bn')
-            fn_bxes = self.get_objects_by_category(objects, 'fn')
-            if (object_counts['bn'] > 0 and bn_bxes[0][-2] > 0.7) or (object_counts['fn'] > 0 and fn_bxes[0][-2] > 0.7):
-                result['speech'] = "You are using the wrong screws. Please find the green one."
-            if (object_counts['gn'] + object_counts['gd']) > 1:
-                result['speech'] = "Good. Insert Screws through the targeting guide and " \
-                                   "remove the targeting guide when done."
-                image_path = "images_feedback/gnb.png"
-                result['image'] = cv2.imread(image_path) if image_path else None
-                self.current_state = "gnb"
-        elif self.current_state == "gnb":
-            vis_objects = self.get_objects_by_categories(objects, ['gnb'])
-            if object_counts['gnb'] >= 2:
-                result['speech'] = "Congradulations. You have finished"
-                image_path = "images_feedback/gnb.png"
-                result['image'] = cv2.imread(image_path) if image_path else None
-                self.current_state = "finished"
+        # # objects is an numpy array of (detect_idx, 6)
+        # if len(objects.shape) < 2:  # nothing detected
+        #     return vis_objects, result
+        #
+        # # get the count of detected objects
+        # object_counts = defaultdict(lambda: 0)
+        # for i in xrange(len(OBJECTS)):
+        #     object_counts[OBJECTS[i]] = sum(objects[:, -1] == i)
+        #
+        # print('objects:{}'.format(object_counts))
+        # if self.current_state == "nothing":
+        #     vis_objects = self.get_objects_by_categories(objects, ['bone'])
+        #     if object_counts['bone'] > 0:
+        #         result['speech'] = "Now find the gauge and put it on the table"
+        #         image_path = "images_feedback/bone-gauge.png"
+        #         result['image'] = cv2.imread(image_path) if image_path else None
+        #         self.current_state = "gauge"
+        # elif self.current_state == "gauge":
+        #     vis_objects = self.get_objects_by_categories(objects, ['gauge'])
+        #     if object_counts['gauge'] > 0:
+        #         result['speech'] = "Good job. Now measure the bone thickness"
+        #         image_path = "images_feedback/measure.png"
+        #         result['image'] = cv2.imread(image_path) if image_path else None
+        #         self.current_state = "measure"
+        # elif self.current_state == "measure":
+        #     vis_objects = self.get_objects_by_categories(objects, ['bone', 'gauge'])
+        #     if object_counts['bone'] > 0 and object_counts['gauge'] > 0:
+        #         if self._check_measure(objects) == True:
+        #             result['speech'] = "Great. Please read the color on the gauge"
+        #             image_path = "images_feedback/read.png"
+        #             result['image'] = cv2.imread(image_path) if image_path else None
+        #             self.current_state = "read"
+        #         elif self._check_measure(objects) == "wrong position":
+        #             result['speech'] = "Please place the gauge near the fracture"
+        # elif self.current_state == "read":
+        #     if header != None and ('gaugeColor' in header):
+        #         if header['gaugeColor'] == 'green':
+        #             result['speech'] = "Great. Please put the green ribplate and two target guides on the table"
+        #             image_path = "images_feedback/grp-tg.png"
+        #             result['image'] = cv2.imread(image_path) if image_path else None
+        #             header['clear_color'] = True
+        #             self.current_state = "grp-tg"
+        #         else:
+        #             # should be green
+        #             result['speech'] = "The color is wrong. Please measure again and tell me the reading"
+        #             image_path = "images_feedback/measure.png"
+        #             result['image'] = cv2.imread(image_path) if image_path else None
+        #             header['clear_color'] = True
+        #             self.current_state = "read"
+        # elif self.current_state == "grp-tg":
+        #     vis_objects = self.get_objects_by_categories(objects, ['brp', 'frp', 'grp', 'tg'])
+        #     if object_counts['brp'] > 0 or object_counts['frp'] > 0:
+        #         result['speech'] = "You are using the wrong ribplate. Please find the green one"
+        #     elif object_counts['grp'] > 0 and object_counts['tg'] > 1:
+        #         result['speech'] = "Great. Now assemble the target guides onto the ribplate"
+        #         image_path = "images_feedback/assembled.png"
+        #         result['image'] = cv2.imread(image_path) if image_path else None
+        #         self.current_state = "assemble"
+        # elif self.current_state == "assemble":
+        #     vis_objects = self.get_objects_by_categories(objects, ['grp', 'tg'])
+        #     if object_counts['grp'] > 0 and object_counts['tg'] > 1:
+        #         if self._check_assemble(objects):
+        #             result['speech'] = "Good. Put the ribplate onto the fracture. Show me the sideview."
+        #             image_path = "images_feedback/bone-grp-tg-sbv.png"
+        #             result['image'] = cv2.imread(image_path) if image_path else None
+        #             self.current_state = "bone-grp-tg"
+        # elif self.current_state == "bone-grp-tg":
+        #     vis_objects = self.get_objects_by_categories(objects, ['sa', 'saf', 'sbv'])
+        #     sa_bxes = self.get_objects_by_category(objects, 'sa')
+        #     if len(sa_bxes) < 1:
+        #         self.cnt = 0
+        #     saf_bxes = self.get_objects_by_category(objects, 'saf')
+        #     if object_counts['sbv'] > 0 and len(saf_bxes) > 0 and saf_bxes[0][-2] > 0.6 and (
+        #             object_counts['sa'] == 0 or (len(sa_bxes) > 0 and sa_bxes[0][-2] < 0.6)):
+        #         self.cnt = 0
+        #         result['speech'] = "You are putting the ribplate upside down. Please put it on the top edge"
+        #     elif object_counts['sbv'] > 0 and object_counts['sa'] > 0 and sa_bxes[0][-2] > 0.7:
+        #         if self._check_secure(objects) == True:
+        #             if self.cnt < 1:
+        #                 self.cnt += 1
+        #             else:
+        #                 self.cnt = 0
+        #                 result['speech'] = "Great. Put the green drill driver onto the power drill"
+        #                 image_path = "images_feedback/gdd.png"
+        #                 result['image'] = cv2.imread(image_path) if image_path else None
+        #                 self.current_state = "gdd"
+        #         elif self._check_secure(objects) == "wrong position":
+        #             self.cnt = 0
+        #             result['speech'] = "Please place the ribplate onto the fracture"
+        #
+        # elif self.current_state == "gdd":
+        #     vis_objects = self.get_objects_by_categories(objects, ['dh', 'bd', 'fd', 'gd'])
+        #     if object_counts['dh'] > 0:
+        #         if object_counts['bd'] > 0 or object_counts['fd'] > 0:
+        #             result['speech'] = "You are using the wrong drill driver. Please find the green one."
+        #         elif object_counts['gd'] > 0:
+        #             result['speech'] = "Good. Drill through the target guides and put away the power drill when done"
+        #             image_path = "images_feedback/bone-grp-tg.png"
+        #             result['image'] = cv2.imread(image_path) if image_path else None
+        #             self.current_state = "drill"
+        # elif self.current_state == "drill":
+        #     vis_objects = self.get_objects_by_categories(objects, ['bone', 'dh'])
+        #     if object_counts['bone'] > 0 or object_counts['dh'] > 0:
+        #         if self._check_drill(objects):
+        #             result['speech'] = "Good. Show me a few green screws"
+        #             image_path = "images_feedback/gn.png"
+        #             result['image'] = cv2.imread(image_path) if image_path else None
+        #             self.current_state = "gn"
+        # elif self.current_state == "gn":
+        #     vis_objects = self.get_objects_by_categories(objects, ['gn', 'bn', 'fn'])
+        #     bn_bxes = self.get_objects_by_category(objects, 'bn')
+        #     fn_bxes = self.get_objects_by_category(objects, 'fn')
+        #     if (object_counts['bn'] > 0 and bn_bxes[0][-2] > 0.7) or (object_counts['fn'] > 0 and fn_bxes[0][-2] > 0.7):
+        #         result['speech'] = "You are using the wrong screws. Please find the green one."
+        #     if (object_counts['gn'] + object_counts['gd']) > 1:
+        #         result['speech'] = "Good. Insert Screws through the targeting guide and " \
+        #                            "remove the targeting guide when done."
+        #         image_path = "images_feedback/gnb.png"
+        #         result['image'] = cv2.imread(image_path) if image_path else None
+        #         self.current_state = "gnb"
+        # elif self.current_state == "gnb":
+        #     vis_objects = self.get_objects_by_categories(objects, ['gnb'])
+        #     if object_counts['gnb'] >= 2:
+        #         result['speech'] = "Congradulations. You have finished"
+        #         image_path = "images_feedback/gnb.png"
+        #         result['image'] = cv2.imread(image_path) if image_path else None
+        #         self.current_state = "finished"
         return vis_objects, result
 
     def get_current_state(self):

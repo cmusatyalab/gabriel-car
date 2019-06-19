@@ -13,7 +13,7 @@ def detect_hand(img, detection_graph, sess):
     boxes, scores = detector_utils.detect_objects(rgb, detection_graph, sess)
 
     for i in range(min(2, len(boxes))):
-        if scores[i] > 0.3:
+        if scores[i] > 0.45:
             (left, right, top, bottom) = (boxes[i][1] * width, boxes[i][3] * width, boxes[i][0] * height, boxes[i][2] * height)
             detected_hands.append({
                 "class_name": "hand",
@@ -43,13 +43,14 @@ def detect_object(img, url):
 
     by_class = {}
     for obj_list_form in converted:
-        if obj_list_form[0] not in by_class.keys():
-            by_class[obj_list_form[0]] = []
+        class_name = group_class_names(obj_list_form[0])
+        if class_name not in by_class.keys():
+            by_class[class_name] = []
 
         intermediate = {"class_name": obj_list_form[0], "dimensions": obj_list_form[1], "confidence": obj_list_form[2]}
 
-        conflicts = [x for x in by_class[obj_list_form[0]] if intersecting_bbox(intermediate, x)]
-        non_conflicts = [x for x in by_class[obj_list_form[0]] if x not in conflicts]
+        conflicts = [x for x in by_class[class_name] if intersecting_bbox(intermediate, x)]
+        non_conflicts = [x for x in by_class[class_name] if x not in conflicts]
 
         highest_confidence_obj = intermediate
         for other in conflicts:
@@ -59,7 +60,7 @@ def detect_object(img, url):
         filtered = [x for x in conflicts if not intersecting_bbox(highest_confidence_obj, x)]
         resolved = non_conflicts + filtered + [highest_confidence_obj]
 
-        by_class[obj_list_form[0]] = resolved
+        by_class[class_name] = resolved
 
     for class_name in by_class:
         for obj in by_class[class_name]:
@@ -70,6 +71,14 @@ def detect_object(img, url):
 
     return detected_objects
 
+
+def group_class_names(name):
+    if name in {"thin_wheel_top", "thick_wheel_top"}:
+        return "wheel"
+    elif name in {"thin_tire", "thick_tire"}:
+        return "tire"
+
+    return name
 
 def intersecting_bbox(obj1, obj2):
     if intersection_helper(obj1["dimensions"], obj2["dimensions"]) or \

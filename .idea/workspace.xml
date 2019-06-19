@@ -1,7 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="361cb4d7-69dd-4ae1-b219-fdd7330217ca" name="Default Changelist" comment="" />
+    <list default="true" id="361cb4d7-69dd-4ae1-b219-fdd7330217ca" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/car" beforeDir="false" afterPath="$PROJECT_DIR$/car" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/car_task.py" beforeDir="false" afterPath="$PROJECT_DIR$/car_task.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/images_feedback/assembled.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images_feedback/bone-gauge.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images_feedback/bone-grp-tg-sbv.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images_feedback/bone-grp-tg.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images_feedback/bone.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images_feedback/gd.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images_feedback/gdd.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images_feedback/gn.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images_feedback/gnb.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images_feedback/grp-tg.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images_feedback/measure.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images_feedback/read.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ribloc_task.py" beforeDir="false" afterPath="$PROJECT_DIR$/ribloc_task.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tpod_wrapper.py" beforeDir="false" afterPath="$PROJECT_DIR$/tpod_wrapper.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/util.py" beforeDir="false" afterPath="$PROJECT_DIR$/util.py" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -9,103 +28,80 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.5">
-      <split-first>
-        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/../gabriel_car/car">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="128">
-                  <caret line="119" column="19" lean-forward="true" selection-start-line="119" selection-start-column="19" selection-end-line="119" selection-end-column="19" />
-                  <folding>
-                    <element signature="e#819#856#0" expanded="true" />
-                  </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/../gabriel_car/tpod_wrapper.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="408">
-                  <caret line="23" selection-start-line="23" selection-end-line="23" />
-                  <folding>
-                    <element signature="e#0#15#0" expanded="true" />
-                  </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/../gabriel_car/util.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="471">
-                  <caret line="57" column="33" selection-start-line="57" selection-start-column="33" selection-end-line="57" selection-end-column="33" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-        </leaf>
-      </split-first>
-      <split-second>
-        <leaf>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/../gabriel_car/handtracking/detect_single_threaded.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="270">
-                  <caret line="97" column="36" selection-start-line="97" selection-start-column="36" selection-end-line="97" selection-end-column="36" />
-                  <folding>
-                    <element signature="e#0#50#0" expanded="true" />
-                  </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/../gabriel_car/handtracking/utils/detector_utils.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="202">
-                  <caret line="19" column="27" selection-start-line="19" selection-start-column="27" selection-end-line="19" selection-end-column="27" />
-                  <folding>
-                    <element signature="e#34#52#0" expanded="true" />
-                  </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/../gabriel_car/handtracking/utils/label_map_util.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="363">
-                  <caret line="30" column="3" selection-start-line="30" selection-start-column="2" selection-end-line="30" selection-end-column="3" />
-                  <folding>
-                    <element signature="e#726#740#0" expanded="true" />
-                  </folding>
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$USER_HOME$/env/lib/python2.7/site-packages/tensorflow/python/framework/errors_impl.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="386">
-                  <caret line="527" selection-start-line="527" selection-end-line="527" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$USER_HOME$/env/lib/python2.7/site-packages/tensorflow/python/lib/io/file_io.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="210">
-                  <caret line="84" selection-start-line="84" selection-end-line="84" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-        </leaf>
-      </split-second>
-    </splitter>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/car">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="112">
+              <caret line="172" column="39" lean-forward="true" selection-start-line="172" selection-start-column="39" selection-end-line="172" selection-end-column="39" />
+              <folding>
+                <element signature="e#819#856#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/config.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="476">
+              <caret line="28" column="18" selection-start-line="28" selection-start-column="18" selection-end-line="28" selection-end-column="18" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/car_task.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="179">
+              <caret line="21" selection-start-line="21" selection-end-line="21" />
+              <folding>
+                <element signature="e#0#11#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ribloc_task.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-1860">
+              <caret line="152" column="41" selection-start-line="152" selection-start-column="41" selection-end-line="152" selection-end-column="41" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/car_stream.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1676">
+              <caret line="148" column="41" lean-forward="true" selection-start-line="148" selection-start-column="41" selection-end-line="148" selection-end-column="41" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/tpod_wrapper.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="504">
+              <caret line="75" column="32" selection-start-line="75" selection-start-column="32" selection-end-line="75" selection-end-column="32" />
+              <folding>
+                <element signature="e#0#15#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/util.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="487">
+              <caret line="46" column="43" selection-start-line="46" selection-start-column="43" selection-end-line="46" selection-end-column="43" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -118,6 +114,11 @@
     <findStrings>
       <find>vis_dete</find>
       <find>ribloc</find>
+      <find>handtracking</find>
+      <find>detect_hand</find>
+      <find>detect</find>
+      <find>detect_object</find>
+      <find>tpod_wrapper</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -127,18 +128,20 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/model/labels.txt" />
-        <option value="$PROJECT_DIR$/start_demo.sh" />
-        <option value="$PROJECT_DIR$/util.py" />
-        <option value="$PROJECT_DIR$/car_task.py" />
         <option value="$PROJECT_DIR$/ribloc" />
         <option value="$PROJECT_DIR$/README.md" />
+        <option value="$PROJECT_DIR$/handtracking/utils/label_map_util.py" />
+        <option value="$PROJECT_DIR$/start_demo.sh" />
+        <option value="$PROJECT_DIR$/handtracking/utils/detector_utils.py" />
+        <option value="$PROJECT_DIR$/util.py" />
+        <option value="$PROJECT_DIR$/util.py" />
+        <option value="$PROJECT_DIR$/car_stream.py" />
+        <option value="$PROJECT_DIR$/ribloc_task.py" />
+        <option value="$PROJECT_DIR$/car" />
         <option value="$PROJECT_DIR$/car" />
         <option value="$PROJECT_DIR$/tpod_wrapper.py" />
-        <option value="$PROJECT_DIR$/../gabriel_car/util.py" />
-        <option value="$PROJECT_DIR$/../gabriel_car/car" />
-        <option value="$PROJECT_DIR$/../gabriel_car/handtracking/utils/label_map_util.py" />
-        <option value="$PROJECT_DIR$/../gabriel_car/handtracking/utils/detector_utils.py" />
-        <option value="$PROJECT_DIR$/../gabriel_car/tpod_wrapper.py" />
+        <option value="$PROJECT_DIR$/tpod_wrapper.py" />
+        <option value="$PROJECT_DIR$/car_task.py" />
       </list>
     </option>
   </component>
@@ -154,7 +157,7 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="196" />
+    <option name="x" value="218" />
     <option name="y" value="-4" />
     <option name="width" value="1400" />
     <option name="height" value="1056" />
@@ -178,13 +181,12 @@
             <path>
               <item name="gabriel_car" type="b2602c69:ProjectViewProjectNode" />
               <item name="gabriel_car" type="462c0819:PsiDirectoryNode" />
-              <item name="handtracking" type="462c0819:PsiDirectoryNode" />
+              <item name="images_feedback" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="gabriel_car" type="b2602c69:ProjectViewProjectNode" />
               <item name="gabriel_car" type="462c0819:PsiDirectoryNode" />
-              <item name="handtracking" type="462c0819:PsiDirectoryNode" />
-              <item name="utils" type="462c0819:PsiDirectoryNode" />
+              <item name="model" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -195,12 +197,14 @@
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../gabriel_car/handtracking" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/../gabriel_car/handtracking" />
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/handtracking" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -215,75 +219,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager">
-    <configuration default="true" type="DjangoTestsConfigurationType">
-      <module name="gabriel_car" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="TARGET" value="" />
-      <option name="SETTINGS_FILE" value="" />
-      <option name="CUSTOM_SETTINGS" value="false" />
-      <option name="USE_OPTIONS" value="false" />
-      <option name="OPTIONS" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration default="true" type="PyBehaveRunConfigurationType" factoryName="Behave">
-      <module name="gabriel_car" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="ADDITIONAL_ARGS" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration default="true" type="PyLettuceRunConfigurationType" factoryName="Lettuce">
-      <module name="gabriel_car" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="ADDITIONAL_ARGS" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration default="true" type="PythonConfigurationType" factoryName="Python">
-      <module name="gabriel_car" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Python.car">
     <configuration name="car" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="gabriel_car" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -292,13 +228,13 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../gabriel_car" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../gabriel_car/car" />
-      <option name="PARAMETERS" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/car" />
+      <option name="PARAMETERS" value="-s 0.0.0.0:8021" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -306,68 +242,36 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration default="true" type="Python.FlaskServer">
+    <configuration name="car_stream" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="gabriel_car" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="launchJavascriptDebuger" value="false" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/car_stream.py" />
+      <option name="PARAMETERS" value="-s 0.0.0.0:8021" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration default="true" type="Tox" factoryName="Tox">
-      <module name="gabriel_car" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <method v="2" />
-    </configuration>
-    <configuration default="true" type="tests" factoryName="Doctests">
-      <module name="gabriel_car" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="" />
-      <option name="CLASS_NAME" value="" />
-      <option name="METHOD_NAME" value="" />
-      <option name="FOLDER_NAME" value="" />
-      <option name="TEST_TYPE" value="TEST_SCRIPT" />
-      <option name="PATTERN" value="" />
-      <option name="USE_PATTERN" value="false" />
-      <method v="2" />
-    </configuration>
-    <configuration default="true" type="tests" factoryName="Unittests">
-      <module name="gabriel_car" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;&quot;" />
-      <option name="_new_targetType" value="&quot;PATH&quot;" />
-      <method v="2" />
-    </configuration>
+    <list>
+      <item itemvalue="Python.car" />
+      <item itemvalue="Python.car_stream" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python.car" />
+        <item itemvalue="Python.car_stream" />
       </list>
     </recent_temporary>
   </component>
@@ -386,24 +290,26 @@
       <workItem from="1560376834850" duration="9284000" />
       <workItem from="1560452472387" duration="1228000" />
       <workItem from="1560456597179" duration="8292000" />
-      <workItem from="1560524679249" duration="6395000" />
+      <workItem from="1560524679249" duration="8751000" />
+      <workItem from="1560787435228" duration="3851000" />
+      <workItem from="1560798668372" duration="17839000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="27360000" />
+    <option name="totallyTimeSpent" value="51406000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="65" y="-4" width="1855" height="1084" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.19900498" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.20453289" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.36008918" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4988662" weight="0.3282365" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.39959225" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.3598369" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.4988662" visible="true" weight="0.34760448" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.3985729" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -424,16 +330,17 @@
     <option name="version" value="1" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/gabriel_car$car_stream.coverage" NAME="car_stream Coverage Results" MODIFIED="1560968244129" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/gabriel_ribloc$ribloc.coverage" NAME="ribloc Coverage Results" MODIFIED="1560449962945" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/gabriel_car$detect_multi_threaded.coverage" NAME="detect_multi_threaded Coverage Results" MODIFIED="1560527191781" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/handtracking" />
-    <SUITE FILE_PATH="coverage/gabriel_car$car.coverage" NAME="car Coverage Results" MODIFIED="1560530884769" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../gabriel_car" />
+    <SUITE FILE_PATH="coverage/gabriel_car$car.coverage" NAME="car Coverage Results" MODIFIED="1560969910567" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/caffe_detect.py" />
     <entry file="file:///usr/lib/python2.7/Queue.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/Dockerfile">
+    <entry file="file://$PROJECT_DIR$/Dockerfile">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="512">
           <caret line="72" column="115" lean-forward="true" selection-start-line="72" selection-start-column="115" selection-end-line="72" selection-end-column="115" />
@@ -441,28 +348,7 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/zhuocv.py" />
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/start_demo.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="340">
-          <caret line="20" column="23" selection-start-line="20" selection-start-column="23" selection-end-line="20" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="510">
-          <caret line="30" selection-start-line="30" selection-end-line="30" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/model/labels.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="3" selection-start-column="3" selection-end-column="3" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/README.md">
+    <entry file="file://$PROJECT_DIR$/README.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
         <state split_layout="SPLIT">
           <first_editor>
@@ -472,24 +358,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/env/local/lib/python2.7/site-packages/gabriel/proxy/common.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="468">
-          <caret line="112" column="26" selection-start-line="112" selection-start-column="26" selection-end-line="112" selection-end-column="26" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/car_task.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/ribloc_task.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4131">
-          <caret line="250" column="84" selection-start-line="250" selection-start-column="84" selection-end-line="250" selection-end-column="84" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/handtracking/detect_multi_threaded.py">
+    <entry file="file://$PROJECT_DIR$/handtracking/detect_multi_threaded.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1224">
           <caret line="150" column="58" lean-forward="true" selection-start-line="150" selection-start-column="58" selection-end-line="150" selection-end-column="58" />
@@ -499,26 +368,19 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/handtracking/detect_single_threaded.py">
+    <entry file="file://$PROJECT_DIR$/handtracking/__init__.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/handtracking/utils/__init__.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/handtracking/utils/label_map_util.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="97" column="36" selection-start-line="97" selection-start-column="36" selection-end-line="97" selection-end-column="36" />
+        <state relative-caret-position="363">
+          <caret line="30" column="3" selection-start-line="30" selection-start-column="2" selection-end-line="30" selection-end-column="3" />
           <folding>
-            <element signature="e#0#50#0" expanded="true" />
+            <element signature="e#726#740#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/handtracking/__init__.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/handtracking/utils/__init__.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$USER_HOME$/env/lib/python2.7/site-packages/tensorflow/python/lib/io/file_io.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="84" selection-start-line="84" selection-end-line="84" />
         </state>
       </provider>
     </entry>
@@ -529,49 +391,113 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/car">
+    <entry file="file://$USER_HOME$/env/lib/python2.7/site-packages/tensorflow/python/lib/io/file_io.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="128">
-          <caret line="119" column="19" lean-forward="true" selection-start-line="119" selection-start-column="19" selection-end-line="119" selection-end-column="19" />
+        <state relative-caret-position="210">
+          <caret line="84" selection-start-line="84" selection-end-line="84" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/handtracking/detect_single_threaded.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="131">
+          <caret line="99" column="42" selection-start-line="99" selection-start-column="42" selection-end-line="99" selection-end-column="42" />
           <folding>
-            <element signature="e#819#856#0" expanded="true" />
+            <element signature="e#0#50#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/handtracking/utils/label_map_util.py">
+    <entry file="file://$PROJECT_DIR$/start_demo.sh">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="363">
-          <caret line="30" column="3" selection-start-line="30" selection-start-column="2" selection-end-line="30" selection-end-column="3" />
-          <folding>
-            <element signature="e#726#740#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="289">
+          <caret line="17" lean-forward="true" selection-start-line="17" selection-end-line="17" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/handtracking/utils/detector_utils.py">
+    <entry file="file://$PROJECT_DIR$/handtracking/utils/detector_utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="202">
-          <caret line="19" column="27" selection-start-line="19" selection-start-column="27" selection-end-line="19" selection-end-column="27" />
-          <folding>
-            <element signature="e#34#52#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="153">
+          <caret line="9" column="35" selection-start-line="9" selection-start-column="35" selection-end-line="9" selection-end-column="35" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/util.py">
+    <entry file="file://$PROJECT_DIR$/model/labels.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="471">
-          <caret line="57" column="33" selection-start-line="57" selection-start-column="33" selection-end-line="57" selection-end-column="33" />
+        <state>
+          <caret selection-end-column="3" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../gabriel_car/tpod_wrapper.py">
+    <entry file="file://$PROJECT_DIR$/car_stream.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="408">
-          <caret line="23" selection-start-line="23" selection-end-line="23" />
+        <state relative-caret-position="-612" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="487">
+          <caret line="46" column="43" selection-start-line="46" selection-start-column="43" selection-end-line="46" selection-end-column="43" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/images_feedback/tire-legend.png">
+      <provider selected="true" editor-type-id="images" />
+    </entry>
+    <entry file="file://$USER_HOME$/env/local/lib/python2.7/site-packages/gabriel/proxy/common.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="94">
+          <caret line="93" selection-start-line="93" selection-end-line="93" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/car_stream.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1676">
+          <caret line="148" column="41" lean-forward="true" selection-start-line="148" selection-start-column="41" selection-end-line="148" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tpod_wrapper.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="504">
+          <caret line="75" column="32" selection-start-line="75" selection-start-column="32" selection-end-line="75" selection-end-column="32" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ribloc_task.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1860">
+          <caret line="152" column="41" selection-start-line="152" selection-start-column="41" selection-end-line="152" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/car_task.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="179">
+          <caret line="21" selection-start-line="21" selection-end-line="21" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="476">
+          <caret line="28" column="18" selection-start-line="28" selection-start-column="18" selection-end-line="28" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/car">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="112">
+          <caret line="172" column="39" lean-forward="true" selection-start-line="172" selection-start-column="39" selection-end-line="172" selection-end-column="39" />
+          <folding>
+            <element signature="e#819#856#0" expanded="true" />
           </folding>
         </state>
       </provider>
