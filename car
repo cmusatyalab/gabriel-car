@@ -146,7 +146,9 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
         header['status'] = 'success'
 
         if instruction.get('image', None) is not None:
-            rtn_data['image'] = b64encode(util.cv_image2raw_jpg(instruction['image']))
+            rtn_data['image'] = b64encode(util.cv_image2raw_png(instruction['image']))
+        if instruction.get("legend", None) is not None:
+            rtn_data["legend"] = b64encode(util.cv_image2raw_png(instruction["legend"]))
         if instruction.get('speech', None) is not None:
             rtn_data['speech'] = instruction['speech']
 

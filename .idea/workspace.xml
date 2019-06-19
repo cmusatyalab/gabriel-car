@@ -4,22 +4,9 @@
     <list default="true" id="361cb4d7-69dd-4ae1-b219-fdd7330217ca" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/car" beforeDir="false" afterPath="$PROJECT_DIR$/car" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/car_stream.py" beforeDir="false" afterPath="$PROJECT_DIR$/car_stream.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/car_task.py" beforeDir="false" afterPath="$PROJECT_DIR$/car_task.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/images_feedback/assembled.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images_feedback/bone-gauge.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images_feedback/bone-grp-tg-sbv.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images_feedback/bone-grp-tg.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images_feedback/bone.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images_feedback/gd.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images_feedback/gdd.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images_feedback/gn.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images_feedback/gnb.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images_feedback/grp-tg.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images_feedback/measure.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/images_feedback/read.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ribloc_task.py" beforeDir="false" afterPath="$PROJECT_DIR$/ribloc_task.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tpod_wrapper.py" beforeDir="false" afterPath="$PROJECT_DIR$/tpod_wrapper.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util.py" beforeDir="false" afterPath="$PROJECT_DIR$/util.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/images_feedback/tire-legend.png" beforeDir="false" afterPath="$PROJECT_DIR$/images_feedback/tire-legend.png" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -32,8 +19,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/car">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="112">
-              <caret line="172" column="39" lean-forward="true" selection-start-line="172" selection-start-column="39" selection-end-line="172" selection-end-column="39" />
+            <state relative-caret-position="1387">
+              <caret line="133" column="37" selection-start-line="133" selection-start-column="37" selection-end-line="133" selection-end-column="37" />
               <folding>
                 <element signature="e#819#856#0" expanded="true" />
               </folding>
@@ -44,7 +31,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/config.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="476">
+            <state relative-caret-position="-279">
               <caret line="28" column="18" selection-start-line="28" selection-start-column="18" selection-end-line="28" selection-end-column="18" />
             </state>
           </provider>
@@ -53,8 +40,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/car_task.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="179">
-              <caret line="21" selection-start-line="21" selection-end-line="21" />
+            <state relative-caret-position="272">
+              <caret line="70" column="36" selection-start-line="70" selection-start-column="36" selection-end-line="70" selection-end-column="36" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
@@ -65,7 +52,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ribloc_task.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1860">
+            <state relative-caret-position="2465">
               <caret line="152" column="41" selection-start-line="152" selection-start-column="41" selection-end-line="152" selection-end-column="41" />
             </state>
           </provider>
@@ -74,8 +61,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/car_stream.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1676">
-              <caret line="148" column="41" lean-forward="true" selection-start-line="148" selection-start-column="41" selection-end-line="148" selection-end-column="41" />
+            <state relative-caret-position="2142">
+              <caret line="147" selection-start-line="147" selection-end-line="147" />
             </state>
           </provider>
         </entry>
@@ -83,7 +70,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/tpod_wrapper.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="504">
+            <state relative-caret-position="1207">
               <caret line="75" column="32" selection-start-line="75" selection-start-column="32" selection-end-line="75" selection-end-column="32" />
               <folding>
                 <element signature="e#0#15#0" expanded="true" />
@@ -95,7 +82,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/util.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="487">
+            <state relative-caret-position="731">
               <caret line="46" column="43" selection-start-line="46" selection-start-column="43" selection-end-line="46" selection-end-column="43" />
             </state>
           </provider>
@@ -135,12 +122,12 @@
         <option value="$PROJECT_DIR$/handtracking/utils/detector_utils.py" />
         <option value="$PROJECT_DIR$/util.py" />
         <option value="$PROJECT_DIR$/util.py" />
-        <option value="$PROJECT_DIR$/car_stream.py" />
         <option value="$PROJECT_DIR$/ribloc_task.py" />
-        <option value="$PROJECT_DIR$/car" />
-        <option value="$PROJECT_DIR$/car" />
         <option value="$PROJECT_DIR$/tpod_wrapper.py" />
         <option value="$PROJECT_DIR$/tpod_wrapper.py" />
+        <option value="$PROJECT_DIR$/car_stream.py" />
+        <option value="$PROJECT_DIR$/car" />
+        <option value="$PROJECT_DIR$/car" />
         <option value="$PROJECT_DIR$/car_task.py" />
       </list>
     </option>
@@ -292,18 +279,20 @@
       <workItem from="1560456597179" duration="8292000" />
       <workItem from="1560524679249" duration="8751000" />
       <workItem from="1560787435228" duration="3851000" />
-      <workItem from="1560798668372" duration="17839000" />
+      <workItem from="1560798668372" duration="19913000" />
+      <workItem from="1560973100473" duration="4096000" />
+      <workItem from="1560977901884" duration="382000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="51406000" />
+    <option name="totallyTimeSpent" value="57958000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="65" y="-4" width="1855" height="1084" extended-state="6" />
+    <frame x="64" y="-4" width="1857" height="1085" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.20453289" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.20895523" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -330,10 +319,10 @@
     <option name="version" value="1" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/gabriel_car$car_stream.coverage" NAME="car_stream Coverage Results" MODIFIED="1560968244129" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/gabriel_car$car_stream.coverage" NAME="car_stream Coverage Results" MODIFIED="1560973884844" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/gabriel_ribloc$ribloc.coverage" NAME="ribloc Coverage Results" MODIFIED="1560449962945" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/gabriel_car$detect_multi_threaded.coverage" NAME="detect_multi_threaded Coverage Results" MODIFIED="1560527191781" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/handtracking" />
-    <SUITE FILE_PATH="coverage/gabriel_car$car.coverage" NAME="car Coverage Results" MODIFIED="1560969910567" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/gabriel_car$car.coverage" NAME="car Coverage Results" MODIFIED="1560978293880" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/caffe_detect.py" />
@@ -429,18 +418,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/car_stream.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-612" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/util.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="487">
-          <caret line="46" column="43" selection-start-line="46" selection-start-column="43" selection-end-line="46" selection-end-column="43" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/images_feedback/tire-legend.png">
       <provider selected="true" editor-type-id="images" />
     </entry>
@@ -451,16 +428,23 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/ribloc_task.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2465">
+          <caret line="152" column="41" selection-start-line="152" selection-start-column="41" selection-end-line="152" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/car_stream.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1676">
-          <caret line="148" column="41" lean-forward="true" selection-start-line="148" selection-start-column="41" selection-end-line="148" selection-end-column="41" />
+        <state relative-caret-position="2142">
+          <caret line="147" selection-start-line="147" selection-end-line="147" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/tpod_wrapper.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="504">
+        <state relative-caret-position="1207">
           <caret line="75" column="32" selection-start-line="75" selection-start-column="32" selection-end-line="75" selection-end-column="32" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
@@ -468,17 +452,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ribloc_task.py">
+    <entry file="file://$PROJECT_DIR$/util.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1860">
-          <caret line="152" column="41" selection-start-line="152" selection-start-column="41" selection-end-line="152" selection-end-column="41" />
+        <state relative-caret-position="731">
+          <caret line="46" column="43" selection-start-line="46" selection-start-column="43" selection-end-line="46" selection-end-column="43" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/car_task.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="179">
-          <caret line="21" selection-start-line="21" selection-end-line="21" />
+        <state relative-caret-position="272">
+          <caret line="70" column="36" selection-start-line="70" selection-start-column="36" selection-end-line="70" selection-end-column="36" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
@@ -487,15 +471,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/config.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="476">
+        <state relative-caret-position="-279">
           <caret line="28" column="18" selection-start-line="28" selection-start-column="18" selection-end-line="28" selection-end-column="18" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/car">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="112">
-          <caret line="172" column="39" lean-forward="true" selection-start-line="172" selection-start-column="39" selection-end-line="172" selection-end-column="39" />
+        <state relative-caret-position="1387">
+          <caret line="133" column="37" selection-start-line="133" selection-start-column="37" selection-end-line="133" selection-end-column="37" />
           <folding>
             <element signature="e#819#856#0" expanded="true" />
           </folding>

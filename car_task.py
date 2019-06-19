@@ -60,8 +60,16 @@ class Task:
         self.left_frames = FrameRecorder(10)
         self.right_frames = FrameRecorder(10)
 
+        self.last_id = None
+
 
     def get_instruction(self, objects, header=None):
+        if header is not None and "task_id" in header:
+            if self.last_id is None:
+                self.last_id = header["task_id"]
+            elif self.last_id != header["task_id"]:
+                self.current_state = "start"
+
         result = defaultdict(lambda: None)
         result['status'] = "success"
         vis_objects = np.asarray([])
@@ -78,7 +86,7 @@ class Task:
             if len(wheels) == 2:
                 result["speech"] = "Excellent! Please line them up with the legend."
                 image_path = os.path.join(images_store, "tire-legend.png")
-                result['legend'] = cv2.imread(image_path)
+                result['legend'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
                 self.current_state = "wheel-stage-2"
 
         elif self.current_state == "wheel-stage-2":

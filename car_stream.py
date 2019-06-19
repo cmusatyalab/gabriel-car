@@ -147,7 +147,7 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
             vis_objects = objects
 
         img_object = util.vis_detections(img, objects)
-        rtn_data['image'] = b64encode(util.cv_image2raw_png(img_object))
+        rtn_data['legend'] = b64encode(util.cv_image2raw_png(img_object))
 
         return json.dumps(rtn_data)
 
