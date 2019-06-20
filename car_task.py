@@ -10,6 +10,7 @@ OBJECTS = config.LABELS
 STATES = ["start", "wheel-stage", "wheel-compare"]
 images_store = os.path.abspath("images_feedback")
 stable_threshold = 50
+wheel_compare_threshold = 25
 
 
 class FrameRecorder:
@@ -47,6 +48,16 @@ class FrameRecorder:
         if self.clear_count > self.size / 2:
             self.deque = deque()
 
+    def averaged_bbox(self):
+        out = [0, 0, 0, 0]
+
+        for i in range(len(self.deque)):
+            dim = self.deque[i]["dimensions"]
+            for u in range(len(dim)):
+                out[u] += dim[u]
+
+        return [v / len(self.deque) for v in out]
+
 
 class Task:
     def __init__(self, init_state=None):
@@ -68,6 +79,7 @@ class Task:
             if self.last_id is None:
                 self.last_id = header["task_id"]
             elif self.last_id != header["task_id"]:
+                self.last_id = header["task_id"]
                 self.current_state = "start"
 
         result = defaultdict(lambda: None)
@@ -93,15 +105,20 @@ class Task:
             wheels = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side", "thick_tire", "thin_tire"})
             if len(wheels) == 2:
                 left, right = separate_left_right(objects)
+                print("left: %s    right: %s    diff: %s" % (bbox_height(left["dimensions"]), bbox_height(right["dimensions"]), abs(bbox_height(left["dimensions"]) - bbox_height(right["dimensions"]))))
 
                 self.left_frames.add(left)
                 self.right_frames.add(right)
 
                 if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold):
-                    left_speech, right_speech = ("bigger", "smaller") if bbox_taller(left["dimensions"], right["dimensions"]) else ("smaller", "bigger")
+                    compare = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
 
-                    result["speech"] = "Great job! The one on the left is the %s wheel and the one on the right is the %s wheel" % (left_speech, right_speech)
-                    self.current_state = "nothing"
+                    if compare == "same":
+                        result["speech"] = "Those wheels are the same size. Please get two different-sized wheels."
+                    else:
+                        left_speech, right_speech = ("bigger", "smaller") if compare == "first" else ("smaller", "bigger")
+                        result["speech"] = "Great job! The one on the left is the %s wheel and the one on the right is the %s wheel" % (left_speech, right_speech)
+                        self.current_state = "nothing"
             else:
                 self.left_frames.staged_clear()
                 self.right_frames.staged_clear()
@@ -135,6 +152,9 @@ def separate_left_right(objects):
 def bbox_center(dims):
     return dims[2] - dims[0], dims[3] - dims[1]
 
+def bbox_height(dims):
+    return dims[3] - dims[1]
+
 def bbox_diff(box1, box2):
     center1 = bbox_center(box1)
     center2 = bbox_center(box2)
@@ -144,5 +164,12 @@ def bbox_diff(box1, box2):
 
     return math.sqrt(x_diff**2 + y_diff**2)
 
-def bbox_taller(box1, box2):
-    return box1[1] + box1[3] > box2[1] + box2[3]
+def wheel_compare(box1, box2, threshold):
+    height1 = bbox_height(box1)
+    height2 = bbox_height(box2)
+
+    diff = abs(height1 - height2)
+    if diff < threshold:
+        return "same"
+
+    return "first" if height1 > height2 else "second"
