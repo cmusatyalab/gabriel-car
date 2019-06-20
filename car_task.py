@@ -8,7 +8,7 @@ import os
 import config
 
 OBJECTS = config.LABELS
-STATES = ["start", "wheel-stage", "wheel-compare"]
+STATES = ["start", "wheel-stage", "wheel-compare", "tire-rim-pairing"]
 images_store = os.path.abspath("images_feedback")
 stable_threshold = 50
 wheel_compare_threshold = 20
@@ -92,6 +92,23 @@ class Task:
 
         # the start
         if self.current_state == "start":
+            result['speech'] = "Please show me all four rims and four tires."
+            image_path = os.path.join(images_store, "tire-rim-stage-1.jpg")
+            result['image'] = cv2.imread(image_path)
+            tires = get_objects_by_categories(objects, {"thick_tire", "thin_tire"})
+            rims = get_objects_by_categories(objects, {"thick_rim", "thin_rim"})
+            if len(tires) == 4 and len(rims) == 4:
+                self.current_state = "tire-rim-pairing-stage-1"
+
+        elif self.current_state == "tire-rim-pairing-stage-1":
+            result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and show me this configuration."
+            image_path = os.path.join(images_store,"tire-rim-legend.png")
+            result['legend'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+            if len(tires) == 2 and len(rims) == 2:
+                #check for the size of the bounding box of both rim and tire to see if the height matches within a certain range
+                self.current_state = "wheel-stage"
+
+        elif self.current_state == "wheel-stage":
             result['speech'] = "Please grab one each of the big and small wheels."
             image_path = os.path.join(images_store, "wheel-stage-1.jpg")
             result['image'] = cv2.imread(image_path)
