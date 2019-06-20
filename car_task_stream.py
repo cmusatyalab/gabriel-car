@@ -11,7 +11,7 @@ OBJECTS = config.LABELS
 STATES = ["start", "wheel-stage", "wheel-compare"]
 images_store = os.path.abspath("images_feedback")
 stable_threshold = 50
-wheel_compare_threshold = 20
+wheel_compare_threshold = 15
 
 
 class FrameRecorder:
@@ -90,50 +90,10 @@ class Task:
         result['status'] = "success"
         vis_objects = np.asarray([])
 
-        # the start
-        if self.current_state == "start":
-            result['speech'] = "Please grab one each of the big and small wheels."
-            image_path = os.path.join(images_store, "wheel-stage-1.jpg")
-            result['image'] = cv2.imread(image_path)
-            self.current_state = "wheel-stage-1"
-
-        elif self.current_state == "wheel-stage-1":
-            wheels = get_objects_by_categories(objects, {"thick_wheel_top", "thin_wheel_top"})
-            if len(wheels) == 2:
-                result["speech"] = "Excellent! Please line them up with the legend."
-                image_path = os.path.join(images_store, "tire-legend.png")
-                result['legend'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-                self.current_state = "wheel-stage-2"
-
-        elif self.current_state == "wheel-stage-2":
-            wheels = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side", "thick_tire", "thin_tire"})
-            if len(wheels) == 2:
-                left, right = separate_left_right(objects)
-                print("left: %s    right: %s    diff: %s" % (bbox_height(left["dimensions"]), bbox_height(right["dimensions"]), abs(bbox_height(left["dimensions"]) - bbox_height(right["dimensions"]))))
-
-                self.left_frames.add(left)
-                self.right_frames.add(right)
-
-                if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold):
-                    compare = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
-
-                    if compare == "same":
-                        result["speech"] = "Those wheels are the same size. Please get two different-sized wheels."
-                        self.left_frames.clear()
-                        self.right_frames.clear()
-
-                    else:
-                        left_speech, right_speech = ("bigger", "smaller") if compare == "first" else ("smaller", "bigger")
-                        result["speech"] = "Great job! The one on the left is the %s wheel and the one on the right is the %s wheel" % (left_speech, right_speech)
-                        self.current_state = "nothing"
-            else:
-                self.left_frames.staged_clear()
-                self.right_frames.staged_clear()
-
-        elif self.current_state == "nothing":
-            time.sleep(3)
-            self.current_state = "start"
-
+        wheels = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side", "thick_tire", "thin_tire"})
+        if len(wheels) == 2:
+            left, right = separate_left_right(objects)
+            print("left: %s    right: %s    diff: %s" % (bbox_height(left["dimensions"]), bbox_height(right["dimensions"]), abs(bbox_height(left["dimensions"]) - bbox_height(right["dimensions"]))))
 
         return vis_objects, result
 

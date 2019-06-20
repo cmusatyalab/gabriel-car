@@ -37,7 +37,7 @@ import config
 import cv2
 import gabriel
 import gabriel.proxy
-import car_task
+import car_task_stream
 import util
 import tpod_wrapper
 
@@ -83,7 +83,7 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
         self.last_msg = ""
         self.dup_msg_cnt = 0
         # task initialization
-        self.task = car_task.Task(init_state=init_state)
+        self.task = car_task_stream.Task(init_state=init_state)
 
     def add_to_byte_array(self, byte_array, extra_bytes):
         return struct.pack("!{}s{}s".format(len(byte_array), len(extra_bytes)), byte_array, extra_bytes)
@@ -138,6 +138,7 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
         hands = tpod_wrapper.detect_hand(img, detection_graph, sess)
         objects.extend(hands)
 
+        vis_objects, instruction = self.task.get_instruction(objects, header)
         header['status'] = 'success'
 
         print("object detection result: %s" % [obj["class_name"] for obj in objects])

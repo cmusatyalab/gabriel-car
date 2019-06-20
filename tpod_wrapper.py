@@ -75,7 +75,7 @@ def detect_object(img, url):
 def group_class_names(name):
     if name in {"thin_wheel_top", "thick_wheel_top"}:
         return "wheel"
-    elif name in {"thin_tire", "thick_tire"}:
+    elif name in {"thin_wheel_side", "thick_wheel_side"}:
         return "tire"
 
     return name
