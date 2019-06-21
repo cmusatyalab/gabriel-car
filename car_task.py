@@ -99,7 +99,7 @@ class Task:
         # the start, branch into desired instruction
         if self.current_state == "start":
             self.current_state = "frame-branch"
-            empty_holes = get_objects_by_categories(objects, {"empty_hole"})
+            empty_holes = get_objects_by_categories(objects, {"hole_empty"})
             if len(empty_holes) > 0:
                 self.current_state = "frame-branch"
             else:
@@ -115,7 +115,7 @@ class Task:
             self.current_state = "frame-empty-hole"
 
         elif self.current_state == "frame-empty-hole":
-            empty_holes = get_objects_by_categories(objects, {"empty_hole"})
+            empty_holes = get_objects_by_categories(objects, {"hole_empty"})
             if len(empty_holes) == 2:
                 left, right = separate_left_right(objects)
                 self.left_hole_state.add(left)
@@ -133,10 +133,10 @@ class Task:
                     self.right_hole_state.staged_clear()
 
         elif self.current_state == "frame-green-washer-holes":
-            holes = get_objects_by_categories(objects, {"empty_hole", "green_hole", "gold_hole"})
+            holes = get_objects_by_categories(objects, {"hole_empty", "hole_green", "hole_gold"})
             if len(holes) == 2:
                 _, right = separate_left_right(objects)
-                if right["class_name"] == "green_hole":
+                if right["class_name"] == "hole_green":
                     self.right_hole_state.add(right)
 
                     if self.right_hole_state.is_center_stable():
@@ -147,17 +147,17 @@ class Task:
                         self.right_hole_state.staged_clear()
 
         elif self.current_state == "frame-gold-washer-holes":
-            holes = get_objects_by_categories(objects, {"empty_hole", "green_hole", "gold_hole"})
+            holes = get_objects_by_categories(objects, {"hole_empty", "hole_green", "hole_gold"})
             if len(holes) == 2:
                 _, right = separate_left_right(objects)
-                if right["class_name"] == "gold_hole":
+                if right["class_name"] == "hole_gold":
                     self.right_hole_state.add(right)
 
                     if self.right_hole_state.is_center_stable():
                         result[
                             'speech'] = "Excellent job!"
                         result['video'] = video_url + "frame-gold-washer-insert.mp4"
-                        self.current_state = "frame-gold-washer-holes"
+                        self.current_state = "nothing"
                     else:
                         self.right_hole_state.staged_clear()
 
