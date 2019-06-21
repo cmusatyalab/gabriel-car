@@ -9,7 +9,7 @@ import config
 
 OBJECTS = config.LABELS
 STATES = ["start", "wheel-stage", "wheel-compare"]
-images_store = os.path.abspath("images_feedback")
+images_store = os.path.abspath("resources/images")
 stable_threshold = 50
 wheel_compare_threshold = 15
 

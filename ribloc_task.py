@@ -152,7 +152,7 @@ class Task:
         # the start
         if self.current_state == "start":
             result['speech'] = "Put the bone on the table"
-            image_path = "images_feedback/bone.png"
+            image_path = "resources/bone.png"
             result['image'] = cv2.imread(image_path) if image_path else None
             self.current_state = "nothing"
             return vis_objects, result
@@ -171,14 +171,14 @@ class Task:
         #     vis_objects = self.get_objects_by_categories(objects, ['bone'])
         #     if object_counts['bone'] > 0:
         #         result['speech'] = "Now find the gauge and put it on the table"
-        #         image_path = "images_feedback/bone-gauge.png"
+        #         image_path = "resources/bone-gauge.png"
         #         result['image'] = cv2.imread(image_path) if image_path else None
         #         self.current_state = "gauge"
         # elif self.current_state == "gauge":
         #     vis_objects = self.get_objects_by_categories(objects, ['gauge'])
         #     if object_counts['gauge'] > 0:
         #         result['speech'] = "Good job. Now measure the bone thickness"
-        #         image_path = "images_feedback/measure.png"
+        #         image_path = "resources/measure.png"
         #         result['image'] = cv2.imread(image_path) if image_path else None
         #         self.current_state = "measure"
         # elif self.current_state == "measure":
@@ -186,7 +186,7 @@ class Task:
         #     if object_counts['bone'] > 0 and object_counts['gauge'] > 0:
         #         if self._check_measure(objects) == True:
         #             result['speech'] = "Great. Please read the color on the gauge"
-        #             image_path = "images_feedback/read.png"
+        #             image_path = "resources/read.png"
         #             result['image'] = cv2.imread(image_path) if image_path else None
         #             self.current_state = "read"
         #         elif self._check_measure(objects) == "wrong position":
@@ -195,14 +195,14 @@ class Task:
         #     if header != None and ('gaugeColor' in header):
         #         if header['gaugeColor'] == 'green':
         #             result['speech'] = "Great. Please put the green ribplate and two target guides on the table"
-        #             image_path = "images_feedback/grp-tg.png"
+        #             image_path = "resources/grp-tg.png"
         #             result['image'] = cv2.imread(image_path) if image_path else None
         #             header['clear_color'] = True
         #             self.current_state = "grp-tg"
         #         else:
         #             # should be green
         #             result['speech'] = "The color is wrong. Please measure again and tell me the reading"
-        #             image_path = "images_feedback/measure.png"
+        #             image_path = "resources/measure.png"
         #             result['image'] = cv2.imread(image_path) if image_path else None
         #             header['clear_color'] = True
         #             self.current_state = "read"
@@ -212,7 +212,7 @@ class Task:
         #         result['speech'] = "You are using the wrong ribplate. Please find the green one"
         #     elif object_counts['grp'] > 0 and object_counts['tg'] > 1:
         #         result['speech'] = "Great. Now assemble the target guides onto the ribplate"
-        #         image_path = "images_feedback/assembled.png"
+        #         image_path = "resources/assembled.png"
         #         result['image'] = cv2.imread(image_path) if image_path else None
         #         self.current_state = "assemble"
         # elif self.current_state == "assemble":
@@ -220,7 +220,7 @@ class Task:
         #     if object_counts['grp'] > 0 and object_counts['tg'] > 1:
         #         if self._check_assemble(objects):
         #             result['speech'] = "Good. Put the ribplate onto the fracture. Show me the sideview."
-        #             image_path = "images_feedback/bone-grp-tg-sbv.png"
+        #             image_path = "resources/bone-grp-tg-sbv.png"
         #             result['image'] = cv2.imread(image_path) if image_path else None
         #             self.current_state = "bone-grp-tg"
         # elif self.current_state == "bone-grp-tg":
@@ -240,7 +240,7 @@ class Task:
         #             else:
         #                 self.cnt = 0
         #                 result['speech'] = "Great. Put the green drill driver onto the power drill"
-        #                 image_path = "images_feedback/gdd.png"
+        #                 image_path = "resources/gdd.png"
         #                 result['image'] = cv2.imread(image_path) if image_path else None
         #                 self.current_state = "gdd"
         #         elif self._check_secure(objects) == "wrong position":
@@ -254,7 +254,7 @@ class Task:
         #             result['speech'] = "You are using the wrong drill driver. Please find the green one."
         #         elif object_counts['gd'] > 0:
         #             result['speech'] = "Good. Drill through the target guides and put away the power drill when done"
-        #             image_path = "images_feedback/bone-grp-tg.png"
+        #             image_path = "resources/bone-grp-tg.png"
         #             result['image'] = cv2.imread(image_path) if image_path else None
         #             self.current_state = "drill"
         # elif self.current_state == "drill":
@@ -262,7 +262,7 @@ class Task:
         #     if object_counts['bone'] > 0 or object_counts['dh'] > 0:
         #         if self._check_drill(objects):
         #             result['speech'] = "Good. Show me a few green screws"
-        #             image_path = "images_feedback/gn.png"
+        #             image_path = "resources/gn.png"
         #             result['image'] = cv2.imread(image_path) if image_path else None
         #             self.current_state = "gn"
         # elif self.current_state == "gn":
@@ -274,14 +274,14 @@ class Task:
         #     if (object_counts['gn'] + object_counts['gd']) > 1:
         #         result['speech'] = "Good. Insert Screws through the targeting guide and " \
         #                            "remove the targeting guide when done."
-        #         image_path = "images_feedback/gnb.png"
+        #         image_path = "resources/gnb.png"
         #         result['image'] = cv2.imread(image_path) if image_path else None
         #         self.current_state = "gnb"
         # elif self.current_state == "gnb":
         #     vis_objects = self.get_objects_by_categories(objects, ['gnb'])
         #     if object_counts['gnb'] >= 2:
         #         result['speech'] = "Congradulations. You have finished"
-        #         image_path = "images_feedback/gnb.png"
+        #         image_path = "resources/gnb.png"
         #         result['image'] = cv2.imread(image_path) if image_path else None
         #         self.current_state = "finished"
         return vis_objects, result

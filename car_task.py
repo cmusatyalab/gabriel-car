@@ -9,8 +9,9 @@ import config
 
 OBJECTS = config.LABELS
 STATES = ["start", "wheel-stage", "wheel-compare"]
-images_store = os.path.abspath("images_feedback")
-stable_threshold = 50
+resources = os.path.abspath("resources/images")
+video_url = "0.0.0.0:9095/"
+stable_threshold = 20
 wheel_compare_threshold = 20
 
 
@@ -28,7 +29,7 @@ class FrameRecorder:
 
         self.clear_count = 0
 
-    def is_center_stable(self, threshold):
+    def is_center_stable(self):
         if len(self.deque) != self.size:
             return False
 
@@ -37,7 +38,7 @@ class FrameRecorder:
             frame = self.deque[i]
             diff = bbox_diff(frame["dimensions"], prev_frame["dimensions"])
 
-            if diff > threshold:
+            if diff > stable_threshold:
                 return False
 
             prev_frame = frame
@@ -46,7 +47,7 @@ class FrameRecorder:
 
     def staged_clear(self):
         self.clear_count += 1
-        if self.clear_count > self.size / 2:
+        if self.clear_count > self.size:
             self.clear()
 
     def clear(self):
@@ -72,10 +73,15 @@ class Task:
                 raise ValueError('Unknown init state: {}'.format(init_state))
             self.current_state = init_state
 
-        self.left_frames = FrameRecorder(10)
-        self.right_frames = FrameRecorder(10)
+        self.left_hole_state = FrameRecorder(5)
+        self.right_hole_state = FrameRecorder(5)
+
+        self.left_wheel_state = FrameRecorder(5)
+        self.right_wheel_state = FrameRecorder(5)
 
         self.last_id = None
+
+        self.wait_count = 0
 
 
     def get_instruction(self, objects, header=None):
@@ -90,10 +96,76 @@ class Task:
         result['status'] = "success"
         vis_objects = np.asarray([])
 
-        # the start
+        # the start, branch into desired instruction
         if self.current_state == "start":
+            self.current_state = "frame-branch"
+            empty_holes = get_objects_by_categories(objects, {"empty_hole"})
+            if len(empty_holes) > 0:
+                self.current_state = "frame-branch"
+            else:
+                self.wait_count += 1
+                time.sleep(1)
+                if self.wait_count > 5:
+                    self.current_state = "wheel-branch"
+
+        elif self.current_state == "frame-branch":
+            result['speech'] = "Please show me the black frame, holding it like this."
+            image_path = os.path.join(resources, "frame-empty-hole.jpg")
+            result['image'] = cv2.imread(image_path)
+            self.current_state = "frame-empty-hole"
+
+        elif self.current_state == "frame-empty-hole":
+            empty_holes = get_objects_by_categories(objects, {"empty_hole"})
+            if len(empty_holes) == 2:
+                left, right = separate_left_right(objects)
+                self.left_hole_state.add(left)
+                self.right_hole_state.add(right)
+
+                if self.left_hole_state.is_center_stable() and self.right_hole_state.is_center_stable():
+                    result['speech'] = "Great! Please put in the green washer into the slot on the right, like this."
+                    result['video'] = video_url + "frame-green-washer-insert.mp4"
+                    self.current_state = "frame-green-washer-holes"
+
+                    self.left_hole_state.clear()
+                    self.right_hole_state.clear()
+                else:
+                    self.left_hole_state.staged_clear()
+                    self.right_hole_state.staged_clear()
+
+        elif self.current_state == "frame-green-washer-holes":
+            holes = get_objects_by_categories(objects, {"empty_hole", "green_hole", "gold_hole"})
+            if len(holes) == 2:
+                _, right = separate_left_right(objects)
+                if right["class_name"] == "green_hole":
+                    self.right_hole_state.add(right)
+
+                    if self.right_hole_state.is_center_stable():
+                        result['speech'] = "Nice! Finally, fit the gold washer into the green washer, like this. Make sure the smaller end goes in first."
+                        result['video'] = video_url + "frame-gold-washer-insert.mp4"
+                        self.current_state = "frame-gold-washer-holes"
+                    else:
+                        self.right_hole_state.staged_clear()
+
+        elif self.current_state == "frame-gold-washer-holes":
+            holes = get_objects_by_categories(objects, {"empty_hole", "green_hole", "gold_hole"})
+            if len(holes) == 2:
+                _, right = separate_left_right(objects)
+                if right["class_name"] == "gold_hole":
+                    self.right_hole_state.add(right)
+
+                    if self.right_hole_state.is_center_stable():
+                        result[
+                            'speech'] = "Excellent job!"
+                        result['video'] = video_url + "frame-gold-washer-insert.mp4"
+                        self.current_state = "frame-gold-washer-holes"
+                    else:
+                        self.right_hole_state.staged_clear()
+
+
+
+        elif self.current_state == "wheel-branch":
             result['speech'] = "Please grab one each of the big and small wheels."
-            image_path = os.path.join(images_store, "wheel-stage-1.jpg")
+            image_path = os.path.join(resources, "wheel-stage-1.jpg")
             result['image'] = cv2.imread(image_path)
             self.current_state = "wheel-stage-1"
 
@@ -101,7 +173,7 @@ class Task:
             wheels = get_objects_by_categories(objects, {"thick_wheel_top", "thin_wheel_top"})
             if len(wheels) == 2:
                 result["speech"] = "Excellent! Please line them up with the legend."
-                image_path = os.path.join(images_store, "tire-legend.png")
+                image_path = os.path.join(resources, "tire-legend.png")
                 result['legend'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
                 self.current_state = "wheel-stage-2"
 
@@ -111,24 +183,24 @@ class Task:
                 left, right = separate_left_right(objects)
                 print("left: %s    right: %s    diff: %s" % (bbox_height(left["dimensions"]), bbox_height(right["dimensions"]), abs(bbox_height(left["dimensions"]) - bbox_height(right["dimensions"]))))
 
-                self.left_frames.add(left)
-                self.right_frames.add(right)
+                self.left_wheel_state.add(left)
+                self.right_wheel_state.add(right)
 
-                if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold):
-                    compare = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
+                if self.left_wheel_state.is_center_stable() and self.right_wheel_state.is_center_stable():
+                    compare = wheel_compare(self.left_wheel_state.averaged_bbox(), self.right_wheel_state.averaged_bbox(), wheel_compare_threshold)
 
                     if compare == "same":
                         result["speech"] = "Those wheels are the same size. Please get two different-sized wheels."
-                        self.left_frames.clear()
-                        self.right_frames.clear()
+                        self.left_wheel_state.clear()
+                        self.right_wheel_state.clear()
 
                     else:
                         left_speech, right_speech = ("bigger", "smaller") if compare == "first" else ("smaller", "bigger")
                         result["speech"] = "Great job! The one on the left is the %s wheel and the one on the right is the %s wheel" % (left_speech, right_speech)
                         self.current_state = "nothing"
             else:
-                self.left_frames.staged_clear()
-                self.right_frames.staged_clear()
+                self.left_wheel_state.staged_clear()
+                self.right_wheel_state.staged_clear()
 
         elif self.current_state == "nothing":
             time.sleep(3)
