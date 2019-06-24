@@ -2,7 +2,7 @@
 
 set -e
 
-GABRIELPATH="/home/aw3/Desktop/gabriel-dev"
+GABRIELPATH="/home/jwu96/Desktop/gabriel"
 
 function die { echo $1; exit 42; }
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
