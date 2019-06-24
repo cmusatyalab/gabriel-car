@@ -109,11 +109,38 @@ class Task:
         elif self.current_state == "tire-rim-pairing-stage-2":
             tires = get_objects_by_categories(objects, {"thick_tire", "thin_tire"})
             rims = get_objects_by_categories(objects, {"thick_rim", "thin_rim"})
+
             if len(tires) == 2 and len(rims) == 2:
-                # image_path = os.path.join(images_store,"tire-rim-legend.png")
-                # result['legend'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-                #check for the size of the bounding box of both rim and tire to see if the height matches within a certain range
-                self.current_state = "wheel-stage"
+                left_tire, right_tire = separate_left_right(tires)
+                left_rim, right_rim = separate_left_right(rims)
+
+                self.left_frames.add(left_tire)
+                self.right_frames.add(right_tire)
+
+                if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold):
+                    compare = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
+
+                    if compare == "same":
+                        self.left_frames.clear()
+                        self.right_frames.clear()
+                        self.left_frames.add(left_rim)
+                        self.right_frames.add(right_rim)
+                        if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold):
+                            compare = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
+                            if compare == "same":
+                                self.left_frames.clear()
+                                self.right_frames.clear()
+                                result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims"
+                                self.current_state = "wheel-stage"
+                            else:
+                                side = "right" if compare == "first" else "left"
+                                result["speech"] = "The one on the %s is a small rim. Please find a bigger rim and replace it with that." % side
+                    else:
+                        side = "right" if compare == "first" else "left"
+                        result["speech"] = "The one on the %s is a small tire. Please find a bigger tire and replace it with that." % side
+            else:
+                self.left_frames.staged_clear()
+                self.right_frames.staged_clear()
 
         elif self.current_state == "wheel-stage":
             result['speech'] = "Please grab one each of the big and small wheels."
@@ -181,6 +208,21 @@ def separate_left_right(objects):
     else:
         left = obj2
         right = obj1
+
+    return left, right
+
+def separate_topleft_topright_bottomleft_bottomright(objects):
+    obj1 = objects[0]
+    obj2 = objects[1]
+    obj3 = objects[2]
+    obj4 = objects[3]
+
+    if obj1["dimensions"][0] < obj2["dimensions"][0] and abs(obj1["dimensions"][0] - obj2["dimensions"][0]) > 0.1:
+        left = [obj1]
+        right = [obj2]
+    else:
+        left = [obj2]
+        right = [obj1]
 
     return left, right
 
