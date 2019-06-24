@@ -101,7 +101,7 @@ class Task:
                 self.current_state = "tire-rim-pairing-stage-1"
 
         elif self.current_state == "tire-rim-pairing-stage-1":
-            result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and show me this configuration."
+            result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and line them up with the legend."
             image_path = os.path.join(images_store,"tire-rim-legend.png")
             result['legend'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
             if len(tires) == 2 and len(rims) == 2:
