@@ -107,6 +107,8 @@ class Task:
                 # result['legend'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
 
         elif self.current_state == "tire-rim-pairing-stage-2":
+            tires = get_objects_by_categories(objects, {"thick_tire", "thin_tire"})
+            rims = get_objects_by_categories(objects, {"thick_rim", "thin_rim"})
             if len(tires) == 2 and len(rims) == 2:
                 result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and line them up with the legend."
                 # image_path = os.path.join(images_store,"tire-rim-legend.png")
