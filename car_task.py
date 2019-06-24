@@ -107,10 +107,10 @@ class Task:
                 result['legend'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
 
         elif self.current_state == "tire-rim-pairing-stage-2":
-            result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and line them up with the legend."
-            image_path = os.path.join(images_store,"tire-rim-legend.png")
-            result['legend'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
             if len(tires) == 2 and len(rims) == 2:
+                result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and line them up with the legend."
+                image_path = os.path.join(images_store,"tire-rim-legend.png")
+                result['legend'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
                 #check for the size of the bounding box of both rim and tire to see if the height matches within a certain range
                 self.current_state = "wheel-stage"
 
