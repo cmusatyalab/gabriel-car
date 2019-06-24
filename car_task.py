@@ -103,14 +103,13 @@ class Task:
             if (len(tires) >= 4) and (len(rims) >= 4):
                 self.current_state = "tire-rim-pairing-stage-2"
                 result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and show me this configuration."
-                # image_path = os.path.join(images_store,"tire-rim-legend.png")
-                # result['legend'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+                image_path = os.path.join(images_store,"tire-rim-legend.jpg")
+                result['legend'] = cv2.imread(image_path)
 
         elif self.current_state == "tire-rim-pairing-stage-2":
             tires = get_objects_by_categories(objects, {"thick_tire", "thin_tire"})
             rims = get_objects_by_categories(objects, {"thick_rim", "thin_rim"})
             if len(tires) == 2 and len(rims) == 2:
-                result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and line them up with the legend."
                 # image_path = os.path.join(images_store,"tire-rim-legend.png")
                 # result['legend'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
                 #check for the size of the bounding box of both rim and tire to see if the height matches within a certain range
