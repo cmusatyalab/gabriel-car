@@ -4,13 +4,16 @@ from collections import defaultdict, deque
 import numpy as np
 import cv2
 import os
+from requests import get
 
 import config
+
+ip = get('https://api.ipify.org').text
 
 OBJECTS = config.LABELS
 STATES = ["start", "wheel-stage", "wheel-compare"]
 resources = os.path.abspath("resources/images")
-video_url = "0.0.0.0:9095/"
+video_url = "http://" + ip + ":9095/"
 stable_threshold = 20
 wheel_compare_threshold = 20
 
@@ -98,7 +101,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "frame-branch"
+            # self.current_state = "frame-branch"
             empty_holes = get_objects_by_categories(objects, {"hole_empty"})
             if len(empty_holes) > 0:
                 self.current_state = "frame-branch"
@@ -107,6 +110,7 @@ class Task:
                 time.sleep(1)
                 if self.wait_count > 5:
                     self.current_state = "wheel-branch"
+                    self.wait_count = 0
 
         elif self.current_state == "frame-branch":
             result['speech'] = "Please show me the black frame, holding it like this."
@@ -154,9 +158,9 @@ class Task:
                     self.right_hole_state.add(right)
 
                     if self.right_hole_state.is_center_stable():
-                        result[
-                            'speech'] = "Excellent job!"
-                        result['video'] = video_url + "frame-gold-washer-insert.mp4"
+                        result['speech'] = "Excellent job!"
+                        image_path = os.path.join(resources, "empty.png")
+                        result['image'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
                         self.current_state = "nothing"
                     else:
                         self.right_hole_state.staged_clear()

@@ -24,7 +24,7 @@ sleep 5
 ./gabriel-ucomm -s 0.0.0.0:8021 &> /tmp/gabriel-ucomm.log &
 sleep 5
 
-cd ${BASH_SOURCE}
+cd ${DIR}
 twistd -n web --path resources/videos --port tcp:9095
 
 wait
