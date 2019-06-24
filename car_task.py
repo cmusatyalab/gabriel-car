@@ -104,7 +104,7 @@ class Task:
                 self.current_state = "tire-rim-pairing-stage-2"
                 result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and show me this configuration."
                 image_path = os.path.join(images_store,"tire-rim-legend.jpg")
-                result['legend'] = cv2.imread(image_path)
+                result['image'] = cv2.imread(image_path)
 
         elif self.current_state == "tire-rim-pairing-stage-2":
             tires = get_objects_by_categories(objects, {"thick_tire", "thin_tire"})
