@@ -253,7 +253,7 @@ def bbox_height(dims):
     return dims[3] - dims[1]
 
 def bbox_area(dims):
-    return (dims[0] + dims[2]) * (dims[1] + dims[3])
+    return dims[2] * dims[3]
 
 def bbox_diff(box1, box2):
     center1 = bbox_center(box1)
