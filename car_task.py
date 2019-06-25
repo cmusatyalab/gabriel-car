@@ -148,7 +148,6 @@ class Task:
                 self.left_frames_2.staged_clear()
                 self.right_frames_2.staged_clear()
         elif self.current_state == "tire-rim-pairing-stage-3":
-            speech[]
             # result['video'] = video_url + "tire-rim-combine.mp4"
             self.current_state = "wheel-stage"
         elif self.current_state == "wheel-stage":
