@@ -247,13 +247,13 @@ def separate_topleft_topright_bottomleft_bottomright(objects):
     return left, right
 
 def bbox_center(dims):
-    return (dims[0] + dims[2])/2 , (dims[1] + dims[3])/2
+    return (dims[0] + (dims[2] - dims[0])) / 2 , (dims[1] + (dims[3] - dims[1])) / 2
 
 def bbox_height(dims):
     return dims[3] - dims[1]
 
 def bbox_area(dims):
-    return dims[2] * dims[3]
+    return (dims[2] - dims[0]) * (dims[3] - dims[1])
 
 def bbox_diff(box1, box2):
     center1 = bbox_center(box1)
