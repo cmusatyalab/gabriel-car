@@ -135,20 +135,25 @@ class Task:
                             self.left_frames_2.clear()
                             self.right_frames_2.clear()
                             result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims"
+                            time.sleep(3)
                             # self.current_state = "tire-rim-pairing-stage-3"
                         else:
                             part = "rims" if compare_tire_rim == "first" else "tires"  
                             result["speech"] = "The pair of %s is the wrong size, please get the other pair." % part
+                            time.sleep(3)
                     elif compare_tire != 'same' and compare_rim != 'same':
                         side1 = "right" if compare_tire == "first" else "left"
                         side2 = "right" if compare_rim == "first" else "left"
                         result["speech"] = "The one tire on the %s and rim on the %s are smaller parts. Please find the bigger tire and rim and replace those with the smaller parts" % (side1,side2)
+                        time.sleep(3)
                     elif compare_tire == 'same':
                         side = "right" if compare_rim == "first" else "left"
                         result["speech"] = "The one rim on the %s is a small rim. Please find a bigger rim and replace it with that." % side
+                        time.sleep(3)
                     else:
                         side = "right" if compare_tire == "first" else "left"
                         result["speech"] = "The one on the %s is a small tire. Please find a bigger tire and replace it with that." % side
+                        time.sleep(3)
             else:
                 self.left_frames.staged_clear()
                 self.right_frames.staged_clear()
