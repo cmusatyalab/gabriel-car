@@ -131,7 +131,7 @@ class Task:
                             # self.current_state = "tire-rim-pairing-stage-3"
                         else:
                             part = "rims" if compare_tire_rim == "first" else "tires"  
-                            result["speech"] = "The pair of %s is the wrong size, please get the other pair."
+                            result["speech"] = "The pair of %s is the wrong size, please get the other pair." % part
                     elif compare_tire != 'same' and compare_rim != 'same':
                         side1 = "right" if compare_tire == "first" else "left"
                         side2 = "right" if compare_rim == "first" else "left"
