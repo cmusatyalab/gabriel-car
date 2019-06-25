@@ -128,7 +128,7 @@ class Task:
                         compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), wheel_compare_threshold)
                         if compare_tire_rim == 'same':
                             result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims"
-                            self.current_state = "tire-rim-pairing-stage-3"
+                            # self.current_state = "tire-rim-pairing-stage-3"
                         else:
                             part = "rims" if compare_tire_rim == "first" else "tires"  
                             result["speech"] = "The pair of %s is the wrong size, please get the other pair."
