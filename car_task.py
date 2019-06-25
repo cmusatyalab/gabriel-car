@@ -130,6 +130,10 @@ class Task:
                     if compare_tire == 'same' and compare_rim == 'same':
                         compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), wheel_compare_threshold)
                         if compare_tire_rim == 'same':
+                            self.left_frames.clear()
+                            self.right_frames.clear()
+                            self.left_frames_2.clear()
+                            self.right_frames_2.clear()
                             result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims"
                             # self.current_state = "tire-rim-pairing-stage-3"
                         else:
