@@ -112,6 +112,9 @@ class Task:
         elif self.current_state == "tire-rim-pairing-stage-2":
             tires = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side"})
             rims = get_objects_by_categories(objects, {"thick_rim_side", "thin_rim_side"})
+            if len(tires) > 2 and len(rims) > 2:
+                tires = tires[0:2]
+                rims = rims[0:2]
             if len(tires) == 2 and len(rims) == 2:
                 left_tire, right_tire = separate_left_right(tires)
                 left_rim, right_rim = separate_left_right(rims)
