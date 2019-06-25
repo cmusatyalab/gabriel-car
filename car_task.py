@@ -112,10 +112,10 @@ class Task:
         elif self.current_state == "tire-rim-pairing-stage-2":
             tires = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side"})
             rims = get_objects_by_categories(objects, {"thick_rim_side", "thin_rim_side"})
-            if len(tires) > 2 and len(rims) > 2:
+ 
+            if len(tires) >= 2 and len(rims) >= 2:
                 tires = tires[0:2]
                 rims = rims[0:2]
-            if len(tires) == 2 and len(rims) == 2:
                 left_tire, right_tire = separate_left_right(tires)
                 left_rim, right_rim = separate_left_right(rims)
 
@@ -128,7 +128,7 @@ class Task:
                     compare_tire = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
                     compare_rim = wheel_compare(self.left_frames_2.averaged_bbox(), self.right_frames_2.averaged_bbox(), wheel_compare_threshold)    
                     if compare_tire == 'same' and compare_rim == 'same':
-                        compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), wheel_compare_threshold)
+                        compare_tire_rim = area_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), wheel_compare_threshold)
                         if compare_tire_rim == 'same':
                             self.left_frames.clear()
                             self.right_frames.clear()
@@ -247,10 +247,13 @@ def separate_topleft_topright_bottomleft_bottomright(objects):
     return left, right
 
 def bbox_center(dims):
-    return dims[2] - dims[0], dims[3] - dims[1]
+    return (dims[0] + dims[2])/2 , (dims[1] + dims[3])/2
 
 def bbox_height(dims):
     return dims[3] - dims[1]
+
+def bbox_area(dims):
+    return (dims[0] + dims[2]) * (dims[1] + dims[3])
 
 def bbox_diff(box1, box2):
     center1 = bbox_center(box1)
@@ -270,3 +273,13 @@ def wheel_compare(box1, box2, threshold):
         return "same"
 
     return "first" if height1 > height2 else "second"
+
+def area_compare(box1, box2, threshold):
+    area1 = bbox_area(box1)
+    area2 = bbox_area(box2)
+
+    diff = abs(area1 - area2)
+    if diff < threshold:
+        return "same"
+    
+    return "first" if area1 > area2 else "second"
