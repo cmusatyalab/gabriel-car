@@ -74,6 +74,8 @@ class Task:
 
         self.left_frames = FrameRecorder(10)
         self.right_frames = FrameRecorder(10)
+        self.left_frames_2 = FrameRecorder(10)
+        self.right_frames_2 = FrameRecorder(10)
 
         self.last_id = None
 
@@ -98,6 +100,7 @@ class Task:
             self.current_state = "tire-rim-pairing-stage-1"
 
         elif self.current_state == "tire-rim-pairing-stage-1":
+            self.current_state = "tire-rim-pairing-stage-2" #forced stage
             tires = get_objects_by_categories(objects, {"thick_tire", "thin_tire"})
             rims = get_objects_by_categories(objects, {"thick_rim", "thin_rim"})
             if (len(tires) >= 4) and (len(rims) >= 4):
@@ -107,41 +110,47 @@ class Task:
                 result['image'] = cv2.imread(image_path)
 
         elif self.current_state == "tire-rim-pairing-stage-2":
-            tires = get_objects_by_categories(objects, {"thick_tire", "thin_tire"})
-            rims = get_objects_by_categories(objects, {"thick_rim", "thin_rim"})
-
+            tires = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side"})
+            rims = get_objects_by_categories(objects, {"thick_rim_side", "thin_rim_side"})
             if len(tires) == 2 and len(rims) == 2:
                 left_tire, right_tire = separate_left_right(tires)
                 left_rim, right_rim = separate_left_right(rims)
 
                 self.left_frames.add(left_tire)
                 self.right_frames.add(right_tire)
+                self.left_frames_2.add(left_rim)
+                self.right_frames_2.add(right_rim)
 
-                if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold):
-                    compare = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
-
-                    if compare == "same":
-                        self.left_frames.clear()
-                        self.right_frames.clear()
-                        self.left_frames.add(left_rim)
-                        self.right_frames.add(right_rim)
-                        if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold):
-                            compare = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
-                            if compare == "same":
-                                self.left_frames.clear()
-                                self.right_frames.clear()
-                                result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims"
-                                self.current_state = "wheel-stage"
-                            else:
-                                side = "right" if compare == "first" else "left"
-                                result["speech"] = "The one on the %s is a small rim. Please find a bigger rim and replace it with that." % side
+                if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold) and self.left_frames_2.is_center_stable(stable_threshold) and self.right_frames_2.is_center_stable(stable_threshold):
+                    compare_tire = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
+                    compare_rim = wheel_compare(self.left_frames_2.averaged_bbox(), self.right_frames_2.averaged_bbox(), wheel_compare_threshold)    
+                    if compare_tire == 'same' and compare_rim == 'same':
+                        compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), wheel_compare_threshold)
+                        if compare_tire_rim == 'same':
+                            result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims"
+                            self.current_state = "tire-rim-pairing-stage-3"
+                        else:
+                            part = "rims" if compare_tire_rim == "first" else "tires"  
+                            result["speech"] = "The pair of %s is the wrong size, please get the other pair."
+                    elif compare_tire != 'same' and compare_rim != 'same':
+                        side1 = "right" if compare_tire == "first" else "left"
+                        side2 = "right" if compare_rim == "first" else "left"
+                        result["speech"] = "The one tire on the %s and rim on the %s are smaller parts. Please find the bigger tire and rim and replace those with the smaller parts" % (side1,side2)
+                    elif compare_tire == 'same':
+                        side = "right" if compare_rim == "first" else "left"
+                        result["speech"] = "The one rim on the %s is a small rim. Please find a bigger rim and replace it with that." % side
                     else:
-                        side = "right" if compare == "first" else "left"
+                        side = "right" if compare_tire == "first" else "left"
                         result["speech"] = "The one on the %s is a small tire. Please find a bigger tire and replace it with that." % side
             else:
                 self.left_frames.staged_clear()
                 self.right_frames.staged_clear()
-
+                self.left_frames_2.staged_clear()
+                self.right_frames_2.staged_clear()
+        elif self.current_state == "tire-rim-pairing-stage-3":
+            speech[]
+            # result['video'] = video_url + "tire-rim-combine.mp4"
+            self.current_state = "wheel-stage"
         elif self.current_state == "wheel-stage":
             result['speech'] = "Please grab one each of the big and small wheels."
             image_path = os.path.join(images_store, "wheel-stage-1.jpg")
