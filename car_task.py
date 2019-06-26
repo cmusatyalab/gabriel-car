@@ -12,6 +12,7 @@ STATES = ["start", "wheel-stage", "wheel-compare", "tire-rim-pairing"]
 images_store = os.path.abspath("images_feedback")
 stable_threshold = 50
 wheel_compare_threshold = 20
+tire_rim_thresold = 18
 
 
 class FrameRecorder:
@@ -128,7 +129,7 @@ class Task:
                     compare_tire = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
                     compare_rim = wheel_compare(self.left_frames_2.averaged_bbox(), self.right_frames_2.averaged_bbox(), wheel_compare_threshold)    
                     if compare_tire == 'same' and compare_rim == 'same':
-                        compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), 300)
+                        compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), tire_rim_thresold)
                         if compare_tire_rim == 'same':
                             self.left_frames.clear()
                             self.right_frames.clear()
@@ -252,9 +253,6 @@ def bbox_center(dims):
 def bbox_height(dims):
     return dims[3] - dims[1]
 
-def bbox_area(dims):
-    return (dims[2] - dims[0]) * (dims[3] - dims[1])
-
 def bbox_diff(box1, box2):
     center1 = bbox_center(box1)
     center2 = bbox_center(box2)
@@ -269,18 +267,9 @@ def wheel_compare(box1, box2, threshold):
     height2 = bbox_height(box2)
 
     diff = abs(height1 - height2)
-    print(diff)
     if diff < threshold:
         return "same"
 
     return "first" if height1 > height2 else "second"
 
-def area_compare(box1, box2, threshold):
-    area1 = bbox_area(box1)
-    area2 = bbox_area(box2)
-    diff = abs(area1 - area2)
-    print(diff)
-    if diff < threshold:
-        return "same"
-    
-    return "first" if area1 > area2 else "second"
+
