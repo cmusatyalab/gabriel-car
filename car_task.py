@@ -14,11 +14,6 @@ stable_threshold = 50
 wheel_compare_threshold = 20
 tire_rim_thresold = 18
 
-
-max_1 = 0
-avg= 0 
-count = 0
-
 class FrameRecorder:
     def __init__(self, size):
         self.deque = deque()
@@ -69,6 +64,9 @@ class FrameRecorder:
 
 
 class Task:
+    max_1 = 0
+    avg= 0 
+    count = 0
     def __init__(self, init_state=None):
         if init_state is None:
             self.current_state = "start"
