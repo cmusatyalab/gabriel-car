@@ -15,6 +15,10 @@ wheel_compare_threshold = 20
 tire_rim_thresold = 18
 
 
+max_1 = 0
+avg= 0 
+count = 0
+
 class FrameRecorder:
     def __init__(self, size):
         self.deque = deque()
@@ -127,7 +131,17 @@ class Task:
 
                 if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold) and self.left_frames_2.is_center_stable(stable_threshold) and self.right_frames_2.is_center_stable(stable_threshold):
                     compare_tire = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
-                    compare_rim = wheel_compare(self.left_frames_2.averaged_bbox(), self.right_frames_2.averaged_bbox(), wheel_compare_threshold)    
+                    compare_rim = wheel_compare(self.left_frames_2.averaged_bbox(), self.right_frames_2.averaged_bbox(), wheel_compare_threshold)  
+                    ######
+                    max_1 += abs(bbox_height(self.left_frames.averaged_bbox()) - bbox_height(self.right_frames.averaged_bbox()))  
+                    count += 1
+                    avg = max_1 / count
+                    print(avg)
+
+
+
+
+                    ######
                     if compare_tire == 'same' and compare_rim == 'same':
                         compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), tire_rim_thresold)
                         if compare_tire_rim == 'same':
@@ -267,7 +281,6 @@ def wheel_compare(box1, box2, threshold):
     height2 = bbox_height(box2)
 
     diff = abs(height1 - height2)
-    print("%s to %s ----%d"(box1["name"],box2["name"],diff))
     if diff < threshold:
         return "same"
 
