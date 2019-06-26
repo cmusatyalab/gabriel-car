@@ -12,7 +12,6 @@ STATES = ["start", "wheel-stage", "wheel-compare", "tire-rim-pairing"]
 images_store = os.path.abspath("images_feedback")
 stable_threshold = 50
 wheel_compare_threshold = 15
-tire_rim_thresold = 18
 
 class FrameRecorder:
     def __init__(self, size):
@@ -129,7 +128,7 @@ class Task:
                     compare_rim = wheel_compare(self.left_frames_2.averaged_bbox(), self.right_frames_2.averaged_bbox(), wheel_compare_threshold)  
 
                     if compare_tire == 'same' and compare_rim == 'same':
-                        compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), tire_rim_thresold)
+                        compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), wheel_compare_threshold)
                         if compare_tire_rim == 'same':
                             self.left_frames.clear()
                             self.right_frames.clear()
