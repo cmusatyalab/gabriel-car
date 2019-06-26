@@ -21,7 +21,7 @@ def detect_hand(img, detection_graph, sess):
                 "confidence": scores[i]})
 
     if len(detected_hands) > 1:
-        intersecting = intersecting_bbox(detected_hands[0], detected_hands[1])
+        intersecting = intersecting_objs(detected_hands[0], detected_hands[1])
         if intersecting is not False:
             detected_hands = [intersecting]
 
@@ -49,7 +49,7 @@ def detect_object(img, url):
 
         intermediate = {"class_name": obj_list_form[0], "dimensions": obj_list_form[1], "confidence": obj_list_form[2]}
 
-        conflicts = [x for x in by_class[class_name] if intersecting_bbox(intermediate, x)]
+        conflicts = [x for x in by_class[class_name] if intersecting_objs(intermediate, x)]
         non_conflicts = [x for x in by_class[class_name] if x not in conflicts]
 
         highest_confidence_obj = intermediate
@@ -57,7 +57,7 @@ def detect_object(img, url):
             if other["confidence"] > highest_confidence_obj["confidence"]:
                 highest_confidence_obj = other
 
-        filtered = [x for x in conflicts if not intersecting_bbox(highest_confidence_obj, x)]
+        filtered = [x for x in conflicts if not intersecting_objs(highest_confidence_obj, x)]
         resolved = non_conflicts + filtered + [highest_confidence_obj]
 
         by_class[class_name] = resolved
@@ -80,12 +80,14 @@ def group_class_names(name):
 
     return name
 
-def intersecting_bbox(obj1, obj2):
-    if intersection_helper(obj1["dimensions"], obj2["dimensions"]) or \
-            intersection_helper(obj2["dimensions"], obj1["dimensions"]):
+def intersecting_objs(obj1, obj2):
+    if intersecting_bbox(obj1["dimensions"], obj2["dimensions"]):
         return obj1 if obj1["confidence"] > obj2["confidence"] else obj2
 
     return False
+
+def intersecting_bbox(box1, box2):
+    return intersection_helper(box1, box2) or intersection_helper(box2, box1)
 
 def intersection_helper(box1, box2):
     horiz_inter = box1[2] > box2[0] and box1[0] < box2[2]

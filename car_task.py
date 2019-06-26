@@ -7,6 +7,7 @@ import os
 from requests import get
 
 import config
+import tpod_wrapper
 
 ip = get('https://api.ipify.org').text
 
@@ -48,6 +49,10 @@ class FrameRecorder:
 
         return True
 
+    def add_and_check_stable(self, obj):
+        self.add(obj)
+        return self.is_center_stable()
+
     def staged_clear(self):
         self.clear_count += 1
         if self.clear_count > self.size:
@@ -76,15 +81,16 @@ class Task:
                 raise ValueError('Unknown init state: {}'.format(init_state))
             self.current_state = init_state
 
-        self.left_hole_state = FrameRecorder(5)
-        self.right_hole_state = FrameRecorder(5)
-
-        self.left_wheel_state = FrameRecorder(5)
-        self.right_wheel_state = FrameRecorder(5)
+        self.state_1 = FrameRecorder(5)
+        self.state_2 = FrameRecorder(5)
 
         self.last_id = None
 
         self.wait_count = 0
+
+        self.history = defaultdict(lambda: False)
+
+        self.delay_flag = False
 
 
     def get_instruction(self, objects, header=None):
@@ -94,125 +100,339 @@ class Task:
             elif self.last_id != header["task_id"]:
                 self.last_id = header["task_id"]
                 self.current_state = "start"
+                self.history.clear()
 
         result = defaultdict(lambda: None)
         result['status'] = "success"
         vis_objects = np.asarray([])
 
+        inter = defaultdict(lambda: None)
+
         # the start, branch into desired instruction
         if self.current_state == "start":
-            # self.current_state = "frame-branch"
-            empty_holes = get_objects_by_categories(objects, {"hole_empty"})
-            if len(empty_holes) > 0:
-                self.current_state = "frame-branch"
-            else:
-                self.wait_count += 1
-                time.sleep(1)
-                if self.wait_count > 5:
-                    self.current_state = "wheel-branch"
-                    self.wait_count = 0
-
-        elif self.current_state == "frame-branch":
-            result['speech'] = "Please show me the black frame, holding it like this."
-            image_path = os.path.join(resources, "frame-empty-hole.jpg")
-            result['image'] = cv2.imread(image_path)
-            self.current_state = "frame-empty-hole"
-
-        elif self.current_state == "frame-empty-hole":
-            empty_holes = get_objects_by_categories(objects, {"hole_empty"})
-            if len(empty_holes) == 2:
-                left, right = separate_left_right(objects)
-                self.left_hole_state.add(left)
-                self.right_hole_state.add(right)
-
-                if self.left_hole_state.is_center_stable() and self.right_hole_state.is_center_stable():
-                    result['speech'] = "Great! Please put in the green washer into the slot on the right, like this."
-                    result['video'] = video_url + "frame-green-washer-insert.mp4"
-                    self.current_state = "frame-green-washer-holes"
-
-                    self.left_hole_state.clear()
-                    self.right_hole_state.clear()
-                else:
-                    self.left_hole_state.staged_clear()
-                    self.right_hole_state.staged_clear()
-
-        elif self.current_state == "frame-green-washer-holes":
-            holes = get_objects_by_categories(objects, {"hole_empty", "hole_green", "hole_gold"})
-            if len(holes) == 2:
-                _, right = separate_left_right(objects)
-                if right["class_name"] == "hole_green":
-                    self.right_hole_state.add(right)
-
-                    if self.right_hole_state.is_center_stable():
-                        result['speech'] = "Nice! Finally, fit the gold washer into the green washer, like this. Make sure the smaller end goes in first."
-                        result['video'] = video_url + "frame-gold-washer-insert.mp4"
-                        self.current_state = "frame-gold-washer-holes"
-                    else:
-                        self.right_hole_state.staged_clear()
-
-        elif self.current_state == "frame-gold-washer-holes":
-            holes = get_objects_by_categories(objects, {"hole_empty", "hole_green", "hole_gold"})
-            if len(holes) == 2:
-                _, right = separate_left_right(objects)
-                if right["class_name"] == "hole_gold":
-                    self.right_hole_state.add(right)
-
-                    if self.right_hole_state.is_center_stable():
-                        result['speech'] = "Excellent job!"
-                        image_path = os.path.join(resources, "empty.png")
-                        result['image'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-                        self.current_state = "nothing"
-                    else:
-                        self.right_hole_state.staged_clear()
-
-
-
-        elif self.current_state == "wheel-branch":
-            result['speech'] = "Please grab one each of the big and small wheels."
-            image_path = os.path.join(resources, "wheel-stage-1.jpg")
-            result['image'] = cv2.imread(image_path)
-            self.current_state = "wheel-stage-1"
-
-        elif self.current_state == "wheel-stage-1":
-            wheels = get_objects_by_categories(objects, {"thick_wheel_top", "thin_wheel_top"})
-            if len(wheels) == 2:
-                result["speech"] = "Excellent! Please line them up with the legend."
-                image_path = os.path.join(resources, "tire-legend.png")
-                result['legend'] = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-                self.current_state = "wheel-stage-2"
-
-        elif self.current_state == "wheel-stage-2":
-            wheels = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side", "thick_tire", "thin_tire"})
-            if len(wheels) == 2:
-                left, right = separate_left_right(objects)
-                print("left: %s    right: %s    diff: %s" % (bbox_height(left["dimensions"]), bbox_height(right["dimensions"]), abs(bbox_height(left["dimensions"]) - bbox_height(right["dimensions"]))))
-
-                self.left_wheel_state.add(left)
-                self.right_wheel_state.add(right)
-
-                if self.left_wheel_state.is_center_stable() and self.right_wheel_state.is_center_stable():
-                    compare = wheel_compare(self.left_wheel_state.averaged_bbox(), self.right_wheel_state.averaged_bbox(), wheel_compare_threshold)
-
-                    if compare == "same":
-                        result["speech"] = "Those wheels are the same size. Please get two different-sized wheels."
-                        self.left_wheel_state.clear()
-                        self.right_wheel_state.clear()
-
-                    else:
-                        left_speech, right_speech = ("bigger", "smaller") if compare == "first" else ("smaller", "bigger")
-                        result["speech"] = "Great job! The one on the left is the %s wheel and the one on the right is the %s wheel" % (left_speech, right_speech)
-                        self.current_state = "nothing"
-            else:
-                self.left_wheel_state.staged_clear()
-                self.right_wheel_state.staged_clear()
-
+            self.current_state = "acquire_axle"
+        elif self.current_state == "acquire_axle":
+            inter = self.acquire_axle_1(objects)
+            if inter["next"] is True:
+                self.current_state = "axle_into_wheel_1"
+        elif self.current_state == "axle_into_wheel_1":
+            inter = self.axle_into_wheel_1(objects)
+            if inter["next"] is True:
+                self.current_state = "acquire_black_frame_1"
+        elif self.current_state == "acquire_black_frame_1":
+            inter = self.acquire_black_frame_1(objects)
+            if inter["next"] is True:
+                self.current_state = "insert_front_green_washer_1"
+        elif self.current_state == "insert_front_green_washer_1":
+            inter = self.insert_front_green_washer_1(objects)
+            if inter["next"] is True:
+                self.current_state = "insert_front_gold_washer_1"
+        elif self.current_state == "insert_front_gold_washer_1":
+            inter = self.insert_front_gold_washer_1(objects)
+            if inter["next"] is True:
+                self.current_state = "insert_pink_gear_1"
+        elif self.current_state == "acquire_black_frame_1":
+            inter = self.insert_pink_gear_1(objects)
+            if inter["next"] is True:
+                self.current_state = "insert_axle_1"
+        elif self.current_state == "insert_axle_1":
+            inter = self.insert_axle_1(objects)
+            if inter["next"] is True:
+                self.current_state = "insert_back_green_washer_1"
+        elif self.current_state == "insert_back_green_washer_1":
+            inter = self.insert_back_green_washer_1(objects)
+            if inter["next"] is True:
+                self.current_state = "insert_back_gold_washer_1"
+        elif self.current_state == "insert_back_gold_washer_1":
+            inter = self.insert_back_gold_washer_1(objects)
+            if inter["next"] is True:
+                self.current_state = "press_wheel_1"
+        elif self.current_state == "press_wheel_1":
+            inter = self.press_wheel_1(objects)
+            if inter["next"] is True:
+                self.current_state = "check_front_wheel_assembly"
+        elif self.current_state == "check_front_wheel_assembly":
+            inter = self.check_front_wheel_assembly(objects)
+            if inter["next"] is True:
+                self.current_state = "front_wheel_assembly_complete"
+        elif self.current_state == "front_wheel_assembly_complete":
+            inter = self.front_wheel_assembly_complete()
+            self.current_state = "nothing"
         elif self.current_state == "nothing":
             time.sleep(3)
             self.current_state = "start"
 
+        for field in inter.keys():
+            if field != "next":
+                result["field"] = inter["field"]
 
         return vis_objects, result
 
+
+    def acquire_axle_1(self, objects):
+        out = defaultdict(lambda: None)
+        if self.history["acquire_axle_1"] is False:
+            self.clear_states()
+            self.history["acquire_axle_1"] = True
+            out['speech'] = "Please grab the wheel axle. Note that it has no gears at the ends."
+            out['image'] = read_image("wheel_axle.jpg")
+
+        gears = get_objects_by_categories(objects, {"axle_on_gear"})
+        if len(gears) > 0:
+            out["speech"] = "You grabbed the wrong part. Please look for a smaller axle without any gears on the ends."
+            self.state_1.clear()
+            self.delay_flag = True
+            return out
+
+        axles = get_objects_by_categories(objects, {"wheel_axle"})
+        if len(axles) == 1:
+            if self.state_1.add_and_check_stable(axles[0]) is True:
+                out["next"] = True
+        else:
+            self.state_1.staged_clear()
+
+        return out
+
+    def axle_into_wheel_1(self, objects):
+        out = defaultdict(lambda: None)
+        if self.history["axle_into_wheel_1"] is False:
+            self.clear_states()
+            self.history["axle_into_wheel_1"] = True
+            out["speech"] = "Great! Please insert the axle into one of the thinner wheels."
+            out["video"] = video_url + "axle_into_wheel_1.mp4"
+
+        axles = get_objects_by_categories(objects, {"wheel_axle"})
+        wheels = get_objects_by_categories(objects, {"thick_wheel", "thin_wheel", "thick_tire_side", "thin_tire_side"})
+
+        if len(axles) == 1:
+            axle_check = self.state_1.add_and_check_stable(axles[0])
+        else:
+            self.state_1.staged_clear()
+            return out
+
+        if len(wheels) == 1:
+            wheel_check = self.state_2.add_and_check_stable(wheels[0])
+        else:
+            self.state_2.staged_clear()
+            return out
+
+        if axle_check is True and wheel_check is True:
+            if tpod_wrapper.intersecting_bbox(self.state_1.averaged_bbox(),
+                                              self.state_2.averaged_bbox()) is True:
+                # TODO: verify correct wheel better
+                out["next"] = True
+
+        return out
+
+    def acquire_black_frame_1(self, objects):
+        out = defaultdict(lambda: None)
+        if self.history["acquire_black_frame_1"] is False:
+            self.clear_states()
+            self.history["acquire_black_frame_1"] = True
+            out["speech"] = "Put the axle down and grab the black frame. Show it to me like this."
+            out['image'] = read_image("frame_empty_hole.jpg")
+
+        empty_holes = get_objects_by_categories(objects, {"hole_empty"})
+
+        if len(empty_holes) == 2:
+            left, _ = separate_two(empty_holes)  # just check one hole is stable
+            if self.state_1.add_and_check_stable(left):
+                out["next"] = True
+        else:
+            self.state_1.staged_clear()
+
+        return out
+
+    def insert_front_green_washer_1(self, objects):
+        out = defaultdict(lambda: None)
+        if self.history["insert_front_green_washer_1"] is False:
+            self.clear_states()
+            self.history["insert_front_green_washer_1"] = True
+            out["speech"] = "Insert the green washer into the left hole."
+            out["video"] = video_url + "green_washer.mp4"
+
+        holes = get_objects_by_categories(objects, {"hole_empty", "hole_green"})
+
+        if len(holes) == 2:
+            left, _ = separate_two(holes)
+            if left["class_name"] == "hole_green":
+                if self.state_1.add_and_check_stable(left):
+                    out["next"] = True
+            else:
+                self.state_1.staged_clear()
+        else:
+            self.state_1.staged_clear()
+
+        return out
+
+    def insert_front_gold_washer_1(self, objects):
+        out = defaultdict(lambda: None)
+        if self.history["insert_front_gold_washer_1"] is False:
+            self.clear_states()
+            self.history["insert_front_gold_washer_1"] = True
+            out["speech"] = "Great, now insert the gold washer into the green washer."
+            out["video"] = video_url + "gold_washer.mp4"
+
+        holes = get_objects_by_categories(objects, {"hole_empty", "hole_green", "hole_gold"})
+
+        if len(holes) == 2:
+            left, _ = separate_two(holes)
+            if left["class_name"] == "hole_gold":
+                if self.state_1.add_and_check_stable(left):
+                    out["next"] = True
+            else:
+                self.state_1.staged_clear()
+        else:
+            self.state_1.staged_clear()
+
+        return out
+
+    def insert_pink_gear_1(self, objects):
+        out = defaultdict(lambda: None)
+        if self.history["insert_pink_gear_1"] is False:
+            self.clear_states()
+            self.history["insert_pink_gear_1"] = True
+            out['speech'] = "Lay the black frame down. Now place a pink gear as shown."
+            out['image'] = read_image("pink_gear_1.jpg")
+
+        bad_pink = get_objects_by_categories(objects, {"pink_gear_bad"}) # TODO: pink gear orientation, not sure how to solve
+        if len(bad_pink) >= 1:
+            out["speech"] = "You grabbed the wrong part. Please look for a smaller axle without any gears on the ends."
+            self.state_1.clear()
+            self.delay_flag = True
+            return out
+
+        good_pink = get_objects_by_categories(objects, {"pink_gear_good"})
+        if len(good_pink) == 1:
+            if self.state_1.add_and_check_stable(good_pink[0]) is True:
+                out["next"] = True
+        else:
+            self.state_1.staged_clear()
+
+        return out
+
+    def insert_axle_1(self, objects):
+        out = defaultdict(lambda: None)
+        if self.history["insert_axle_1"] is False:
+            self.clear_states()
+            self.history["insert_axle_1"] = True
+            out["speech"] = "Great, now insert the axle through the washers and the pink gear. "
+            out["video"] = video_url + "insert_axle_1.mp4"
+
+        pink_gears = get_objects_by_categories(objects, {"pink_gear_good"})
+        axles = get_objects_by_categories(objects, {"wheel_axle"})
+
+        if len(pink_gears) == 1 and len(axles) == 1:
+            gear_check = self.state_1.add_and_check_stable(pink_gears[0])
+            axle_check = self.state_2.add_and_check_stable(axles[0])
+            if gear_check and axle_check and check_insert_axle_1(pink_gears[0], axles[0]):
+                out["next"] = True
+        else:
+            self.state_1.staged_clear()
+
+        return out
+
+    def insert_back_green_washer_1(self, objects):
+        out = defaultdict(lambda: None)
+        if self.history["insert_back_green_washer_1"] is False:
+            self.clear_states()
+            self.history["insert_back_green_washer_1"] = True
+            out["speech"] = "Great, now flip over to the other side and insert the green washer through the axle " \
+                            "into the back left hole."
+            out["video"] = video_url + "back_green_washer_1.mp4"
+
+        holes = get_objects_by_categories(objects, {"hole_empty", "hole_green"})
+
+        if len(holes) == 2:
+            left, _ = separate_two(holes)
+            if left["class_name"] == "hole_green":
+                if self.state_1.add_and_check_stable(left):
+                    out["next"] = True
+            else:
+                self.state_1.staged_clear()
+        else:
+            self.state_1.staged_clear()
+
+        return out
+
+    def insert_back_gold_washer_1(self, objects):
+        out = defaultdict(lambda: None)
+        if self.history["insert_back_gold_washer_1"] is False:
+            self.clear_states()
+            self.history["insert_back_gold_washer_1"] = True
+            out["speech"] = "Great, now insert the gold washer into the green washer."
+            out["video"] = video_url + "back_gold_washer_1.mp4"
+
+        holes = get_objects_by_categories(objects, {"hole_empty", "hole_green", "hole_gold"})
+
+        if len(holes) == 2:
+            left, _ = separate_two(holes)
+            if left["class_name"] == "hole_gold":
+                if self.state_1.add_and_check_stable(left):
+                    out["next"] = True
+            else:
+                self.state_1.staged_clear()
+        else:
+            self.state_1.staged_clear()
+
+        return out
+
+    def press_wheel_1(self, objects):
+        out = defaultdict(lambda: None)
+        if self.history["press_wheel_1"] is False:
+            self.clear_states()
+            self.history["press_wheel_1"] = True
+            out["speech"] = "Finally, press the thin wheel into the axle. It should be the same size as the first wheel."
+            out["video"] = video_url + "press_wheel_1.mp4"
+
+        wheels = get_objects_by_categories(objects, {"thin_wheel", "thick_wheel"})
+
+        if len(wheels) == 1:
+            self.state_1.add_and_check_stable(wheels[0])
+            if self.state_1.add_and_check_stable(wheels[0]):
+                out["next"] = True
+        else:
+            self.state_1.staged_clear()
+
+        return out
+
+    def check_front_wheel_assembly(self, objects):
+        out = defaultdict(lambda: None)
+        if self.history["check_front_wheel_assembly"] is False:
+            self.clear_states()
+            self.history["check_front_wheel_assembly"] = True
+            out["speech"] = "Please show me what you have, like this."
+            out["video"] = video_url + "check_front_wheel_assembly.mp4"
+
+        wheels = get_objects_by_categories(objects, {"thin_wheel", "thick_wheel"})
+
+        if len(wheels) == 2:
+            top, bottom = separate_two(objects, False)
+            top_check = self.state_1.add_and_check_stable(top)
+            bottom_check = self.state_2.add_and_check_stable(bottom)
+
+            if top_check is True and bottom_check is True:
+                if compare(self.state_1.averaged_bbox(), self.state_2.averaged_bbox()) == "same":
+                    out["next"] = True
+        else:
+            self.state_1.staged_clear()
+
+        return out
+
+    def front_wheel_assembly_complete(self):
+        out = defaultdict(lambda: None)
+        if self.history["check_front_wheel_assembly"] is False:
+            self.history["check_front_wheel_assembly"] = True
+            out["speech"] = "Great job! We're finished with assembling the front wheels."
+
+        return out
+
+    def clear_states(self):
+        self.state_1.clear()
+        self.state_2.clear()
+
+def check_insert_axle_1(pink_gear, axle):
+    return pink_gear["dimensions"][1] < axle["dimensions"][1]
 
 
 def get_objects_by_categories(objects, categories):
@@ -223,18 +443,20 @@ def get_objects_by_categories(objects, categories):
     return out
 
 
-def separate_left_right(objects):
+def separate_two(objects, left_right=True):
     obj1 = objects[0]
     obj2 = objects[1]
 
-    if obj1["dimensions"][0] < obj2["dimensions"][0]:
-        left = obj1
-        right = obj2
-    else:
-        left = obj2
-        right = obj1
+    dim = 0 if left_right is True else 1  # left-right vs top-bottom
 
-    return left, right
+    if obj1["dimensions"][dim] < obj2["dimensions"][dim]:
+        one = obj1
+        two = obj2
+    else:
+        one = obj2
+        two = obj1
+
+    return one, two
 
 def bbox_center(dims):
     return dims[2] - dims[0], dims[3] - dims[1]
@@ -251,7 +473,7 @@ def bbox_diff(box1, box2):
 
     return math.sqrt(x_diff**2 + y_diff**2)
 
-def wheel_compare(box1, box2, threshold):
+def compare(box1, box2, threshold):
     height1 = bbox_height(box1)
     height2 = bbox_height(box2)
 
@@ -260,3 +482,8 @@ def wheel_compare(box1, box2, threshold):
         return "same"
 
     return "first" if height1 > height2 else "second"
+
+def read_image(name):
+    image_path = os.path.join(resources, name)
+    return cv2.imread(image_path)
+
