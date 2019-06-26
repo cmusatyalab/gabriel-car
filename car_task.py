@@ -11,7 +11,7 @@ OBJECTS = config.LABELS
 STATES = ["start", "wheel-stage", "wheel-compare", "tire-rim-pairing"]
 images_store = os.path.abspath("images_feedback")
 stable_threshold = 50
-wheel_compare_threshold = 20
+wheel_compare_threshold = 15
 tire_rim_thresold = 18
 
 class FrameRecorder:
