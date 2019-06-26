@@ -133,6 +133,7 @@ class Task:
                     compare_tire = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
                     compare_rim = wheel_compare(self.left_frames_2.averaged_bbox(), self.right_frames_2.averaged_bbox(), wheel_compare_threshold)  
                     ######
+                    max_1 = max_1
                     max_1 = max_1 + abs(bbox_height(self.left_frames.averaged_bbox()) - bbox_height(self.right_frames.averaged_bbox()))  
                     count = count + 1
                     avg = max_1 / count
