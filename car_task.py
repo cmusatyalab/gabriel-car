@@ -267,6 +267,7 @@ def wheel_compare(box1, box2, threshold):
     height2 = bbox_height(box2)
 
     diff = abs(height1 - height2)
+    print("%s to %s ----%s"(box1["name"],box2["name"],diff))
     if diff < threshold:
         return "same"
 
