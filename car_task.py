@@ -128,7 +128,7 @@ class Task:
                     compare_tire = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
                     compare_rim = wheel_compare(self.left_frames_2.averaged_bbox(), self.right_frames_2.averaged_bbox(), wheel_compare_threshold)    
                     if compare_tire == 'same' and compare_rim == 'same':
-                        compare_tire_rim = area_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), 300)
+                        compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), 300)
                         if compare_tire_rim == 'same':
                             self.left_frames.clear()
                             self.right_frames.clear()
@@ -269,6 +269,7 @@ def wheel_compare(box1, box2, threshold):
     height2 = bbox_height(box2)
 
     diff = abs(height1 - height2)
+    print(diff)
     if diff < threshold:
         return "same"
 
