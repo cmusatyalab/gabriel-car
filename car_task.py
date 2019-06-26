@@ -277,8 +277,8 @@ def wheel_compare(box1, box2, threshold):
 def area_compare(box1, box2, threshold):
     area1 = bbox_area(box1)
     area2 = bbox_area(box2)
-    print("%s ----------  %s" % (area1,area2))
     diff = abs(area1 - area2)
+    print(diff)
     if diff < threshold:
         return "same"
     
