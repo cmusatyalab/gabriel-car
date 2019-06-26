@@ -129,27 +129,50 @@ class Task:
 
                     #check for rim(on the top) and tire(on the bottom) orientation
                     if self.left_frames.averaged_bbox()[1] > self.left_frames_2.averaged_bbox()[1] and self.right_frames.averaged_bbox()[1] > self.right_frames_2.averaged_bbox()[1]:
-                        #check for correct size of parts
-                        if compare_tire != 'same' and compare_rim != 'same':
-                            if compare_tire == "left" and compare_tire == "left":
+                        if compare_tire == 'same' and compare_rim == 'same':
+                            compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), wheel_compare_threshold)
+                            if compare_tire_rim == 'same':
                                 self.left_frames.clear()
                                 self.right_frames.clear()
                                 self.left_frames_2.clear()
                                 self.right_frames_2.clear()
                                 result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims"
                                 # self.current_state = "tire-rim-pairing-stage-3"
-                            elif compare_tire != "left" and compare_tire == "left":
-                                result["speech"] = "The right tire is bigger. Please switch the positions of the right and left tires."
-                            elif compare_tire == "left" and compare_tire != "left":
-                                result["speech"] = "The right rim is bigger. Please switch the positions of the right and left rims."
                             else:
-                                result["speech"] = "The right tire and rim are bigger. Please switch the positions of the right and left rims and tires."
-                        elif compare_tire == 'same' and compare_rim == 'same':
-                            result["speech"] = "Both rims and tires are the same. Please switch the right rim and right tire with smaller ones."
-                        elif compare_tire != 'same' and compare_rim == 'same':
-                            result["speech"] = "Both rims are the same. Please switch the right one with a smaller one."
+                                part = "rims" if compare_tire_rim == "first" else "tires"  
+                                result["speech"] = "The pair of %s is the wrong size, please get the other pair." % part
+                        elif compare_tire != 'same' and compare_rim != 'same':
+                            side1 = "right" if compare_tire == "first" else "left"
+                            side2 = "right" if compare_rim == "first" else "left"
+                            result["speech"] = "The one tire on the %s and rim on the %s are smaller parts. Please find the bigger tire and rim and replace those with the smaller parts" % (side1,side2)
+                        elif compare_tire == 'same':
+                            side = "right" if compare_rim == "first" else "left"
+                            result["speech"] = "The one rim on the %s is a small rim. Please find a bigger rim and replace it with that." % side
                         else:
-                            result["speech"] = "Both tires are the same. Please switch the right one with a smaller one."
+                            side = "right" if compare_tire == "first" else "left"
+                            result["speech"] = "The one on the %s is a small tire. Please find a bigger tire and replace it with that." % side
+
+                        # #check for correct size of parts
+                        # if compare_tire != 'same' and compare_rim != 'same':
+                        #     if compare_tire == "left" and compare_tire == "left":
+                        #         self.left_frames.clear()
+                        #         self.right_frames.clear()
+                        #         self.left_frames_2.clear()
+                        #         self.right_frames_2.clear()
+                        #         result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims"
+                        #         # self.current_state = "tire-rim-pairing-stage-3"
+                        #     elif compare_tire != "left" and compare_tire == "left":
+                        #         result["speech"] = "The right tire is bigger. Please switch the positions of the right and left tires."
+                        #     elif compare_tire == "left" and compare_tire != "left":
+                        #         result["speech"] = "The right rim is bigger. Please switch the positions of the right and left rims."
+                        #     else:
+                        #         result["speech"] = "The right tire and rim are bigger. Please switch the positions of the right and left rims and tires."
+                        # elif compare_tire == 'same' and compare_rim == 'same':
+                        #     result["speech"] = "Both rims and tires are the same. Please switch the right rim and right tire with smaller ones."
+                        # elif compare_tire != 'same' and compare_rim == 'same':
+                        #     result["speech"] = "Both rims are the same. Please switch the right one with a smaller one."
+                        # else:
+                        #     result["speech"] = "Both tires are the same. Please switch the right one with a smaller one."
 
                     elif self.left_frames.averaged_bbox()[1] > self.left_frames_2.averaged_bbox()[1] and self.right_frames.averaged_bbox()[1] < self.right_frames_2.averaged_bbox()[1]:
                         result["speech"] = "The orientation of tire and rim on the right is wrong. Please switch their positions"
@@ -157,29 +180,6 @@ class Task:
                         result["speech"] = "The orientation of tire and rim on the left is wrong. Please switch their positions"
                     else:
                         result["speech"] = "The orientation of tire and rim on the left and the right is wrong. Please switch the positions of the tire and rim on the left and then switch the positions of the tire and rim on the right."
-
-                    # if compare_tire == 'same' and compare_rim == 'same':
-                    #     compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), wheel_compare_threshold)
-                    #     if compare_tire_rim == 'same':
-                    #         self.left_frames.clear()
-                    #         self.right_frames.clear()
-                    #         self.left_frames_2.clear()
-                    #         self.right_frames_2.clear()
-                    #         result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims"
-                    #         # self.current_state = "tire-rim-pairing-stage-3"
-                    #     else:
-                    #         part = "rims" if compare_tire_rim == "first" else "tires"  
-                    #         result["speech"] = "The pair of %s is the wrong size, please get the other pair." % part
-                    # elif compare_tire != 'same' and compare_rim != 'same':
-                    #     side1 = "right" if compare_tire == "first" else "left"
-                    #     side2 = "right" if compare_rim == "first" else "left"
-                    #     result["speech"] = "The one tire on the %s and rim on the %s are smaller parts. Please find the bigger tire and rim and replace those with the smaller parts" % (side1,side2)
-                    # elif compare_tire == 'same':
-                    #     side = "right" if compare_rim == "first" else "left"
-                    #     result["speech"] = "The one rim on the %s is a small rim. Please find a bigger rim and replace it with that." % side
-                    # else:
-                    #     side = "right" if compare_tire == "first" else "left"
-                    #     result["speech"] = "The one on the %s is a small tire. Please find a bigger tire and replace it with that." % side
                     time.sleep(4)
             else:
                 self.left_frames.staged_clear()
