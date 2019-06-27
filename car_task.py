@@ -134,9 +134,9 @@ class Task:
 
                 if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold) and self.left_frames_2.is_center_stable(stable_threshold) and self.right_frames_2.is_center_stable(stable_threshold):  
                     #check for rim(on the top) and tire(on the bottom) orientation
-                    print(self.left_frames.averaged_class())
                     if self.left_frames.averaged_bbox()[1] > self.left_frames_2.averaged_bbox()[1] and self.right_frames.averaged_bbox()[1] > self.right_frames_2.averaged_bbox()[1]:
                         #third implementation with config 2 and more confident tpod container
+                        result["speech"] = "%s" % self.left_frames.averaged_class()
                         if self.left_frames.averaged_class() == "thick_tire_side":
                             print("Good")
 
