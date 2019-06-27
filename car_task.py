@@ -162,9 +162,9 @@ class Task:
                             result["speech"] = "Please switch out the left tire with a bigger tire."
                         elif self.right_frames.averaged_class() != "thin_wheel_side":
                             result["speech"] = "Please switch out the right tire with a smaller tire."
-                        elif self.left_frames.averaged_class() != "thick_rim_side":
+                        elif self.left_frames_2.averaged_class() != "thick_rim_side":
                             result["speech"] = "Please switch out the left rim with a bigger rim."
-                        elif self.right_frames.averaged_class() != "thin_rim_side":
+                        elif self.right_frames_2.averaged_class() != "thin_rim_side":
                             result["speech"] = "Please switch out the right rim with a smaller rim."
                             
 
