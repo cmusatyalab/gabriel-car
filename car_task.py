@@ -60,6 +60,15 @@ class FrameRecorder:
                 out[u] += dim[u]
 
         return [v / len(self.deque) for v in out]
+    
+    def averaged_class(self):
+        all_class = []
+        for i in range(len(self.deque)):
+            if self.deque[i]["class_name"] not in all_class:
+                all_class.append(self.deque[i]["class_name"])
+        return max(set(all_class), key = all_class.count) 
+        
+
 
 
 class Task:
@@ -123,36 +132,42 @@ class Task:
                 self.left_frames_2.add(left_rim)
                 self.right_frames_2.add(right_rim)
 
-                if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold) and self.left_frames_2.is_center_stable(stable_threshold) and self.right_frames_2.is_center_stable(stable_threshold):
-                    compare_tire = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
-                    compare_rim = wheel_compare(self.left_frames_2.averaged_bbox(), self.right_frames_2.averaged_bbox(), wheel_compare_threshold)  
-
+                if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold) and self.left_frames_2.is_center_stable(stable_threshold) and self.right_frames_2.is_center_stable(stable_threshold):  
                     #check for rim(on the top) and tire(on the bottom) orientation
                     if self.left_frames.averaged_bbox()[1] > self.left_frames_2.averaged_bbox()[1] and self.right_frames.averaged_bbox()[1] > self.right_frames_2.averaged_bbox()[1]:
-                        if compare_tire == 'same' and compare_rim == 'same':
-                            compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), wheel_compare_threshold)
-                            if compare_tire_rim == 'same':
-                                self.left_frames.clear()
-                                self.right_frames.clear()
-                                self.left_frames_2.clear()
-                                self.right_frames_2.clear()
-                                result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims"
-                                # self.current_state = "tire-rim-pairing-stage-3"
-                            else:
-                                part = "rims" if compare_tire_rim == "first" else "tires"  
-                                result["speech"] = "The pair of %s is the wrong size, please get the other pair." % part
-                        elif compare_tire != 'same' and compare_rim != 'same':
-                            side1 = "right" if compare_tire == "first" else "left"
-                            side2 = "right" if compare_rim == "first" else "left"
-                            result["speech"] = "The one tire on the %s and rim on the %s are smaller parts. Please find the bigger tire and rim and replace those with the smaller parts" % (side1,side2)
-                        elif compare_tire == 'same':
-                            side = "right" if compare_rim == "first" else "left"
-                            result["speech"] = "The one rim on the %s is a small rim. Please find a bigger rim and replace it with that." % side
-                        else:
-                            side = "right" if compare_tire == "first" else "left"
-                            result["speech"] = "The one on the %s is a small tire. Please find a bigger tire and replace it with that." % side
+                        #third implementation with config 2 and more confident tpod container
+                        if self.left_frames.averaged_class == "thick_tire_side":
+                            print("Good")
 
-                        # #check for correct size of parts
+                        # #second implementation with config 2
+                        # compare_tire = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
+                        # compare_rim = wheel_compare(self.left_frames_2.averaged_bbox(), self.right_frames_2.averaged_bbox(), wheel_compare_threshold)
+                        # if compare_tire == 'same' and compare_rim == 'same':
+                        #     compare_tire_rim = wheel_compare(self.left_frames.averaged_bbox(), self.left_frames_2.averaged_bbox(), wheel_compare_threshold)
+                        #     if compare_tire_rim == 'same':
+                        #         self.left_frames.clear()
+                        #         self.right_frames.clear()
+                        #         self.left_frames_2.clear()
+                        #         self.right_frames_2.clear()
+                        #         result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims"
+                        #         # self.current_state = "tire-rim-pairing-stage-3"
+                        #     else:
+                        #         part = "rims" if compare_tire_rim == "first" else "tires"  
+                        #         result["speech"] = "The pair of %s is the wrong size, please get the other pair." % part
+                        # elif compare_tire != 'same' and compare_rim != 'same':
+                        #     side1 = "right" if compare_tire == "first" else "left"
+                        #     side2 = "right" if compare_rim == "first" else "left"
+                        #     result["speech"] = "The one tire on the %s and rim on the %s are smaller parts. Please find the bigger tire and rim and replace those with the smaller parts" % (side1,side2)
+                        # elif compare_tire == 'same':
+                        #     side = "right" if compare_rim == "first" else "left"
+                        #     result["speech"] = "The one rim on the %s is a small rim. Please find a bigger rim and replace it with that." % side
+                        # else:
+                        #     side = "right" if compare_tire == "first" else "left"
+                        #     result["speech"] = "The one on the %s is a small tire. Please find a bigger tire and replace it with that." % side
+
+                        # #first implementation with config 1
+                        # compare_tire = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
+                        # compare_rim = wheel_compare(self.left_frames_2.averaged_bbox(), self.right_frames_2.averaged_bbox(), wheel_compare_threshold)
                         # if compare_tire != 'same' and compare_rim != 'same':
                         #     if compare_tire == "left" and compare_tire == "left":
                         #         self.left_frames.clear()
@@ -180,7 +195,7 @@ class Task:
                         result["speech"] = "The orientation of tire and rim on the left is wrong. Please switch their positions"
                     else:
                         result["speech"] = "The orientation of tire and rim on the left and the right is wrong. Please switch the positions of the tire and rim on the left and then switch the positions of the tire and rim on the right."
-                    time.sleep(10)
+                    time.sleep(3)
             else:
                 self.left_frames.staged_clear()
                 self.right_frames.staged_clear()
