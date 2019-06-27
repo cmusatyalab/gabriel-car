@@ -161,11 +161,11 @@ class Task:
                         elif self.left_frames.averaged_class() != "thick_wheel_side":
                             result["speech"] = "Please switch out the left tire with a bigger tire."
                         elif self.right_frames.averaged_class() != "thin_wheel_side":
-                            result["speech"] = "Please switch out the left tire with a smaller tire."
+                            result["speech"] = "Please switch out the right tire with a smaller tire."
                         elif self.left_frames.averaged_class() != "thick_rim_side":
                             result["speech"] = "Please switch out the left rim with a bigger rim."
                         elif self.right_frames.averaged_class() != "thin_rim_side":
-                            result["speech"] = "Please switch out the left rim with a smaller rim."
+                            result["speech"] = "Please switch out the right rim with a smaller rim."
                             
 
                         # #second implementation with config 2
