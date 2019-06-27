@@ -136,9 +136,9 @@ class Task:
                     #check for rim(on the top) and tire(on the bottom) orientation
                     if self.left_frames.averaged_bbox()[1] > self.left_frames_2.averaged_bbox()[1] and self.right_frames.averaged_bbox()[1] > self.right_frames_2.averaged_bbox()[1]:
                         #third implementation with config 2 and more confident tpod container
-                        if self.left_frames.averaged_class == "thick_tire_side":
+                        if self.left_frames.averaged_class() == "thick_tire_side":
                             print("Good")
-                        print("passed")
+                        print(self.left_frames.averaged_class())
 
                         # #second implementation with config 2
                         # compare_tire = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
