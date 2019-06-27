@@ -67,8 +67,27 @@ class FrameRecorder:
             if self.deque[i]["class_name"] not in all_class:
                 all_class.append(self.deque[i]["class_name"])
         return max(set(all_class), key = all_class.count) 
-        
 
+# class Tire_rim_config:
+#     def __init__(self):
+#         #state: [left_rim(thick),right_rim(thin),left_tire(thick),right_tire(thin)]
+#         self.state = [0,0,0,0]
+    
+#     def change_state(self,part):
+#         if part == "left_rim":
+#             self.state[0] = 1
+#         if part == "right_rim":
+#             self.state[1] = 1
+#         if part == "left_tire":
+#             self.state[2] = 1
+#         if part == "right_tire":
+#             self.state[3] = 1
+
+#     def check_state(self):
+#         indices = [i for i, x in enumerate(self.state) if x == 0]
+
+        
+        
 
 
 class Task:
@@ -136,9 +155,18 @@ class Task:
                     #check for rim(on the top) and tire(on the bottom) orientation
                     if self.left_frames.averaged_bbox()[1] > self.left_frames_2.averaged_bbox()[1] and self.right_frames.averaged_bbox()[1] > self.right_frames_2.averaged_bbox()[1]:
                         #third implementation with config 2 and more confident tpod container
-                        result["speech"] = "%s" % self.left_frames.averaged_class()
-                        if self.left_frames.averaged_class() == "thick_tire_side":
-                            print("Good")
+                        if self.left_frames.averaged_class() == "thick_wheel_side" and self.right_frames.averaged_class() == "thin_wheel_side" and self.left_frames_2.averaged_class() == "thick_rim_side" and self.right_frames_2.averaged_class() == "thin_rim_side":
+                            result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims."
+                            # self.current_state = "tire-rim-pairing-stage-3"
+                        elif self.left_frames.averaged_class() != "thick_wheel_side":
+                            result["speech"] = "Please switch out the left tire with a bigger tire."
+                        elif self.right_frames.averaged_class() != "thin_wheel_side":
+                            result["speech"] = "Please switch out the left tire with a smaller tire."
+                        elif self.left_frames.averaged_class() != "thick_rim_side":
+                            result["speech"] = "Please switch out the left rim with a bigger rim."
+                        elif self.right_frames.averaged_class() != "thin_rim_side":
+                            result["speech"] = "Please switch out the left rim with a smaller rim."
+                            
 
                         # #second implementation with config 2
                         # compare_tire = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
