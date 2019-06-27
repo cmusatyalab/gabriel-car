@@ -180,7 +180,7 @@ class Task:
                         result["speech"] = "The orientation of tire and rim on the left is wrong. Please switch their positions"
                     else:
                         result["speech"] = "The orientation of tire and rim on the left and the right is wrong. Please switch the positions of the tire and rim on the left and then switch the positions of the tire and rim on the right."
-                    time.sleep(4)
+                    time.sleep(10)
             else:
                 self.left_frames.staged_clear()
                 self.right_frames.staged_clear()
