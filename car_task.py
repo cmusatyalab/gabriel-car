@@ -120,22 +120,26 @@ class Task:
         vis_objects = np.asarray([])
 
         # the start
+        # if self.current_state == "start":
+        #     result['speech'] = "Please show me all four rims and four tires."
+        #     image_path = os.path.join(images_store, "tire-rim-stage-1.jpg")
+        #     result['image'] = cv2.imread(image_path)
+        #     self.current_state = "tire-rim-pairing-stage-1"
+
+        # elif self.current_state == "tire-rim-pairing-stage-1":
+        #     tires = get_objects_by_categories(objects, {"thick_tire", "thin_tire"})
+        #     rims = get_objects_by_categories(objects, {"thick_rim", "thin_rim"})
+        #     if (len(tires) >= 4) and (len(rims) >= 4):
+        #         self.current_state = "tire-rim-pairing-stage-2"
+        #         result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and show me this configuration."
+        #         image_path = os.path.join(images_store,"tire-rim-legend.jpg")
+        #         result['image'] = cv2.imread(image_path)
+
         if self.current_state == "start":
-            result['speech'] = "Please show me all four rims and four tires."
-            image_path = os.path.join(images_store, "tire-rim-stage-1.jpg")
+            result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and show me this configuration."
+            image_path = os.path.join(images_store,"tire-rim-legend.jpg")
             result['image'] = cv2.imread(image_path)
-            self.current_state = "tire-rim-pairing-stage-1"
-
-        elif self.current_state == "tire-rim-pairing-stage-1":
-            self.current_state = "tire-rim-pairing-stage-2" #forced stage
-            tires = get_objects_by_categories(objects, {"thick_tire", "thin_tire"})
-            rims = get_objects_by_categories(objects, {"thick_rim", "thin_rim"})
-            if (len(tires) >= 4) and (len(rims) >= 4):
-                self.current_state = "tire-rim-pairing-stage-2"
-                result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and show me this configuration."
-                image_path = os.path.join(images_store,"tire-rim-legend.jpg")
-                result['image'] = cv2.imread(image_path)
-
+            self.current_state = "tire-rim-pairing-stage-2"
         elif self.current_state == "tire-rim-pairing-stage-2":
             tires = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side"})
             rims = get_objects_by_categories(objects, {"thick_rim_side", "thin_rim_side"})
