@@ -92,6 +92,24 @@ class Task:
 
         # the start
         if self.current_state == "start":
+            result['speech'] = "Please grab pink gear and place it on the black frame as shown in the image. Make sure the teeths of the gears are pointing towards the middle of the frame."
+            image_path = os.path.join(images_store, "wheel-stage-1.jpg")
+            result['image'] = cv2.imread(image_path)
+            self.current_state = "pink-brown-gear-1"
+
+        elif self.current_state == "pink-brown-gear-1":
+            result['speech'] = "Please grab pink gear and place it on the black frame as shown in the image. Make sure the teeths of the gears are pointing away from the middle of the frame."
+            image_path = os.path.join(images_store, "wheel-stage-1.jpg")
+            result['image'] = cv2.imread(image_path)
+            self.current_state = "pink-brown-gear-2"
+
+        elif self.current_state == "pink-brown-gear-2":
+            result['speech'] = "Please grab brown gear and place it on the black frame as shown in the image. Make sure the nudge on side is pointing towards the middle of the frame."
+            image_path = os.path.join(images_store, "wheel-stage-1.jpg")
+            result['image'] = cv2.imread(image_path)
+            self.current_state = "pink-brown-gear-3"
+        
+        elif self.current_state == "wheel-stage"
             result['speech'] = "Please grab one each of the big and small wheels."
             image_path = os.path.join(images_store, "wheel-stage-1.jpg")
             result['image'] = cv2.imread(image_path)
