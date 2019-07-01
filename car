@@ -151,6 +151,8 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
             rtn_data["legend"] = b64encode(util.cv_image2raw_png(instruction["legend"]))
         if instruction.get('speech', None) is not None:
             rtn_data['speech'] = instruction['speech']
+        if instruction.get('video', None) is not None:
+            rtn_data['video'] = instruction['video']
 
         if config.VISUALIZE_ALL:
             vis_objects = objects
