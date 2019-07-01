@@ -141,7 +141,7 @@ class Task:
         #         result['image'] = cv2.imread(image_path)
 
         if self.current_state == "start":
-            result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and show me this configuration."
+            result['speech'] = "Please find two different sized rims,two different sized tires, and show me this configuration."
             image_path = os.path.join(images_store,"tire-rim-legend.jpg")
             result['image'] = cv2.imread(image_path)
             self.current_state = "tire-rim-pairing-stage-2"
