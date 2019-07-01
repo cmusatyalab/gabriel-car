@@ -29,11 +29,11 @@ class FrameRecorder:
 
     def add(self, obj):
         if self.obj_class is None:
-            self.obj_class = obj["class"]
+            self.obj_class = obj["class_name"]
 
-        if self.obj_class != obj["class"]:
+        if self.obj_class != obj["class_name"]:
             self.clear()
-            self.obj_class = obj["class"]
+            self.obj_class = obj["class_name"]
 
         self.deque.append(obj)
 
@@ -81,8 +81,7 @@ class Task:
     def __init__(self):
         self.model = CarModel()
 
-        self.state_1 = FrameRecorder(5)
-        self.state_2 = FrameRecorder(5)
+        self.frame_recs = defaultdict(lambda: FrameRecorder(5))
 
         self.last_id = None
 
@@ -100,7 +99,7 @@ class Task:
         vis_objects = np.asarray([])
 
         holes = get_objects_by_categories(objects, {"hole_empty", "hole_green", "hole_gold"})
-        side_marker = get_objects_by_categories(objects, {"left_frame_marker", "right_frame_marker"})
+        side_marker = get_objects_by_categories(objects, {"frame_marker_left", "frame_marker_right"})
         horn = get_objects_by_categories(objects, {"frame_horn"})
 
         # stop if bad frame
@@ -108,13 +107,15 @@ class Task:
             return vis_objects, result
 
         left_obj, right_obj = separate_left_right(holes)
-        self.state_1.add(left_obj)
-        self.state_2.add(right_obj)
+        self.frame_recs[0].add(left_obj)
+        self.frame_recs[1].add(right_obj)
+        self.frame_recs[2].add(side_marker[0])
 
-        if not self.state_1.is_center_stable() or not self.state_2.is_center_stable():
+        if not self.frame_recs[0].is_center_stable() or not self.frame_recs[1].is_center_stable() \
+                or not self.frame_recs[2].is_center_stable():
             return vis_objects, result
 
-        left_comp, right_comp = get_orientation(side_marker, horn)
+        left_comp, right_comp = get_orientation(side_marker[0], horn[0])
         left_speech = speech_from_update(*self.model.check_update(left_comp, left_obj["class_name"]))
         right_speech = speech_from_update(*self.model.check_update(right_comp, right_obj["class_name"]))
 
@@ -123,11 +124,17 @@ class Task:
         elif right_speech != "":
             result["speech"] = right_speech
 
+        self.clear_frame_recs()
+
         return vis_objects, result
+
+    def clear_frame_recs(self):
+        for frame_rec in self.frame_recs.values():
+            frame_rec.clear()
 
 
 def get_orientation(side_marker, horn):
-    side = "left" if side_marker["class_name"] == "left_frame_marker" else "right"
+    side = "left" if side_marker["class_name"] == "frame_marker_left" else "right"
 
     left_obj, right_obj = separate_left_right([side_marker, horn])
     if side == "left":
@@ -152,10 +159,10 @@ def get_orientation(side_marker, horn):
 def speech_from_update(update, data):
     if update == "next_step":
         return "You put the %s into the %s." % \
-               (COMPONENTS_SPEECH[data["actual_state"]], STATES_SPEECH[data["actual_comp"]])
+               (STATES_SPEECH[data["actual_state"]], COMPONENTS_SPEECH[data["actual_comp"]])
     if update == "back_step":
         return "You took the %s out of the %s." % \
-               (COMPONENTS_SPEECH[data["before_state"]], STATES_SPEECH[data["actual_comp"]])
+               (STATES_SPEECH[data["before_state"]], COMPONENTS_SPEECH[data["actual_comp"]])
 
     return ""
 

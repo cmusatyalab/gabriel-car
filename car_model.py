@@ -18,25 +18,24 @@ STATES_SPEECH = {
 class CarModel:
     def __init__(self):
         self.components = OrderedDict()
-        for c in self.components:
-            self.components[c](Component(c, STATES))
+        for c in COMPONENTS:
+            self.components[c] = Component(c, STATES)
 
         self.comp_index = 0
 
     def check_update(self, component, state):
         intended_comp, intended_state = self.next_instruction()
-        if intended_comp is None and intended_state is None:
-            return "no_change", {}
-
         before_comp, before_state = self.current_instruction()
-        out_data = {"before_comp": before_comp,
-                    "before_state": before_state,
-                    "intended_comp": intended_comp,
+        out_data = {"intended_comp": intended_comp,
                     "intended_state": intended_state,
                     "actual_comp": component,
                     "actual_state": state}
 
-        update = self.components[component].update_state(state)
+        update, prev_state = self.components[component].update_state(state)
+
+        if update == "back_step":
+            out_data["before_comp"] = component
+            out_data["before_state"] = prev_state
 
         return update, out_data
 
@@ -48,9 +47,10 @@ class CarModel:
         elif check == "incremented":
             return self.next_instruction()
 
-        comp = self.components[self.name_from_index(self.comp_index)]
+        comp_name = self.name_from_index(self.comp_index)
+        comp = self.components[comp_name]
 
-        return comp, comp.next_step()
+        return comp_name, comp.next_step()
 
     def current_instruction(self):
         check = self.check_component_index()
@@ -59,9 +59,10 @@ class CarModel:
         elif check == "incremented":
             return self.current_instruction()
 
-        comp = self.components[self.name_from_index(self.comp_index)]
+        comp_name = self.name_from_index(self.comp_index)
+        comp = self.components[comp_name]
 
-        return comp, comp.current_step()
+        return comp_name, comp.current_step()
 
     def check_component_index(self):
         if self.comp_index >= len(self.components.keys()) - 1:
@@ -70,6 +71,8 @@ class CarModel:
         if self.components[self.name_from_index(self.comp_index)].finished():
             self.comp_index += 1
             return "incremented"
+
+        return True
 
     def name_from_index(self, index):
         return list(self.components.keys())[index]
@@ -96,17 +99,15 @@ class Component:
     def update_state(self, state):
         current_state = self.current_step()
         if state == current_state:
-            return "no_change"
+            return "no_change", state
 
         expected_state = self.next_step()
-        if expected_state is None:
-            return "no_change"
         if expected_state == state:
             self.current_index += 1
-            return "next_step"
+            return "next_step", current_state
         else:
             for i, item in enumerate(self.states):
                 if state == item:
                     self.current_index = i
-            return "back_step"
+            return "back_step", current_state
 

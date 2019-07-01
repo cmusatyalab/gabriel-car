@@ -1,5 +1,4 @@
 #! /bin/bash
-
 set -e
 
 GABRIELPATH="/home/aw3/Desktop/gabriel-dev"

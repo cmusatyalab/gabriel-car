@@ -84,7 +84,7 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
         self.last_msg = ""
         self.dup_msg_cnt = 0
         # task initialization
-        self.task = car_task.Task(init_state=init_state)
+        self.task = car_task.Task()
 
     def add_to_byte_array(self, byte_array, extra_bytes):
         return struct.pack("!{}s{}s".format(len(byte_array), len(extra_bytes)), byte_array, extra_bytes)
