@@ -4,14 +4,18 @@ from collections import defaultdict, deque
 import numpy as np
 import cv2
 import os
+from requests import get
 
 import config
 
 OBJECTS = config.LABELS
 STATES = ["start", "wheel-stage", "wheel-compare", "tire-rim-pairing"]
 images_store = os.path.abspath("images_feedback")
+
 stable_threshold = 50
 wheel_compare_threshold = 15
+
+video_url = "http://" + ip + ":9095/"
 
 class FrameRecorder:
     def __init__(self, size):
@@ -161,7 +165,7 @@ class Task:
                         #third implementation with config 2 and more confident tpod container
                         if self.left_frames.averaged_class() == "thick_wheel_side" and self.right_frames.averaged_class() == "thin_wheel_side" and self.left_frames_2.averaged_class() == "thick_rim_side" and self.right_frames_2.averaged_class() == "thin_rim_side":
                             result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims."
-                            # self.current_state = "tire-rim-pairing-stage-3"
+                            self.current_state = "tire-rim-pairing-stage-3"
                         elif self.left_frames.averaged_class() != "thick_wheel_side":
                             result["speech"] = "Please switch out the left tire with a bigger tire."
                         elif self.right_frames.averaged_class() != "thin_wheel_side":
@@ -183,7 +187,7 @@ class Task:
                 self.left_frames_2.staged_clear()
                 self.right_frames_2.staged_clear()
         elif self.current_state == "tire-rim-pairing-stage-3":
-            # result['video'] = video_url + "tire-rim-combine.mp4"
+            result['video'] = video_url + "tire-rim-combine.mp4"
             self.current_state = "wheel-stage"
         elif self.current_state == "wheel-stage":
             result['speech'] = "Please grab one each of the big and small wheels."
