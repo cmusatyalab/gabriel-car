@@ -15,6 +15,7 @@ images_store = os.path.abspath("resources/images")
 stable_threshold = 50
 wheel_compare_threshold = 15
 
+ip = get('https://api.ipify.org').text
 video_url = "http://" + ip + ":9095/"
 
 class FrameRecorder:
