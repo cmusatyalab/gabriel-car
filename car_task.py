@@ -187,10 +187,11 @@ class Task:
                 self.left_frames_2.staged_clear()
                 self.right_frames_2.staged_clear()
         elif self.current_state == "tire-rim-pairing-stage-3":
-            time.sleep(10)
+            time.sleep(5)
             result['video'] = video_url + "tire-rim-combine.mp4"
-            self.current_state = "tire-rim-pairing-stage-2"
+            self.current_state = "wheel-stage"
         elif self.current_state == "wheel-stage":
+            time.sleep(25)
             result['speech'] = "Please grab one each of the big and small wheels."
             image_path = os.path.join(images_store, "wheel-stage-1.jpg")
             result['image'] = cv2.imread(image_path)
