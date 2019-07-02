@@ -73,28 +73,6 @@ class FrameRecorder:
                 all_class.append(self.deque[i]["class_name"])
         return max(set(all_class), key = all_class.count) 
 
-# class Tire_rim_config:
-#     def __init__(self):
-#         #state: [left_rim(thick),right_rim(thin),left_tire(thick),right_tire(thin)]
-#         self.state = [0,0,0,0]
-    
-#     def change_state(self,part):
-#         if part == "left_rim":
-#             self.state[0] = 1
-#         if part == "right_rim":
-#             self.state[1] = 1
-#         if part == "left_tire":
-#             self.state[2] = 1
-#         if part == "right_tire":
-#             self.state[3] = 1
-
-#     def check_state(self):
-#         indices = [i for i, x in enumerate(self.state) if x == 0]
-
-        
-        
-
-
 class Task:
     def __init__(self, init_state=None):
         if init_state is None:
@@ -123,22 +101,6 @@ class Task:
         result = defaultdict(lambda: None)
         result['status'] = "success"
         vis_objects = np.asarray([])
-
-        # the start
-        # if self.current_state == "start":
-        #     result['speech'] = "Please show me all four rims and four tires."
-        #     image_path = os.path.join(images_store, "tire-rim-stage-1.jpg")
-        #     result['image'] = cv2.imread(image_path)
-        #     self.current_state = "tire-rim-pairing-stage-1"
-
-        # elif self.current_state == "tire-rim-pairing-stage-1":
-        #     tires = get_objects_by_categories(objects, {"thick_tire", "thin_tire"})
-        #     rims = get_objects_by_categories(objects, {"thick_rim", "thin_rim"})
-        #     if (len(tires) >= 4) and (len(rims) >= 4):
-        #         self.current_state = "tire-rim-pairing-stage-2"
-        #         result['speech'] = "Good job! Please find the two biggest tires, two biggest rims, and show me this configuration."
-        #         image_path = os.path.join(images_store,"tire-rim-legend.jpg")
-        #         result['image'] = cv2.imread(image_path)
 
         if self.current_state == "start":
             result['speech'] = "Please find two different sized rims,two different sized tires, and show me this configuration."
