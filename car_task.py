@@ -108,6 +108,7 @@ class Task:
             result['image'] = cv2.imread(image_path)
             self.current_state = "tire-rim-pairing-stage-2"
         elif self.current_state == "tire-rim-pairing-stage-2":
+            time.sleep(5)
             tires = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side"})
             rims = get_objects_by_categories(objects, {"thick_rim_side", "thin_rim_side"})
  
