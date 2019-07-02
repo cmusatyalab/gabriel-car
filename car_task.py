@@ -108,7 +108,6 @@ class Task:
             result['image'] = cv2.imread(image_path)
             self.current_state = "tire-rim-pairing-stage-2"
         elif self.current_state == "tire-rim-pairing-stage-2":
-            time.sleep(5)
             tires = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side"})
             rims = get_objects_by_categories(objects, {"thick_rim_side", "thin_rim_side"})
  
@@ -123,7 +122,8 @@ class Task:
                 self.left_frames_2.add(left_rim)
                 self.right_frames_2.add(right_rim)
 
-                if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold) and self.left_frames_2.is_center_stable(stable_threshold) and self.right_frames_2.is_center_stable(stable_threshold):  
+                if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold) and self.left_frames_2.is_center_stable(stable_threshold) and self.right_frames_2.is_center_stable(stable_threshold):
+                    time.sleep(3)  
                     #check for rim(on the top) and tire(on the bottom) orientation
                     if self.left_frames.averaged_bbox()[1] > self.left_frames_2.averaged_bbox()[1] and self.right_frames.averaged_bbox()[1] > self.right_frames_2.averaged_bbox()[1]:
                         #third implementation with config 2 and more confident tpod container
