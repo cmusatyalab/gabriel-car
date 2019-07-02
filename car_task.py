@@ -181,13 +181,13 @@ class Task:
                         result["speech"] = "The orientation of tire and rim on the left is wrong. Please switch their positions"
                     else:
                         result["speech"] = "The orientation of tire and rim on the left and the right is wrong. Please switch the positions of the tire and rim on the left and then switch the positions of the tire and rim on the right."
-                    time.sleep(3)
             else:
                 self.left_frames.staged_clear()
                 self.right_frames.staged_clear()
                 self.left_frames_2.staged_clear()
                 self.right_frames_2.staged_clear()
         elif self.current_state == "tire-rim-pairing-stage-3":
+            time.sleep(10)
             result['video'] = video_url + "tire-rim-combine.mp4"
             self.current_state = "tire-rim-pairing-stage-2"
         elif self.current_state == "wheel-stage":
