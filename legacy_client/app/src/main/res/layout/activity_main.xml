@@ -39,8 +39,8 @@
         
         <edu.cmu.cs.gabrielclient.CameraPreview
             android:id="@+id/camera_preview"
-            android:layout_width="1dp"
-            android:layout_height="1dp" />
+            android:layout_width="300dp"
+            android:layout_height="168.75dp" />
     </LinearLayout>
 
 </LinearLayout>

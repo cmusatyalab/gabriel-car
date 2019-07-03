@@ -81,8 +81,7 @@ class Task:
                 raise ValueError('Unknown init state: {}'.format(init_state))
             self.current_state = init_state
 
-        self.state_1 = FrameRecorder(5)
-        self.state_2 = FrameRecorder(5)
+        self.frame_recs = defaultdict(lambda: FrameRecorder(5))
 
         self.last_id = None
 
@@ -179,17 +178,20 @@ class Task:
 
         gears = get_objects_by_categories(objects, {"axle_on_gear"})
         if len(gears) > 0:
-            out["speech"] = "You grabbed the wrong part. Please look for a smaller axle without any gears on the ends."
-            self.state_1.clear()
-            self.delay_flag = True
+            if self.frame_recs[1].add_and_check_stable(gears[0]) is True:
+                out["speech"] = "You grabbed the wrong part. Please look for a smaller axle without any gears on the ends."
+                self.clear_states()
+                self.delay_flag = True
             return out
+        else:
+            self.frame_recs[1].staged_clear()
 
         axles = get_objects_by_categories(objects, {"wheel_axle"})
         if len(axles) == 1:
-            if self.state_1.add_and_check_stable(axles[0]) is True:
+            if self.frame_recs[0].add_and_check_stable(axles[0]) is True:
                 out["next"] = True
         else:
-            self.state_1.staged_clear()
+            self.frame_recs[0].staged_clear()
 
         return out
 
@@ -198,29 +200,33 @@ class Task:
         if self.history["axle_into_wheel_1"] is False:
             self.clear_states()
             self.history["axle_into_wheel_1"] = True
-            out["speech"] = "Great! Please insert the axle into one of the thinner wheels."
-            out["video"] = video_url + "axle_into_wheel_1.mp4"
+            out["speech"] = "Great! Please insert the axle into one of the thinner wheels. Then hold it up like this."
+            out["image"] = read_image("wheel_in_axle.jpg")
 
-        axles = get_objects_by_categories(objects, {"wheel_axle"})
-        wheels = get_objects_by_categories(objects, {"thick_wheel", "thin_wheel", "thick_tire_side", "thin_tire_side"})
 
-        if len(axles) == 1:
-            axle_check = self.state_1.add_and_check_stable(axles[0])
-        else:
-            self.state_1.staged_clear()
+        thick = get_objects_by_categories(objects, {"wheel_in_axle_thick"})
+        thin = get_objects_by_categories(objects, {"wheel_in_axle_thin"})
+
+        if len(thick) != 0 and len(thin) != 1:
+            self.all_staged_clear()
             return out
 
-        if len(wheels) == 1:
-            wheel_check = self.state_2.add_and_check_stable(wheels[0])
+        if len(thick) == 1:
+            thick_check = self.frame_recs[0].add_and_check_stable(thick[0])
+            if thick_check is True:
+                out["speech"] = "You have the thicker wheel. Please use the thinner wheel instead"
+                out["video"] = video_url + "axle_into_wheel_1.mp4"
+                self.delay_flag = True
+                self.clear_states()
         else:
-            self.state_2.staged_clear()
-            return out
+            self.frame_recs[0].staged_clear()
 
-        if axle_check is True and wheel_check is True:
-            if tpod_wrapper.intersecting_bbox(self.state_1.averaged_bbox(),
-                                              self.state_2.averaged_bbox()) is True:
-                # TODO: verify correct wheel better
+        if len(thin) == 1:
+            thin_check = self.frame_recs[1].add_and_check_stable(thick[0])
+            if thin_check is True:
                 out["next"] = True
+        else:
+            self.frame_recs[1].staged_clear()
 
         return out
 
@@ -232,14 +238,25 @@ class Task:
             out["speech"] = "Put the axle down and grab the black frame. Show it to me like this."
             out['image'] = read_image("frame_empty_hole.jpg")
 
-        empty_holes = get_objects_by_categories(objects, {"hole_empty"})
+        frame_marker = get_objects_by_categories(objects, {"frame_marker_right", "frame_marker_left"})
+        horn = get_objects_by_categories(objects, {"frame_horn"})
 
-        if len(empty_holes) == 2:
-            left, _ = separate_two(empty_holes)  # just check one hole is stable
-            if self.state_1.add_and_check_stable(left):
-                out["next"] = True
-        else:
-            self.state_1.staged_clear()
+        if len(frame_marker) != 1 and len(horn) != 1:
+            self.all_staged_clear()
+            return out
+
+        marker_check = False
+        if len(frame_marker) == 1:
+            if self.frame_recs[0].add_and_check_stable(frame_marker[0]):
+                marker_check = True
+
+        horn_check = False
+        if len(horn) == 1:
+            if self.frame_recs[1].add_and_check_stable(horn[0]):
+                horn_check = True
+
+        if marker_check is True and horn_check is True:
+            out["next"] = True
 
         return out
 
@@ -256,12 +273,12 @@ class Task:
         if len(holes) == 2:
             left, _ = separate_two(holes)
             if left["class_name"] == "hole_green":
-                if self.state_1.add_and_check_stable(left):
+                if self.frame_recs[0].add_and_check_stable(left):
                     out["next"] = True
             else:
-                self.state_1.staged_clear()
+                self.frame_recs[0].staged_clear()
         else:
-            self.state_1.staged_clear()
+            self.frame_recs[0].staged_clear()
 
         return out
 
@@ -278,12 +295,12 @@ class Task:
         if len(holes) == 2:
             left, _ = separate_two(holes)
             if left["class_name"] == "hole_gold":
-                if self.state_1.add_and_check_stable(left):
+                if self.frame_recs[0].add_and_check_stable(left):
                     out["next"] = True
             else:
-                self.state_1.staged_clear()
+                self.frame_recs[0].staged_clear()
         else:
-            self.state_1.staged_clear()
+            self.frame_recs[0].staged_clear()
 
         return out
 
@@ -298,16 +315,16 @@ class Task:
         bad_pink = get_objects_by_categories(objects, {"pink_gear_bad"}) # TODO: pink gear orientation, not sure how to solve
         if len(bad_pink) >= 1:
             out["speech"] = "You grabbed the wrong part. Please look for a smaller axle without any gears on the ends."
-            self.state_1.clear()
+            self.frame_recs[0].clear()
             self.delay_flag = True
             return out
 
         good_pink = get_objects_by_categories(objects, {"pink_gear_good"})
         if len(good_pink) == 1:
-            if self.state_1.add_and_check_stable(good_pink[0]) is True:
+            if self.frame_recs[0].add_and_check_stable(good_pink[0]) is True:
                 out["next"] = True
         else:
-            self.state_1.staged_clear()
+            self.frame_recs[0].staged_clear()
 
         return out
 
@@ -323,12 +340,12 @@ class Task:
         axles = get_objects_by_categories(objects, {"wheel_axle"})
 
         if len(pink_gears) == 1 and len(axles) == 1:
-            gear_check = self.state_1.add_and_check_stable(pink_gears[0])
-            axle_check = self.state_2.add_and_check_stable(axles[0])
+            gear_check = self.frame_recs[0].add_and_check_stable(pink_gears[0])
+            axle_check = self.frame_recs[1].add_and_check_stable(axles[0])
             if gear_check and axle_check and check_insert_axle_1(pink_gears[0], axles[0]):
                 out["next"] = True
         else:
-            self.state_1.staged_clear()
+            self.frame_recs[0].staged_clear()
 
         return out
 
@@ -346,12 +363,12 @@ class Task:
         if len(holes) == 2:
             left, _ = separate_two(holes)
             if left["class_name"] == "hole_green":
-                if self.state_1.add_and_check_stable(left):
+                if self.frame_recs[0].add_and_check_stable(left):
                     out["next"] = True
             else:
-                self.state_1.staged_clear()
+                self.frame_recs[0].staged_clear()
         else:
-            self.state_1.staged_clear()
+            self.frame_recs[0].staged_clear()
 
         return out
 
@@ -368,12 +385,12 @@ class Task:
         if len(holes) == 2:
             left, _ = separate_two(holes)
             if left["class_name"] == "hole_gold":
-                if self.state_1.add_and_check_stable(left):
+                if self.frame_recs[0].add_and_check_stable(left):
                     out["next"] = True
             else:
-                self.state_1.staged_clear()
+                self.frame_recs[0].staged_clear()
         else:
-            self.state_1.staged_clear()
+            self.frame_recs[0].staged_clear()
 
         return out
 
@@ -388,11 +405,11 @@ class Task:
         wheels = get_objects_by_categories(objects, {"thin_wheel", "thick_wheel"})
 
         if len(wheels) == 1:
-            self.state_1.add_and_check_stable(wheels[0])
-            if self.state_1.add_and_check_stable(wheels[0]):
+            self.frame_recs[0].add_and_check_stable(wheels[0])
+            if self.frame_recs[0].add_and_check_stable(wheels[0]):
                 out["next"] = True
         else:
-            self.state_1.staged_clear()
+            self.frame_recs[0].staged_clear()
 
         return out
 
@@ -408,14 +425,14 @@ class Task:
 
         if len(wheels) == 2:
             top, bottom = separate_two(objects, False)
-            top_check = self.state_1.add_and_check_stable(top)
-            bottom_check = self.state_2.add_and_check_stable(bottom)
+            top_check = self.frame_recs[0].add_and_check_stable(top)
+            bottom_check = self.frame_recs[1].add_and_check_stable(bottom)
 
             if top_check is True and bottom_check is True:
-                if compare(self.state_1.averaged_bbox(), self.state_2.averaged_bbox()) == "same":
+                if compare(self.frame_recs[0].averaged_bbox(), self.frame_recs[1].averaged_bbox()) == "same":
                     out["next"] = True
         else:
-            self.state_1.staged_clear()
+            self.frame_recs[0].staged_clear()
 
         return out
 
@@ -428,8 +445,12 @@ class Task:
         return out
 
     def clear_states(self):
-        self.state_1.clear()
-        self.state_2.clear()
+        for rec in self.frame_recs.values():
+            rec.clear()
+
+    def all_staged_clear(self):
+        for rec in self.frame_recs.values():
+            rec.staged_clear()
 
 def check_insert_axle_1(pink_gear, axle):
     return pink_gear["dimensions"][1] < axle["dimensions"][1]
@@ -486,4 +507,28 @@ def compare(box1, box2, threshold):
 def read_image(name):
     image_path = os.path.join(resources, name)
     return cv2.imread(image_path)
+
+def get_orientation(side_marker, horn):
+    side = "left" if side_marker["class_name"] == "frame_marker_left" else "right"
+
+    left_obj, right_obj = separate_left_right([side_marker, horn])
+    if side == "left":
+        flipped = left_obj["class_name"] == "frame_horn"
+    else:
+        flipped = right_obj["class_name"] == "frame_horn"
+
+    return side, flipped
+
+def separate_left_right(objects):
+    obj1 = objects[0]
+    obj2 = objects[1]
+
+    if obj1["dimensions"][0] < obj2["dimensions"][0]:
+        left = obj1
+        right = obj2
+    else:
+        left = obj2
+        right = obj1
+
+    return left, right
 
