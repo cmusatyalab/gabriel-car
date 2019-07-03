@@ -170,6 +170,7 @@ class Task:
 
         elif self.current_state == "wheel-stage-2":
             wheels = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side", "thick_tire", "thin_tire"})
+            wrong_wheels = get_objects_by_categories(objects, {"wrong_wheel"})
             if len(wheels) == 2:
                 left, right = separate_left_right(objects)
                 print("left: %s    right: %s    diff: %s" % (bbox_height(left["dimensions"]), bbox_height(right["dimensions"]), abs(bbox_height(left["dimensions"]) - bbox_height(right["dimensions"]))))
@@ -179,8 +180,11 @@ class Task:
 
                 if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold):
                     compare = wheel_compare(self.left_frames.averaged_bbox(), self.right_frames.averaged_bbox(), wheel_compare_threshold)
-
-                    if compare == "same":
+                    
+                    if len(wrong_wheels) > 0:
+                        side = "left" if self.left_frames.averaged_class() == "wrong_wheel" else "right"
+                        result["speech"] = "The wheel on %s is a wheel that is assembled incorrectly. Please reassemble it." % side
+                    elif compare == "same":
                         result["speech"] = "Those wheels are the same size. Please get two different-sized wheels."
                         self.left_frames.clear()
                         self.right_frames.clear()
