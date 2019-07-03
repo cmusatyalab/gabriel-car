@@ -108,7 +108,7 @@ class Task:
         self.frame_count += 1
 
         if self.frame_count < 50:
-            self.get_objects_by_categories(img, {"empty_hole"})
+            self.get_objects_by_categories(img, {"thick_rim_side"})
         else:
             self.get_objects_by_categories(img, {"front_gear_good"})
 
