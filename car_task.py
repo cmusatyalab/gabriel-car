@@ -104,7 +104,7 @@ class Task:
             result['image'] = cv2.imread(image_path)
             self.current_state = "pink-brown-gear-1"
 
-        elif self.current_state == "pink-brown-gear-1"
+        elif self.current_state == "pink-brown-gear-1":
             result['speech'] = "Please let me see where the pink gear was placed."
             self.current_state = "pink-brown-gear-2"
 
@@ -134,7 +134,7 @@ class Task:
             result['image'] = cv2.imread(image_path)
             self.current_state = "start"
         
-        elif self.current_state == "wheel-stage"
+        elif self.current_state == "wheel-stage":
             result['speech'] = "Please grab one each of the big and small wheels."
             image_path = os.path.join(images_store, "wheel-stage-1.jpg")
             result['image'] = cv2.imread(image_path)
