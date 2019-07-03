@@ -131,19 +131,30 @@ class Task:
                         #third implementation with config 2 and more confident tpod container
                         if self.left_frames.averaged_class() == "thick_wheel_side" and self.right_frames.averaged_class() == "thin_wheel_side" and self.left_frames_2.averaged_class() == "thick_rim_side" and self.right_frames_2.averaged_class() == "thin_rim_side":
                             result["speech"] = "Great Job! Now, assemble this set of tires and rims and then assemble the remaining tires and rims."
+                            self.left_frames.clear()
+                            self.left_frames_2.clear()
+                            self.right_frames.clear()
+                            self.left_frames_2.clear()
                             self.current_state = "tire-rim-pairing-stage-3"
+
                         elif self.left_frames.averaged_class() != "thick_wheel_side":
                             result["speech"] = "Please switch out the left tire with a bigger tire."
+
                         elif self.right_frames.averaged_class() != "thin_wheel_side":
                             result["speech"] = "Please switch out the right tire with a smaller tire."
+
                         elif self.left_frames_2.averaged_class() != "thick_rim_side":
                             result["speech"] = "Please switch out the left rim with a bigger rim."
+
                         elif self.right_frames_2.averaged_class() != "thin_rim_side":
                             result["speech"] = "Please switch out the right rim with a smaller rim."
+
                     elif self.left_frames.averaged_bbox()[1] > self.left_frames_2.averaged_bbox()[1] and self.right_frames.averaged_bbox()[1] < self.right_frames_2.averaged_bbox()[1]:
                         result["speech"] = "The orientation of tire and rim on the right is wrong. Please switch their positions"
+
                     elif self.left_frames.averaged_bbox()[1] < self.left_frames_2.averaged_bbox()[1] and self.right_frames.averaged_bbox()[1] > self.right_frames_2.averaged_bbox()[1]:
                         result["speech"] = "The orientation of tire and rim on the left is wrong. Please switch their positions"
+
                     else:
                         result["speech"] = "The orientation of tire and rim on the left and the right is wrong. Please switch the positions of the tire and rim on the left and then switch the positions of the tire and rim on the right."
             else:
@@ -153,7 +164,6 @@ class Task:
                 self.right_frames_2.staged_clear()
 
         elif self.current_state == "tire-rim-pairing-stage-3":
-            time.sleep(30)
             result['video'] = video_url + "tire-rim-combine.mp4"
             if self.repetition_count != 1:
                 self.current_state = "tire-rim-pairing-stage-2"
