@@ -62,6 +62,13 @@ class FrameRecorder:
 
         return [v / len(self.deque) for v in out]
 
+    def averaged_class(self):
+        all_class = []
+        for i in range(len(self.deque)):
+            if self.deque[i]["class_name"] not in all_class:
+                all_class.append(self.deque[i]["class_name"])
+        return max(set(all_class), key = all_class.count) 
+
 
 class Task:
     def __init__(self, init_state=None):
@@ -97,17 +104,35 @@ class Task:
             result['image'] = cv2.imread(image_path)
             self.current_state = "pink-brown-gear-1"
 
-        elif self.current_state == "pink-brown-gear-1":
-            result['speech'] = "Please grab pink gear and place it on the black frame as shown in the image. Make sure the teeths of the gears are pointing away from the middle of the frame."
-            image_path = os.path.join(images_store, "wheel-stage-1.jpg")
-            result['image'] = cv2.imread(image_path)
+        elif self.current_state == "pink-brown-gear-1"
+            result['speech'] = "Please let me see where the pink gear was placed."
             self.current_state = "pink-brown-gear-2"
 
         elif self.current_state == "pink-brown-gear-2":
+            pink_gear = get_objects_by_categories(objects,{"front_gear_good", "front_gear_bad"})
+
+            if len(pink_gear) >= 1:
+                pink_gear = pink_gear[0]
+                self.left_frames.add(pink_gear)
+                
+                if self.left_frames.is_center_stable(stable_threshold) and self.left_frames.averaged_class() == "front_gear_good":
+                    result['speech'] = "Good Job!"
+                    self.current_state = "pink-brown-gear-3"
+                elif self.left_frames.is_center_stable(stable_threshold) and self.left_frames.averaged_class() == "front_gear_bad":
+                    result['speech'] = "The orientation of the pink gear is incorrect. Please place the pink gear so the teeths are pointing to the center of the black frame."
+            else:
+                self.left_frames.staged_clear()
+        elif self.current_state == "pink-brown-gear-3":
+            result['speech'] = "Please grab pink gear and place it on the black frame as shown in the image. Make sure the teeths of the gears are pointing away from the middle of the frame."
+            image_path = os.path.join(images_store, "wheel-stage-1.jpg")
+            result['image'] = cv2.imread(image_path)
+            self.current_state = "pink-brown-gear-4"
+
+        elif self.current_state == "pink-brown-gear-4":
             result['speech'] = "Please grab brown gear and place it on the black frame as shown in the image. Make sure the nudge on side is pointing towards the middle of the frame."
             image_path = os.path.join(images_store, "wheel-stage-1.jpg")
             result['image'] = cv2.imread(image_path)
-            self.current_state = "pink-brown-gear-3"
+            self.current_state = "start"
         
         elif self.current_state == "wheel-stage"
             result['speech'] = "Please grab one each of the big and small wheels."
