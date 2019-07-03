@@ -184,6 +184,8 @@ class Task:
                     if len(wrong_wheels) > 0:
                         side = "left" if self.left_frames.averaged_class() == "wrong_wheel" else "right"
                         result["speech"] = "The wheel on %s is a wheel that is assembled incorrectly. Please reassemble it." % side
+                        self.left_frames.clear()
+                        self.right_frames.clear()
                     elif compare == "same":
                         result["speech"] = "Those wheels are the same size. Please get two different-sized wheels."
                         self.left_frames.clear()
