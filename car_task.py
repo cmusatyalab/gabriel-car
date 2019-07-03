@@ -105,10 +105,12 @@ class Task:
             self.current_state = "pink-brown-gear-1"
 
         elif self.current_state == "pink-brown-gear-1":
+            time.sleep(3)
             result['speech'] = "Please let me see where the pink gear was placed."
             self.current_state = "pink-brown-gear-2"
 
         elif self.current_state == "pink-brown-gear-2":
+            time.sleep(3)
             pink_gear = get_objects_by_categories(objects,{"front_gear_good", "front_gear_bad"})
 
             if len(pink_gear) >= 1:
@@ -123,12 +125,14 @@ class Task:
             else:
                 self.left_frames.staged_clear()
         elif self.current_state == "pink-brown-gear-3":
+            time.sleep(3)
             result['speech'] = "Please grab pink gear and place it on the black frame as shown in the image. Make sure the teeths of the gears are pointing away from the middle of the frame."
             image_path = os.path.join(images_store, "back-pink-gear.jpg")
             result['image'] = cv2.imread(image_path)
             self.current_state = "pink-brown-gear-4"
 
         elif self.current_state == "pink-brown-gear-4":
+            time.sleep(3)
             result['speech'] = "Please grab brown gear and place it on the black frame as shown in the image. Make sure the nudge on side is pointing towards the middle of the frame."
             image_path = os.path.join(images_store, "back-brown-gear.jpg")
             result['image'] = cv2.imread(image_path)
