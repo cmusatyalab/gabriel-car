@@ -153,7 +153,7 @@ class Task:
                 self.right_frames_2.staged_clear()
 
         elif self.current_state == "tire-rim-pairing-stage-3":
-            time.sleep(25)
+            time.sleep(5)
             result['video'] = video_url + "tire-rim-combine.mp4"
             if self.repetition_count != 1:
                 self.current_state = "tire-rim-pairing-stage-2"
