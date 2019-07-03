@@ -110,7 +110,6 @@ class Task:
             self.current_state = "pink-brown-gear-2"
 
         elif self.current_state == "pink-brown-gear-2":
-            time.sleep(3)
             pink_gear = get_objects_by_categories(objects,{"front_gear_good", "front_gear_bad"})
 
             if len(pink_gear) >= 1:
