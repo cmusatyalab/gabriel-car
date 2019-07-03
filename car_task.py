@@ -9,7 +9,7 @@ import config
 
 OBJECTS = config.LABELS
 STATES = ["start", "wheel-stage", "wheel-compare"]
-images_store = os.path.abspath("images_feedback")
+images_store = os.path.abspath("resources/images")
 stable_threshold = 50
 wheel_compare_threshold = 20
 
@@ -100,7 +100,7 @@ class Task:
         # the start
         if self.current_state == "start":
             result['speech'] = "Please grab pink gear and place it on the black frame as shown in the image. Make sure the teeths of the gears are pointing towards the middle of the frame."
-            image_path = os.path.join(images_store, "wheel-stage-1.jpg")
+            image_path = os.path.join(images_store, "front-pink-gear.jpg")
             result['image'] = cv2.imread(image_path)
             self.current_state = "pink-brown-gear-1"
 
@@ -124,13 +124,13 @@ class Task:
                 self.left_frames.staged_clear()
         elif self.current_state == "pink-brown-gear-3":
             result['speech'] = "Please grab pink gear and place it on the black frame as shown in the image. Make sure the teeths of the gears are pointing away from the middle of the frame."
-            image_path = os.path.join(images_store, "wheel-stage-1.jpg")
+            image_path = os.path.join(images_store, "back-pink-gear.jpg")
             result['image'] = cv2.imread(image_path)
             self.current_state = "pink-brown-gear-4"
 
         elif self.current_state == "pink-brown-gear-4":
             result['speech'] = "Please grab brown gear and place it on the black frame as shown in the image. Make sure the nudge on side is pointing towards the middle of the frame."
-            image_path = os.path.join(images_store, "wheel-stage-1.jpg")
+            image_path = os.path.join(images_store, "back-brown-gear.jpg")
             result['image'] = cv2.imread(image_path)
             self.current_state = "start"
         
