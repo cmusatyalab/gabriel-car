@@ -86,7 +86,8 @@ class Task:
         self.right_frames = FrameRecorder(10)
         self.left_frames_2 = FrameRecorder(10)
         self.right_frames_2 = FrameRecorder(10)
-
+        
+        self.repetition_count = 0
         self.last_id = None
 
 
@@ -107,6 +108,7 @@ class Task:
             image_path = os.path.join(images_store,"tire-rim-legend.jpg")
             result['image'] = cv2.imread(image_path)
             self.current_state = "tire-rim-pairing-stage-2"
+
         elif self.current_state == "tire-rim-pairing-stage-2":
             tires = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side"})
             rims = get_objects_by_categories(objects, {"thick_rim_side", "thin_rim_side"})
@@ -149,12 +151,19 @@ class Task:
                 self.right_frames.staged_clear()
                 self.left_frames_2.staged_clear()
                 self.right_frames_2.staged_clear()
+
         elif self.current_state == "tire-rim-pairing-stage-3":
             time.sleep(5)
             result['video'] = video_url + "tire-rim-combine.mp4"
-            self.current_state = "wheel-stage"
-        elif self.current_state == "wheel-stage":
             time.sleep(25)
+            if self.repetition_count != 1:
+                self.current_state = "tire-rim-pairing-stage-2"
+                self.repetition_count += 1
+            else:
+                self.current_state = "wheel-stage"
+                self.repetition_count = 0
+
+        elif self.current_state == "wheel-stage":
             result['speech'] = "Please grab one each of the big and small wheels."
             image_path = os.path.join(images_store, "wheel-stage-1.jpg")
             result['image'] = cv2.imread(image_path)
@@ -194,7 +203,12 @@ class Task:
                     else:
                         left_speech, right_speech = ("bigger", "smaller") if compare == "first" else ("smaller", "bigger")
                         result["speech"] = "Great job! The one on the left is the %s wheel and the one on the right is the %s wheel" % (left_speech, right_speech)
-                        self.current_state = "nothing"
+                        if self.repetition_count != 1:
+                            self.current_state = "wheel-stage"
+                            self.repetition_count += 1
+                        else:
+                            self.current_state = "nothing"
+                            self.repetition_count = 0
             else:
                 self.left_frames.staged_clear()
                 self.right_frames.staged_clear()
