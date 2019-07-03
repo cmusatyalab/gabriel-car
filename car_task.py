@@ -7,7 +7,7 @@ import os
 from requests import get
 
 import config
-from tpod_wrapper import detect_object, get_cache
+from tpod_wrapper import detect_object, all_detected_objects
 
 ip = get('https://api.ipify.org').text
 
@@ -112,7 +112,7 @@ class Task:
         else:
             self.get_objects_by_categories(img, {"front_gear_good"})
 
-        return get_cache(), result
+        return all_detected_objects(), result
 
 
     def acquire_axle_1(self, img):
