@@ -165,12 +165,13 @@ class Task:
 
         elif self.current_state == "tire-rim-pairing-stage-3":
             result['video'] = video_url + "tire-rim-combine.mp4"
-            self.repetition_count += 1
-            if self.repetition_count != 2:
-                self.current_state = "tire-rim-pairing-stage-2"
-            else:
-                self.current_state = "wheel-stage"
-                self.repetition_count = 0
+            self.current_state = "tire-rim-pairing-stage-2"
+            # self.repetition_count += 1
+            # if self.repetition_count != 2:
+            #     self.current_state = "tire-rim-pairing-stage-2"
+            # else:
+            #     self.current_state = "wheel-stage"
+            #     self.repetition_count = 0
 
         elif self.current_state == "wheel-stage":
             result['speech'] = "Please grab one each of the big and small wheels."
