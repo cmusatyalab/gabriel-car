@@ -166,9 +166,9 @@ class Task:
         elif self.current_state == "tire-rim-pairing-stage-3":
             result['video'] = video_url + "tire-rim-combine.mp4"
             self.current_state = "tire-rim-pairing-stage-2"
-            self.repetition_count += 1
-            if self.repetition_count != 2:
+            if self.repetition_count != 1:
                 self.current_state = "start"
+                self.repetition_count += 1
             else:
                 self.current_state = "wheel-stage"
                 self.repetition_count = 0
