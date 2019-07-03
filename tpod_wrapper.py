@@ -7,7 +7,7 @@ import ast
 import handtracking.utils.detector_utils as detector_utils
 
 url_to_objs = {
-    "http://0.0.0.0:8000": {
+    "http://0.0.0.0:8003": {
         "thick_rim_side",
         "thick_wheel_side",
         "thick_wheel_top",
