@@ -9,7 +9,7 @@ import config
 
 OBJECTS = config.LABELS
 STATES = ["start", "wheel-stage", "wheel-compare"]
-images_store = os.path.abspath("images_feedback")
+images_store = os.path.abspath("resources/images")
 stable_threshold = 50
 wheel_compare_threshold = 20
 
@@ -75,6 +75,10 @@ class Task:
         self.left_frames = FrameRecorder(10)
         self.right_frames = FrameRecorder(10)
 
+        self.top_wheel_frame = FrameRecorder(10)
+        self.bot_wheel_frame = FrameRecorder(10)
+        self.pink_gear_frame = FrameRecorder(10)
+
         self.last_id = None
 
 
@@ -92,6 +96,28 @@ class Task:
 
         # the start
         if self.current_state == "start":
+            result['speech'] = "Please show me this view of the black frame."
+            image_path = os.path.join(images_store, "final_front_view.jpg")
+            result['image'] = cv2.imread(image_path)
+            self.current_state = "final-check-front-1"
+        elif self.current_state == "final-check-front-1":
+            wheels = get_objects_by_categories(objects, {"thick_wheel_side"})
+            gear = get_objects_by_categories(objects, {"front_gear_bad","front_gear_good"})
+
+            if len(wheels) >= 2 and len(gear) >= 1:
+                top, bot = separate_top_bottom(wheels)
+                self.top_wheel_frame.add(top)
+                self.bot_wheel_frame.add(bot)
+                self.pink_gear_frame.add(gear)
+
+                if self.top_wheel_frame.is_center_stable() and self.bot_wheel_frame.is_center_stable() and self.pink_gear_frame.is_center_stable():
+                    #stopped here
+            else:
+                self.top_wheel_frame.staged_clear()
+                self.bot_wheel_frame.staged_clear()
+                self.pink_gear_frame.staged_clear()
+                
+        
             result['speech'] = "Please grab one each of the big and small wheels."
             image_path = os.path.join(images_store, "wheel-stage-1.jpg")
             result['image'] = cv2.imread(image_path)
@@ -159,6 +185,19 @@ def separate_left_right(objects):
         right = obj1
 
     return left, right
+
+def separate_top_bottom(objects):
+    obj1 = objects[0]
+    obj2 = objects[1]
+
+    if obj1["dimensions"][1] < obj2["dimensions"][1]:
+        top = obj1
+        bot = obj2
+    else:
+        top = obj2
+        bot = obj1
+
+    return top, bot
 
 def bbox_center(dims):
     return dims[2] - dims[0], dims[3] - dims[1]
