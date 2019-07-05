@@ -141,6 +141,7 @@ class Task:
 
             else:
                 self.left_frames.staged_clear()
+                self.right_frames.staged_clear()
         
         elif self.current_state == "wheel-stage":
             result['speech'] = "Please grab one each of the big and small wheels."
