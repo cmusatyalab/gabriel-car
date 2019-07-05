@@ -105,14 +105,14 @@ class Task:
             self.current_state = "pink-brown-gear-1"
 
         elif self.current_state == "pink-brown-gear-1":
-            sleep(5)
+            time.sleep(5)
             result['speech'] = "Please grab the second pink gear and place it on the black frame as shown in the image. Make sure the teeths of the gears are pointing away from the middle of the frame."
             image_path = os.path.join(images_store, "back-pink-gear.jpg")
             result['image'] = cv2.imread(image_path)
             self.current_state = "pink-brown-gear-2"
 
         elif self.current_state == "pink-brown-gear-2":
-            sleep(5)
+            time.sleep(5)
             result['speech'] = "Please show me this view of the black frame."
             image_path = os.path.join(images_store, "pink-gears-side-view.jpg")
             self.current_state = "pink-brown-gear-3"
