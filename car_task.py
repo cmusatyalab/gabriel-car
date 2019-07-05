@@ -106,42 +106,27 @@ class Task:
 
         elif self.current_state == "pink-brown-gear-1":
             time.sleep(5)
-            result['speech'] = "Please grab the second pink gear and place it on the black frame as shown in the image. Make sure the teeths of the gears are pointing away from the middle of the frame."
-            image_path = os.path.join(images_store, "back-pink-gear.jpg")
-            result['image'] = cv2.imread(image_path)
+            result['speech'] = "Please show me this view of the black frame."
+            image_path = os.path.join(images_store, "pink-gears-side-view.jpg")
             self.current_state = "pink-brown-gear-2"
 
         elif self.current_state == "pink-brown-gear-2":
-            time.sleep(5)
-            result['speech'] = "Please show me this view of the black frame."
-            image_path = os.path.join(images_store, "pink-gears-side-view.jpg")
-            self.current_state = "pink-brown-gear-3"
+            pink_gear = get_objects_by_categories(objects,{"front_pink_gear_good","front_pink_gear_wrong"})
 
-        elif self.current_state == "pink-brown-gear-3":
-            pink_gear = get_objects_by_categories(objects,{"front_pink_gear_good", "back_pink_gear_good","front_pink_gear_wrong", "back_pink_gear_wrong"})
-
-            if len(pink_gear) >= 2:
-                pink_gear = pink_gear[0:2]
-                pink_left, pink_right = separate_left_right(pink_gear)
-                self.left_frames.add(pink_left)
-                self.right_frames.add(pink_right)
+            if len(pink_gear) >= 1:
+                pink_gear = pink_gear[0]
+                self.left_frames.add(pink_gear)
                 
-                if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold):
-                    if self.left_frames.averaged_class() == "front_pink_gear_good" and self.right_frames.averaged_class() == "back_pink_gear_good":
+                if self.left_frames.is_center_stable(stable_threshold):
+                    if self.left_frames.averaged_class() == "front_pink_gear_good":
                         result['speech'] = "Great Job!"
                         self.current_state = "start"
                         self.left_frames.clear() 
-                        self.right_frames.clear()
-                    elif self.left_frames.averaged_class() == "front_pink_gear_wrong" and self.right_frames.averaged_class() == "back_pink_gear_wrong":
-                        result['speech'] = "Both gear's orientation is wrong. Please fix them."
-                    elif self.left_frames.averaged_class() == "front_pink_gear_wrong":
+                    else:
                         result['speech'] = "The front gear's orientation is wrong. Please fix it."
-                    elif self.right_frames.averaged_class() == "back_pink_gear_wrong":
-                        result['speech'] = "The back gear's orientation is wrong. Please fix it."
-
+                
             else:
                 self.left_frames.staged_clear()
-                self.right_frames.staged_clear()
         
         elif self.current_state == "wheel-stage":
             result['speech'] = "Please grab one each of the big and small wheels."
