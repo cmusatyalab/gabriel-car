@@ -122,7 +122,7 @@ class Task:
 
             if len(pink_gear) >= 2:
                 pink_gear = pink_gear[0:2]
-                pink_left, pink_right = separate_left_right()
+                pink_left, pink_right = separate_left_right(pink_gear)
                 self.left_frames.add(pink_left)
                 self.right_frames.add(pink_right)
                 
