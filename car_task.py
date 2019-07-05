@@ -127,7 +127,6 @@ class Task:
                 self.right_frames.add(pink_right)
                 
                 if self.left_frames.is_center_stable(stable_threshold) and self.right_frames.is_center_stable(stable_threshold):
-                    print("stable")
                     if self.left_frames.averaged_class() == "front_pink_gear_good" and self.right_frames.averaged_class() == "back_pink_gear_good":
                         result['speech'] = "Great Job!"
                         self.current_state = "start"
@@ -141,7 +140,6 @@ class Task:
                         result['speech'] = "The back gear's orientation is wrong. Please fix it."
 
             else:
-                print("clear")
                 self.left_frames.staged_clear()
                 self.right_frames.staged_clear()
         
