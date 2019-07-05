@@ -108,6 +108,7 @@ class Task:
             time.sleep(5)
             result['speech'] = "Please show me this view of the black frame."
             image_path = os.path.join(images_store, "pink-gears-side-view.jpg")
+            result['image'] = cv2.imread(image_path)
             self.current_state = "pink-brown-gear-2"
 
         elif self.current_state == "pink-brown-gear-2":
