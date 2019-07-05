@@ -137,7 +137,7 @@ class Task:
                         result['speech'] = "Both gear's orientation is wrong. Please fix them."
                     elif self.left_frames.averaged_class() == "front_pink_gear_wrong":
                         result['speech'] = "The front gear's orientation is wrong. Please fix it."
-                    elif self.left_frames.averaged_class() == "back_pink_gear_wrong":
+                    elif self.right_frames.averaged_class() == "back_pink_gear_wrong":
                         result['speech'] = "The back gear's orientation is wrong. Please fix it."
 
             else:
