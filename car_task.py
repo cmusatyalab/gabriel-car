@@ -75,6 +75,10 @@ class Task:
         self.left_frames = FrameRecorder(10)
         self.right_frames = FrameRecorder(10)
 
+        self.top_wheel_frames = FrameRecorder(10)
+        self.bot_wheel_frames = FrameRecorder(10)
+        self.pink_gear_frames = FrameRecorder(10)
+
         self.last_id = None
 
 
@@ -92,6 +96,50 @@ class Task:
 
         # the start
         if self.current_state == "start":
+            time.sleep(3)
+            result['speech'] = "Please show me the bird's eye view of the black frame with the horns of the black frame facing up."
+            # show bird's eye view image
+            # image_path = os.path.join(images_store, "wheel-stage-1.jpg")
+            # result['image'] = cv2.imread(image_path)
+            self.current_state = "final-check-top-1"
+
+        elif self.current_state == "final-check-top-1":
+            wheels = get_objects_by_categories(objects,{"thin_wheel_side"})
+            gear = get_objects_by_categories(objects, {"front_gear_good"})
+            
+            if len(wheels) >= 2 and len(gear) >= 1:
+                wheels = wheels[0:2]
+                gear = gear[0]
+                top_wheel, bot_wheel = separate_top_bot(wheels)
+
+                self.top_wheel_frames.add(top_wheel)
+                self.bot_wheel_frames.add(bot_wheel)
+                self.pink_gear_frames.add(gear)
+
+                if self.top_wheel_frames.is_center_stable(stable_threshold) and self.bot_wheel_frames.is_center_stable(stable_threshold) and self.pink_gear_frames.is_center_stable(stable_threshold):
+                    origin_top_wheel = self.top_wheel_frames.averaged_bbox()
+                    origin_bot_wheel = self.bot_wheel_frames.averaged_bbox()
+                    origin_pink_gear = self.pink_gear_frames.averaged_bbox()
+
+                    if origin_top_wheel[1] < origin_pink_gear[1] < origin_bot_wheel[1]:
+                        self.top_wheel_frames.clear()
+                        self.bot_wheel_frames.clear()
+                        self.pink_gear_frames.clear()
+
+                        self.current_state = "final-check-top-2"
+                    else:
+                        result['speech'] = "no"
+                    
+            else:
+                self.top_wheel_frames.staged_clear()
+                self.bot_wheel_frames.staged_clear()
+                self.pink_gear_frames.staged_clear()
+
+        elif self.current_state == "final-check-top-2":
+            result['speech'] = "Good job. Final check is done."
+            self.current_state = "start"
+
+        elif self.current_state == "wheel-stage":
             result['speech'] = "Please grab one each of the big and small wheels."
             image_path = os.path.join(images_store, "wheel-stage-1.jpg")
             result['image'] = cv2.imread(image_path)
@@ -159,6 +207,19 @@ def separate_left_right(objects):
         right = obj1
 
     return left, right
+
+def separate_top_bot(objects):
+    obj1 = objects[0]
+    obj2 = objects[1]
+
+    if obj1["dimensions"][1] < obj2["dimensions"][1]:
+        top = obj1
+        bot = obj2
+    else:
+        top = obj2
+        bot = obj1
+
+    return top, bot
 
 def bbox_center(dims):
     return dims[2] - dims[0], dims[3] - dims[1]
