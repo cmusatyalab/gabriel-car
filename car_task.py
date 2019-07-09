@@ -109,7 +109,15 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "acquire_axle"
+        #     self.current_state = "configurate_wheels_rims_1"
+        # elif self.current_state == "configurate_wheels_rims_1":
+        #     inter = self.configurate_wheels_rims(objects)
+        #     if inter["next"] is True:
+        #         self.current_state = "combine_wheel_rim_1"
+        # elif self.current_state == "combine_wheel_rim_1":
+        #     inter = self.combine_wheel_rim(objects)
+        #     if inter["next"] is True:
+                # self.current_state = "acquire_axle"
         elif self.current_state == "acquire_axle":
             inter = self.acquire_axle_1(objects)
             if inter["next"] is True:
