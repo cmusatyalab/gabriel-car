@@ -163,7 +163,7 @@ class Task:
 
         for field in inter.keys():
             if field != "next":
-                result["field"] = inter["field"]
+                result[field] = inter[field]
 
         return vis_objects, result
 
