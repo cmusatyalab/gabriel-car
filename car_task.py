@@ -70,6 +70,13 @@ class FrameRecorder:
                 out[u] += dim[u]
 
         return [v / len(self.deque) for v in out]
+    
+    def averaged_class(self):
+        all_class = []
+        for i in range(len(self.deque)):
+            if self.deque[i]["class_name"] not in all_class:
+                all_class.append(self.deque[i]["class_name"])
+        return max(set(all_class), key = all_class.count) 
 
 
 class Task:
@@ -109,11 +116,11 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-        #     self.current_state = "configurate_wheels_rims_1"
-        # elif self.current_state == "configurate_wheels_rims_1":
-        #     inter = self.configurate_wheels_rims(objects)
-        #     if inter["next"] is True:
-        #         self.current_state = "combine_wheel_rim_1"
+            self.current_state = "configurate_wheels_rims_1"
+        elif self.current_state == "configurate_wheels_rims_1":
+            inter = self.configurate_wheels_rims(objects)
+            if inter["next"] is True:
+                self.current_state = "combine_wheel_rim_1"
         # elif self.current_state == "combine_wheel_rim_1":
         #     inter = self.combine_wheel_rim(objects)
         #     if inter["next"] is True:
@@ -175,6 +182,47 @@ class Task:
 
         return vis_objects, result
 
+    def configurate_wheels_rims_1(self, objects):
+        out = defaultdict(lambda: None)
+        if self.history["acquire_axle_1"] is False:
+            self.clear_states(): 
+            self.history["acquire_axle_1"] == True
+            out['speech'] = 'Please find two different sized rims,two different sized tires, and show me this configuration.'
+            out['image'] = read_image('tire-rim-legend')
+        
+        tires = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side"})
+        rims = get_objects_by_categories(objects, {"thick_rim_side", "thin_rim_side"})
+
+        left_tire, right_tire = separate_two(tires)
+        left_rim, right_rim = separate_two(rims)
+
+        if len(tires) >= 2 and len(rims) >= 2:
+            if self.frame_recs[0].add_and_check_stable(left_tire) and self.frame_recs[1].add_and_check_stable(right_tire) and self.frame_recs[2].add_and_check_stable(left_rim) and self.frame_recs[3].add_and_check_stable(right_rim): 
+                if self.frame_recs[0].averaged_bbox()[1] > self.frame_recs[2].averaged_bbox()[1] and self.frame_recs[1].averaged_bbox()[1] > self.frame_recs[3].averaged_bbox()[1]:
+                    if self.frame_recs[0].averaged_class() == "thick_wheel_side" and self.frame_recs[1].averaged_class() == "thin_wheel_side" and self.frame_recs[2].averaged_class() == "thick_rim_side" and self.frame_recs[3].averaged_class() == "thin_rim_side":
+                        out['next'] = True
+                    elif self.frame_recs[0].averaged_class() != "thick_wheel_side":
+                        out["speech"] = "Please switch out the left tire with a bigger tire."
+                    elif self.frame_recs[1].averaged_class() != "thin_wheel_side":
+                        out["speech"] = "Please switch out the right tire with a smaller tire."
+                    elif self.frame_recs[2].averaged_class() != "thick_rim_side":
+                        out["speech"] = "Please switch out the left rim with a bigger rim."
+                    elif self.frame_recs[3].averaged_class() != "thin_rim_side":
+                        out["speech"] = "Please switch out the right rim with a smaller rim."
+                elif self.frame_recs[0].averaged_bbox()[1] > self.frame_recs[2].averaged_bbox()[1] and self.frame_recs[1].averaged_bbox()[1] < self.frame_recs[3].averaged_bbox()[1]:
+                    out['speech'] = "The orientation of tire and rim on the right is wrong. Please switch their positions"
+                elif self.frame_recs[0].averaged_bbox()[1] < self.frame_recs[2].averaged_bbox()[1] and self.frame_recs[1].averaged_bbox()[1] > self.frame_recs[3].averaged_bbox()[1]:
+                    out["speech"] = "The orientation of tire and rim on the left is wrong. Please switch their positions"
+                else:
+                    out["speech"] = "The orientation of tire and rim on the left and the right is wrong. Please switch the positions of the tire and rim on the left and then switch the positions of the tire and rim on the right."
+                self.clear_states()
+        else:
+            self.frame_recs[0].staged_clear()
+            self.frame_recs[1].staged_clear()
+            self.frame_recs[2].staged_clear()
+            self.frame_recs[3].staged_clear()
+
+        return out
 
     def acquire_axle_1(self, objects):
         out = defaultdict(lambda: None)
