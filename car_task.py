@@ -117,14 +117,16 @@ class Task:
         # the start, branch into desired instruction
         if self.current_state == "start":
             self.current_state = "configurate_wheels_rims_1"
-        elif self.current_state == "configurate_wheels_rims_1":
+        elif self.current_state == "configurate_wheels_rims":
             inter = self.configurate_wheels_rims(objects)
             if inter["next"] is True:
-                self.current_state = "combine_wheel_rim_1"
-        # elif self.current_state == "combine_wheel_rim_1":
-        #     inter = self.combine_wheel_rim(objects)
-        #     if inter["next"] is True:
-                # self.current_state = "acquire_axle"
+                self.current_state = "combine_wheel_rim"
+        elif self.current_state == "combine_wheel_rim":
+            inter = self.combine_wheel_rim(objects)
+            if inter["next"] is True and self.history["configurate_wheels_rims_2"] is True:
+                self.current_state = "acquire_axle"
+            elif inter["next"] is True and self.history["configurate_wheels_rims_1"] is True:
+                self.current_state = "configurate_wheels_rims" 
         elif self.current_state == "acquire_axle":
             inter = self.acquire_axle_1(objects)
             if inter["next"] is True:
@@ -182,12 +184,17 @@ class Task:
 
         return vis_objects, result
 
-    def configurate_wheels_rims_1(self, objects):
+    def configurate_wheels_rims(self, objects):
         out = defaultdict(lambda: None)
-        if self.history["acquire_axle_1"] is False:
+        if self.history["configurate_wheels_rims_1"] is False:
             self.clear_states(): 
-            self.history["acquire_axle_1"] == True
+            self.history["configurate_wheels_rims_1"] == True
             out['speech'] = 'Please find two different sized rims,two different sized tires, and show me this configuration.'
+            out['image'] = read_image('tire-rim-legend')
+        elif self.history["configurate_wheels_rims_2"] is False:
+            self.clear_states(): 
+            self.history["configurate_wheels_rims_2"] == True
+            out['speech'] = 'Please find the other set of two different sized rims,two different sized tires, and show me this configuration.'
             out['image'] = read_image('tire-rim-legend')
         
         tires = get_objects_by_categories(objects, {"thick_wheel_side", "thin_wheel_side"})
@@ -222,6 +229,17 @@ class Task:
             self.frame_recs[2].staged_clear()
             self.frame_recs[3].staged_clear()
 
+        return out
+
+    def combine_wheel_rim(self, objects):
+        out = defaultdict(lambda: None)
+        if self.history["combine_wheel_rim"] is False:
+            self.clear_states()
+            self.history["combine_wheel_rim"] = True
+            out["speech"] = "Well done. Now assemble the tires and rims as shown in the video"
+        else:
+            out["video"] = video_url + "tire-rim-combine.mp4"
+            out["next"] = True  
         return out
 
     def acquire_axle_1(self, objects):
