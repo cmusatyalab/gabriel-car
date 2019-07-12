@@ -135,8 +135,8 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
             img = cv2.resize(img, (720, 480))
 
         objects = tpod_wrapper.detect_object(img, "http://0.0.0.0:8000")
-        hands = tpod_wrapper.detect_hand(img, detection_graph, sess)
-        objects.extend(hands)
+        # hands = tpod_wrapper.detect_hand(img, detection_graph, sess)
+        # objects.extend(hands)
 
         vis_objects, instruction = self.task.get_instruction(objects, header)
         header['status'] = 'success'

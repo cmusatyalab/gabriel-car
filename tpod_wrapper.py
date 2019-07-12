@@ -77,6 +77,8 @@ def group_class_names(name):
         return "wheel"
     elif name in {"thin_wheel_side", "thick_wheel_side"}:
         return "tire"
+    elif name in {"hole_green", "hole_gold"}:
+        return "hole_filled"
 
     return name
 
