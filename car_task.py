@@ -122,17 +122,22 @@ class Task:
         # the start, branch into desired instruction
         if self.current_state == "start":
             self.current_state = "insert_axle_1"
-        elif self.current_state == "configurate_wheels_rims":
-            inter = self.configurate_wheels_rims(img)
+        elif self.current_state == "layout_wheels_rims_1":
+            inter = self.layout_wheels_rims(img, True)
             if inter["next"] is True:
-                self.current_state = "combine_wheel_rim"
-        elif self.current_state == "combine_wheel_rim":
-            inter = self.combine_wheel_rim()
-            if inter["next"] is True and self.history["configurate_wheels_rims_2"] is True:
-                self.current_state = "nothing"
-                # self.current_state = "acquire_axle"
-            elif inter["next"] is True and self.history["configurate_wheels_rims_1"] is True:
-                self.current_state = "configurate_wheels_rims"
+                self.current_state = "combine_wheel_rim_1"
+        elif self.current_state == "combine_wheel_rim_1":
+            inter = self.combine_wheel_rim(True)
+            if inter["next"] is True:
+                self.current_state = "layout_wheels_rims_2"
+        elif self.current_state == "layout_wheels_rims_2":
+            inter = self.layout_wheels_rims(img, False)
+            if inter["next"] is True:
+                self.current_state = "combine_wheel_rim_2"
+        elif self.current_state == "combine_wheel_rim_2":
+            inter = self.combine_wheel_rim(False)
+            if inter["next"] is True:
+                self.current_state = "acquire_axle"
         elif self.current_state == "acquire_axle":
             inter = self.acquire_axle_1(img)
             if inter["next"] is True:
@@ -190,18 +195,18 @@ class Task:
 
         return [], result
 
-    def configurate_wheels_rims(self, img):
+    def layout_wheels_rims(self, img, first_pair):
         out = defaultdict(lambda: None)
-        if self.history["configurate_wheels_rims_1"] is False:
+        if self.history["layout_wheels_rims_1"] is False and first_pair is True:
             self.clear_states()
-            self.history["configurate_wheels_rims_1"] = True
-            out['speech'] = 'Please find two different sized rims,two different sized tires, and show me this configuration.'
-            out['image'] = read_image('tire-rim-legend')
+            self.history["layout_wheels_rims_1"] = True
+            out['speech'] = 'Please find two different sized rims,two different sized tires, and arrange them like this.'
+            out['image'] = read_image('tire-rim-legend.jpg')
             return out
-        elif self.history["configurate_wheels_rims_2"] is False:
-            self.history["configurate_wheels_rims_2"] = True
-            out['speech'] = 'Please find the other set of two different sized rims,two different sized tires, and show me this configuration.'
-            out['image'] = read_image('tire-rim-legend')
+        elif self.history["layout_wheels_rims_2"] is False and first_pair is False:
+            self.history["layout_wheels_rims_2"] = True
+            out['speech'] = 'Find the other set of two different sized rims,two different sized tires, and show me this configuration.'
+            out['image'] = read_image('tire-rim-legend.jpg')
             return out
         
         tires = self.get_objects_by_categories(img, {"thick_wheel_side", "thin_wheel_side"})
@@ -231,23 +236,21 @@ class Task:
                     out["speech"] = "The orientation of tire and rim on the left and the right is wrong. Please switch the positions of the tire and rim on the left and then switch the positions of the tire and rim on the right."
                 self.clear_states()
         else:
-            self.frame_recs[0].staged_clear()
-            self.frame_recs[1].staged_clear()
-            self.frame_recs[2].staged_clear()
-            self.frame_recs[3].staged_clear()
+            self.all_staged_clear()
 
         return out
 
-    def combine_wheel_rim(self):
+    def combine_wheel_rim(self, first_pair):
         out = defaultdict(lambda: None)
-        if self.history["combine_wheel_rim"] is False:
+        if (self.history["combine_wheel_rim_1"] is False and first_pair is True) \
+            or (self.history["combine_wheel_rim_2"] is False and first_pair is False):
             self.clear_states()
             self.history["combine_wheel_rim"] = True
-            out["speech"] = "Well done. Now assemble the tires and rims as shown in the video"
-        else:
+            out["speech"] = "Well done. Now assemble the tires and rims as shown in the video."
             out["video"] = video_url + "tire-rim-combine.mp4"
+        else:
             out["next"] = True
-            self.delay_flag = True
+            time.sleep(10)
         return out
 
     def acquire_axle_1(self, img):
