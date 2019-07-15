@@ -190,7 +190,6 @@ class Task:
             self.history = defaultdict(lambda: False)
             time.sleep(10)
             self.current_state = "start"
-efefef
         for field in inter.keys():
             if field != "next":
                 result[field] = inter[field]
