@@ -160,10 +160,10 @@ class Task:
         elif self.current_state == "nothing":
             time.sleep(3)
             self.current_state = "start"
-
+efefef
         for field in inter.keys():
             if field != "next":
-                result["field"] = inter["field"]
+                result[field] = inter[field]
 
         return vis_objects, result
 
