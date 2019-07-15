@@ -212,10 +212,9 @@ class Task:
         tires = self.get_objects_by_categories(img, {"thick_wheel_side", "thin_wheel_side"})
         rims = self.get_objects_by_categories(img, {"thick_rim_side", "thin_rim_side"})
 
-        left_tire, right_tire = separate_two(tires)
-        left_rim, right_rim = separate_two(rims)
-
-        if len(tires) >= 2 and len(rims) >= 2:
+        if len(tires) == 2 and len(rims) == 2:
+            left_tire, right_tire = separate_two(tires)
+            left_rim, right_rim = separate_two(rims)
             if self.frame_recs[0].add_and_check_stable(left_tire) and self.frame_recs[1].add_and_check_stable(right_tire) and self.frame_recs[2].add_and_check_stable(left_rim) and self.frame_recs[3].add_and_check_stable(right_rim): 
                 if self.frame_recs[0].averaged_bbox()[1] > self.frame_recs[2].averaged_bbox()[1] and self.frame_recs[1].averaged_bbox()[1] > self.frame_recs[3].averaged_bbox()[1]:
                     if self.frame_recs[0].averaged_class() == "thick_wheel_side" and self.frame_recs[1].averaged_class() == "thin_wheel_side" and self.frame_recs[2].averaged_class() == "thick_rim_side" and self.frame_recs[3].averaged_class() == "thin_rim_side":
