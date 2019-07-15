@@ -41,13 +41,13 @@ import car_task_stream
 import util
 import object_detection
 
-from handtracking.utils import detector_utils
+# from handtracking.utils import detector_utils
 
 LOG = gabriel.logging.getLogger(__name__)
 ANDROID_CLIENT = True
 config.setup(is_streaming=True)
 display_list = config.DISPLAY_LIST_TASK
-detection_graph, sess = detector_utils.load_inference_graph()
+# detection_graph, sess = detector_utils.load_inference_graph()
 
 
 def process_command_line(argv):

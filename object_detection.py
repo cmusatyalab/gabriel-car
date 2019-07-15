@@ -69,7 +69,7 @@ class Detector:
                                                     remove=True,
                                                     detach=True,
                                                     runtime="nvidia")
-        time.sleep(7)
+        time.sleep(4)
 
         return True
 
@@ -154,6 +154,8 @@ def group_class_names(name):
         return "wheel"
     elif name in {"thin_wheel_side", "thick_wheel_side"}:
         return "tire"
+    elif name in {"thin_rim_side", "thick_rim_side"}:
+        return "rim"
     elif name in {"hole_green", "hole_gold"}:
         return "hole_filled"
 

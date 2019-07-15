@@ -16,7 +16,7 @@ STATES = ["start", "wheel-stage", "wheel-compare"]
 resources = os.path.abspath("resources/images")
 video_url = "http://" + ip + ":9095/"
 stable_threshold = 20
-wheel_compare_threshold = 20
+wheel_compare_threshold = 15
 
 
 class FrameRecorder:
@@ -110,7 +110,7 @@ class Task:
                 self.history.clear()
 
         if self.delay_flag is True:
-            time.sleep(3)
+            time.sleep(5)
             self.delay_flag = False
 
         result = defaultdict(lambda: None)
@@ -121,7 +121,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "insert_axle_1"
+            self.current_state = "insert_back_green_washer_1"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, True)
             if inter["next"] is True:
@@ -137,7 +137,7 @@ class Task:
         elif self.current_state == "combine_wheel_rim_2":
             inter = self.combine_wheel_rim(False)
             if inter["next"] is True:
-                self.current_state = "acquire_axle"
+                self.current_state = "axle_into_wheel_1"
         elif self.current_state == "acquire_axle":
             inter = self.acquire_axle_1(img)
             if inter["next"] is True:
@@ -184,9 +184,11 @@ class Task:
                 self.current_state = "front_wheel_assembly_complete"
         elif self.current_state == "front_wheel_assembly_complete":
             inter = self.front_wheel_assembly_complete()
-            self.current_state = "nothing"
+            if inter["next"] is True:
+                self.current_state = "nothing"
         elif self.current_state == "nothing":
-            time.sleep(3)
+            self.history = defaultdict(lambda: False)
+            time.sleep(10)
             self.current_state = "start"
 
         for field in inter.keys():
@@ -217,16 +219,23 @@ class Task:
             left_rim, right_rim = separate_two(rims)
             if self.frame_recs[0].add_and_check_stable(left_tire) and self.frame_recs[1].add_and_check_stable(right_tire) and self.frame_recs[2].add_and_check_stable(left_rim) and self.frame_recs[3].add_and_check_stable(right_rim): 
                 if self.frame_recs[0].averaged_bbox()[1] > self.frame_recs[2].averaged_bbox()[1] and self.frame_recs[1].averaged_bbox()[1] > self.frame_recs[3].averaged_bbox()[1]:
+                    rim_diff = compare(self.frame_recs[2].averaged_bbox(),self.frame_recs[3].averaged_bbox(),wheel_compare_threshold)
+
                     if self.frame_recs[0].averaged_class() == "thick_wheel_side" and self.frame_recs[1].averaged_class() == "thin_wheel_side" and self.frame_recs[2].averaged_class() == "thick_rim_side" and self.frame_recs[3].averaged_class() == "thin_rim_side":
                         out['next'] = True
                     elif self.frame_recs[0].averaged_class() != "thick_wheel_side":
                         out["speech"] = "Please switch out the left tire with a bigger tire."
                     elif self.frame_recs[1].averaged_class() != "thin_wheel_side":
                         out["speech"] = "Please switch out the right tire with a smaller tire."
-                    elif self.frame_recs[2].averaged_class() != "thick_rim_side":
-                        out["speech"] = "Please switch out the left rim with a bigger rim."
-                    elif self.frame_recs[3].averaged_class() != "thin_rim_side":
-                        out["speech"] = "Please switch out the right rim with a smaller rim."
+                    elif rim_diff == "second":
+                        out["speech"] = "Please switch the positions of the rims."
+                    elif rim_diff == "same":
+                        # out["speech"] = "Please switch one of the rims with a different sized one."
+                        if self.frame_recs[2].averaged_class() != "thick_rim_side":
+                            out["speech"] = "Please switch out the left rim with a bigger rim."
+                        elif self.frame_recs[3].averaged_class() != "thin_rim_side":
+                            out["speech"] = "Please switch out the right rim with a smaller rim."
+
                 elif self.frame_recs[0].averaged_bbox()[1] > self.frame_recs[2].averaged_bbox()[1] and self.frame_recs[1].averaged_bbox()[1] < self.frame_recs[3].averaged_bbox()[1]:
                     out['speech'] = "The orientation of tire and rim on the right is wrong. Please switch their positions"
                 elif self.frame_recs[0].averaged_bbox()[1] < self.frame_recs[2].averaged_bbox()[1] and self.frame_recs[1].averaged_bbox()[1] > self.frame_recs[3].averaged_bbox()[1]:
@@ -243,8 +252,8 @@ class Task:
         out = defaultdict(lambda: None)
         if (self.history["combine_wheel_rim_1"] is False and first_pair is True) \
             or (self.history["combine_wheel_rim_2"] is False and first_pair is False):
-            self.clear_states()
-            self.history["combine_wheel_rim"] = True
+            history = "combine_wheel_rim_1" if first_pair else "combine_wheel_rim_2"
+            self.history[history] = True
             out["speech"] = "Well done. Now assemble the tires and rims as shown in the video."
             out["video"] = video_url + "tire-rim-combine.mp4"
         else:
@@ -527,10 +536,10 @@ class Task:
             self.clear_states()
             self.history["check_front_wheel_assembly"] = True
             out["speech"] = "Please show me what you have, like this."
-            out["video"] = video_url + "check_front_wheel_assembly.mp4"
+            out["image"] = read_image("check_front_wheel_assembly.jpg")
             return out
 
-        wheels = self.get_objects_by_categories(img, {"thin_wheel", "thick_wheel"})
+        wheels = self.get_objects_by_categories(img, {"thin_wheel_side", "thick_wheel_side"})
 
         if len(wheels) == 2:
             top, bottom = separate_two(wheels, False)
@@ -538,18 +547,21 @@ class Task:
             bottom_check = self.frame_recs[1].add_and_check_stable(bottom)
 
             if top_check is True and bottom_check is True:
-                if compare(self.frame_recs[0].averaged_bbox(), self.frame_recs[1].averaged_bbox(), wheel_compare_threshold) == "same":
+                var = compare(self.frame_recs[0].averaged_bbox(), self.frame_recs[1].averaged_bbox(), wheel_compare_threshold)
+                if var == "same":
                     out["next"] = True
         else:
             self.frame_recs[0].staged_clear()
+            self.frame_recs[1].staged_clear()
 
         return out
 
     def front_wheel_assembly_complete(self):
         out = defaultdict(lambda: None)
-        if self.history["check_front_wheel_assembly"] is False:
-            self.history["check_front_wheel_assembly"] = True
+        if self.history["front_wheel_assembly_complete"] is False:
+            self.history["front_wheel_assembly_complete"] = True
             out["speech"] = "Great job! We're finished with assembling the front wheels."
+            out["next"] = True
 
         return out
 
