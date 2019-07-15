@@ -39,7 +39,7 @@ import gabriel
 import gabriel.proxy
 import car_task_stream
 import util
-import tpod_wrapper
+import object_detection
 
 from handtracking.utils import detector_utils
 
@@ -134,9 +134,9 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
         if config.RESIZE_IMAGE:
             img = cv2.resize(img, (720, 480))
 
-        objects = tpod_wrapper.detect_object(img, "http://0.0.0.0:8000")
-        hands = tpod_wrapper.detect_hand(img, detection_graph, sess)
-        objects.extend(hands)
+        objects = object_detection.tpod_request(img, "http://0.0.0.0:8000")
+        # hands = tpod_wrapper.detect_hand(img, detection_graph, sess)
+        # objects.extend(hands)
 
         vis_objects, instruction = self.task.get_instruction(objects, header)
         header['status'] = 'success'
