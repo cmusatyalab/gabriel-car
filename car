@@ -133,7 +133,7 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
         if config.RESIZE_IMAGE:
             img = cv2.resize(img, (720, 480))
 
-        vis_objects, instruction = self.task.get_instruction(img, header)
+        viz_objects, instruction = self.task.get_instruction(img, header)
         header['status'] = 'success'
 
         if instruction.get('image', None) is not None:
@@ -144,6 +144,11 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
             rtn_data['speech'] = instruction['speech']
         if instruction.get('video', None) is not None:
             rtn_data['video'] = instruction['video']
+
+        img_object = util.vis_detections(img, viz_objects)
+        rtn_data["viz_obj"] = b64encode(util.cv_image2raw_png(img_object))
+
+        print("object detection result: %s" % [obj["class_name"] for obj in viz_objects])
 
         return json.dumps(rtn_data)
 

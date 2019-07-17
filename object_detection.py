@@ -44,7 +44,7 @@ class Detector:
                 self.objs_to_docker_image[o] = url
         
         self.last_id = None
-        self.cache = None
+        self.cache = []
 
         self.client = docker.from_env()
         self.last_image = None
@@ -77,13 +77,13 @@ class Detector:
     def detect_object(self, img, objects, f_id):
         if f_id != self.last_id:
             self.last_id = f_id
-            self.cache = None
+            self.cache = []
 
         self.init_docker_classifier(objects)
 
         out = []
 
-        if self.cache is None:
+        if len(self.cache) == 0:
             detected_objs = tpod_request(img, self.tpod_url)
             self.cache = detected_objs
         else:
@@ -93,7 +93,6 @@ class Detector:
             if d["class_name"] in objects:
                 out.append(d)
 
-        print("object detection result: %s" % [obj["class_name"] for obj in out])
         return out
 
 

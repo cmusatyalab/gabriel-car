@@ -121,7 +121,8 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "layout_wheels_rims_1"
+            # self.current_state = "layout_wheels_rims_1"
+            self.current_state = "insert_green_washer_1"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -227,7 +228,7 @@ class Task:
             if field != "next":
                 result[field] = inter[field]
 
-        return [], result
+        return self.detector.all_detected_objects(), result
 
     def layout_wheels_rims(self, img, part_id):
         out = defaultdict(lambda: None)

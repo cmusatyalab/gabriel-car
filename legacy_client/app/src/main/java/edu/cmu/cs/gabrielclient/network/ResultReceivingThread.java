@@ -164,7 +164,7 @@ public class ResultReceivingThread extends Thread {
 
             String speechFeedback = "";
             Bitmap imageFeedback = null;
-            Bitmap legendFeedback = null;
+            Bitmap vizObjectFeedback = null;
 
 
             // image guidance
@@ -185,14 +185,14 @@ public class ResultReceivingThread extends Thread {
             try {
                 String legendFeedbackString = resultJSON.getString("legend");
                 byte[] data = Base64.decode(legendFeedbackString.getBytes(), Base64.DEFAULT);
-                legendFeedback = BitmapFactory.decodeByteArray(data,0,data.length);
+                vizObjectFeedback = BitmapFactory.decodeByteArray(data,0,data.length);
 
                 Message msg = Message.obtain();
                 msg.what = NetworkProtocol.NETWORK_RET_LEGEND;
-                msg.obj = legendFeedback;
+                msg.obj = vizObjectFeedback;
                 this.returnMsgHandler.sendMessage(msg);
             } catch (JSONException e) {
-                Log.v(LOG_TAG, "no image guidance found");
+                Log.v(LOG_TAG, "no legend guidance found");
             }
 
             // video guidance
@@ -204,6 +204,20 @@ public class ResultReceivingThread extends Thread {
                 this.returnMsgHandler.sendMessage(msg);
             } catch (JSONException e) {
                 Log.v(LOG_TAG, "no video guidance found");
+            }
+
+            // legend guidance
+            try {
+                String legendFeedbackString = resultJSON.getString("viz_obj");
+                byte[] data = Base64.decode(legendFeedbackString.getBytes(), Base64.DEFAULT);
+                vizObjectFeedback = BitmapFactory.decodeByteArray(data,0,data.length);
+
+                Message msg = Message.obtain();
+                msg.what = NetworkProtocol.NETWORK_RET_VIZ_OBJECT_IMAGE;
+                msg.obj = vizObjectFeedback;
+                this.returnMsgHandler.sendMessage(msg);
+            } catch (JSONException e) {
+                Log.v(LOG_TAG, "no viz object guidance found");
             }
 
             // animation guidance

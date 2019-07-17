@@ -17,6 +17,7 @@ import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.hardware.Camera.PreviewCallback;
 import android.media.AudioRecord;
+import android.media.Image;
 import android.media.MediaPlayer;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -85,6 +86,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
     // views
     private ImageView imgView = null;
     private ImageView legendView = null;
+    private ImageView vizObjectsView = null;
     private VideoView videoView = null;
     private TextView subtitleView = null;
 
@@ -106,6 +108,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
         imgView = (ImageView) findViewById(R.id.guidance_image);
         legendView = (ImageView) findViewById(R.id.legend_image);
         videoView = (VideoView) findViewById(R.id.guidance_video);
+        vizObjectsView = (ImageView) findViewById(R.id.viz_objects_image);
         if(Const.SHOW_SUBTITLES){
             findViewById(R.id.subtitleText).setVisibility(View.VISIBLE);
         }
@@ -571,6 +574,10 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
                     }
                 });
                 videoView.start();
+            }
+            if (msg.what == NetworkProtocol.NETWORK_RET_VIZ_OBJECT_IMAGE) {
+                Bitmap feedbackImg = (Bitmap) msg.obj;
+                vizObjectsView.setImageBitmap(feedbackImg);
             }
             if (msg.what == NetworkProtocol.NETWORK_RET_DONE) {
                 notifyToken();
