@@ -162,7 +162,7 @@ public class ResultReceivingThread extends Thread {
                 Log.e(LOG_TAG, "Result message not in correct JSON format");
             }
 
-            String speechFeedback = "";
+            String viz_obj = "";
             Bitmap imageFeedback = null;
             Bitmap vizObjectFeedback = null;
 
@@ -206,18 +206,15 @@ public class ResultReceivingThread extends Thread {
                 Log.v(LOG_TAG, "no video guidance found");
             }
 
-            // legend guidance
+            // viz guidance
             try {
-                String legendFeedbackString = resultJSON.getString("viz_obj");
-                byte[] data = Base64.decode(legendFeedbackString.getBytes(), Base64.DEFAULT);
-                vizObjectFeedback = BitmapFactory.decodeByteArray(data,0,data.length);
-
+                viz_obj = resultJSON.getString("viz_obj");
                 Message msg = Message.obtain();
-                msg.what = NetworkProtocol.NETWORK_RET_VIZ_OBJECT_IMAGE;
-                msg.obj = vizObjectFeedback;
+                msg.what = NetworkProtocol.NETWORK_RET_VIZ_OBJ;
+                msg.obj = viz_obj;
                 this.returnMsgHandler.sendMessage(msg);
             } catch (JSONException e) {
-                Log.v(LOG_TAG, "no viz object guidance found");
+                Log.v(LOG_TAG, "no viz objs found");
             }
 
             // animation guidance
@@ -242,10 +239,10 @@ public class ResultReceivingThread extends Thread {
 
             // speech guidance
             try {
-                speechFeedback = resultJSON.getString("speech");
+                viz_obj = resultJSON.getString("speech");
                 Message msg = Message.obtain();
                 msg.what = NetworkProtocol.NETWORK_RET_SPEECH;
-                msg.obj = speechFeedback;
+                msg.obj = viz_obj;
                 this.returnMsgHandler.sendMessage(msg);
             } catch (JSONException e) {
                 Log.v(LOG_TAG, "no speech guidance found");

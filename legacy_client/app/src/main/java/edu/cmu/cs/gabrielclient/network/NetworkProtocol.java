@@ -14,7 +14,7 @@ public class NetworkProtocol {
     public static final int NETWORK_RET_DONE = 9;
     public static final int NETWORK_RET_SYNC = 10;
     public static final int NETWORK_RET_LEGEND = 11;
-    public static final int NETWORK_RET_VIZ_OBJECT_IMAGE = 12;
+    public static final int NETWORK_RET_VIZ_OBJ = 12;
 
     public static final String HEADER_MESSAGE_CONTROL = "control";
     public static final String HEADER_MESSAGE_RESULT = "result";

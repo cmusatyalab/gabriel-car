@@ -145,8 +145,8 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
         if instruction.get('video', None) is not None:
             rtn_data['video'] = instruction['video']
 
-        img_object = util.vis_detections(img, viz_objects)
-        rtn_data["viz_obj"] = b64encode(util.cv_image2raw_png(img_object))
+        # img_object = util.vis_detections(img, viz_objects)
+        rtn_data["viz_obj"] = json.dumps(viz_objects)
 
         print("object detection result: %s" % [obj["class_name"] for obj in viz_objects])
 

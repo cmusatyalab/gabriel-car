@@ -1,6 +1,23 @@
 apply plugin: 'com.android.application'
 
 android {
+    splits {
+        // Configures multiple APKs based on ABI.
+        abi {
+            // Enables building multiple APKs per ABI.
+            enable true
+
+            // By default all ABIs are included, so use reset() and include to specify that we only
+            // want APKs for x86, armeabi-v7a, and mips.
+            reset()
+
+            // Specifies a list of ABIs that Gradle should create APKs for.
+            include "x86", "x86_64", "armeabi-v7a", "arm64-v8a"
+
+            // Specifies that we want to also generate a universal APK that includes all ABIs.
+            universalApk false
+        }
+    }
     compileSdkVersion 23
     // buildToolsVersion "25.0.2"
 
@@ -19,8 +36,10 @@ android {
 }
 
 dependencies {
-    implementation 'com.android.support:appcompat-v7:23.2.0'
-    implementation 'com.android.support:support-v4:23.2.0'
-    implementation 'com.android.support:support-v13:23.2.0'
-    implementation 'com.android.support:design:23.2.0'
+    implementation 'com.android.support:appcompat-v7:23.4.0'
+    implementation 'com.android.support:support-v4:23.4.0'
+    implementation 'com.android.support:support-v13:23.4.0'
+    implementation 'com.android.support:design:23.4.0'
+    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 }

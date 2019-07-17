@@ -1,28 +1,24 @@
 package edu.cmu.cs.gabrielclient;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
 import android.hardware.Camera;
 import android.hardware.Camera.PreviewCallback;
-import android.media.AudioRecord;
-import android.media.Image;
-import android.media.MediaPlayer;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioRecord;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
@@ -31,26 +27,41 @@ import android.os.Message;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.MediaController;
-import android.widget.VideoView;
 import android.widget.TextView;
+import android.widget.VideoView;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import edu.cmu.cs.gabrielclient.network.AccStreamingThread;
 import edu.cmu.cs.gabrielclient.network.AudioStreamingThread;
 import edu.cmu.cs.gabrielclient.network.ControlThread;
 import edu.cmu.cs.gabrielclient.network.LogicalTime;
 import edu.cmu.cs.gabrielclient.network.NetworkProtocol;
-import edu.cmu.cs.gabrielclient.util.PingThread;
 import edu.cmu.cs.gabrielclient.network.ResultReceivingThread;
 import edu.cmu.cs.gabrielclient.network.VideoStreamingThread;
 import edu.cmu.cs.gabrielclient.token.ReceivedPacketInfo;
 import edu.cmu.cs.gabrielclient.token.TokenController;
+import edu.cmu.cs.gabrielclient.util.PingThread;
 import edu.cmu.cs.gabrielclient.util.ResourceMonitoringService;
 
 public class GabrielClientActivity extends Activity implements TextToSpeech.OnInitListener, SensorEventListener{
@@ -70,7 +81,14 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
     private boolean isRunning = false;
     private boolean isFirstExperiment = true;
 
-    private CameraPreview preview = null;
+    private CameraPreview cameraPreview = null;
+
+    private SurfaceHolder overlayHolder = null;
+    private SurfaceView overlayPreview = null;
+    private Canvas canvas = null;
+    private Paint paint = new Paint();
+
+    Gson gson = new Gson();
 
     private SensorManager sensorManager = null;
     private Sensor sensorAcc = null;
@@ -86,7 +104,6 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
     // views
     private ImageView imgView = null;
     private ImageView legendView = null;
-    private ImageView vizObjectsView = null;
     private VideoView videoView = null;
     private TextView subtitleView = null;
 
@@ -108,7 +125,6 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
         imgView = (ImageView) findViewById(R.id.guidance_image);
         legendView = (ImageView) findViewById(R.id.legend_image);
         videoView = (VideoView) findViewById(R.id.guidance_video);
-        vizObjectsView = (ImageView) findViewById(R.id.viz_objects_image);
         if(Const.SHOW_SUBTITLES){
             findViewById(R.id.subtitleText).setVisibility(View.VISIBLE);
         }
@@ -158,8 +174,18 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
         Log.v(LOG_TAG, "++initOnce");
 
         if (Const.SENSOR_VIDEO) {
-            preview = (CameraPreview) findViewById(R.id.camera_preview);
-            preview.start(CameraPreview.CameraConfiguration.getInstance(), previewCallback);
+            cameraPreview = (CameraPreview) findViewById(R.id.camera_preview);
+            cameraPreview.start(CameraPreview.CameraConfiguration.getInstance(), previewCallback);
+            overlayPreview = (SurfaceView)findViewById(R.id.viz_overlay);
+
+            overlayHolder = overlayPreview.getHolder();
+            overlayHolder.setFormat(PixelFormat.TRANSPARENT);
+//            overlayHolder.addCallback(cameraPreview);
+            overlayHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setColor(Color.RED);
+            paint.setStrokeWidth(5);
         }
 
         Const.ROOT_DIR.mkdirs();
@@ -390,9 +416,9 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
                 if (sw) { // turning on
                     Const.SENSOR_VIDEO = true;
                     tokenController.reset();
-                    if (preview == null) {
-                        preview = (CameraPreview) findViewById(R.id.camera_preview);
-                        preview.start(CameraPreview.CameraConfiguration.getInstance(), previewCallback);
+                    if (cameraPreview == null) {
+                        cameraPreview = (CameraPreview) findViewById(R.id.camera_preview);
+                        cameraPreview.start(CameraPreview.CameraConfiguration.getInstance(), previewCallback);
                     }
                     if (videoStreamingThread == null) {
                         videoStreamingThread = new VideoStreamingThread(serverIP, Const.VIDEO_STREAM_PORT, returnMsgHandler, tokenController, logicalTime);
@@ -400,9 +426,9 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
                     }
                 } else { // turning off
                     Const.SENSOR_VIDEO = false;
-                    if (preview != null) {
-                        preview.close();
-                        preview = null;
+                    if (cameraPreview != null) {
+                        cameraPreview.close();
+                        cameraPreview = null;
                     }
                     if (videoStreamingThread != null) {
                         videoStreamingThread.stopStreaming();
@@ -463,7 +489,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
             }
 
             // Camera configs
-            if (preview != null) {
+            if (cameraPreview != null) {
                 CameraPreview.CameraConfiguration camConfig = CameraPreview.CameraConfiguration.getInstance();
                 if (msgJSON.has(NetworkProtocol.SERVER_CONTROL_FPS))
                     camConfig.fps = msgJSON.getInt(NetworkProtocol.SERVER_CONTROL_FPS);
@@ -482,8 +508,8 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
                         camConfig.flashMode = Camera.Parameters.FLASH_MODE_OFF;
                     }
                 }
-                preview.close();
-                preview.start(CameraPreview.CameraConfiguration.getInstance(), previewCallback);
+                cameraPreview.close();
+                cameraPreview.start(CameraPreview.CameraConfiguration.getInstance(), previewCallback);
             }
 
         } catch (JSONException e) {
@@ -575,9 +601,19 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
                 });
                 videoView.start();
             }
-            if (msg.what == NetworkProtocol.NETWORK_RET_VIZ_OBJECT_IMAGE) {
-                Bitmap feedbackImg = (Bitmap) msg.obj;
-                vizObjectsView.setImageBitmap(feedbackImg);
+            if (msg.what == NetworkProtocol.NETWORK_RET_VIZ_OBJ) {
+                canvas = overlayHolder.lockCanvas();
+                if (canvas != null) {
+                    Type fooType = new TypeToken<List<VizObj>>() {}.getType();
+                    List<VizObj> objs = gson.fromJson((String) msg.obj, fooType);
+                    canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+
+                    for (VizObj obj : objs) {
+                        drawVizObj(obj);
+                    }
+
+                    overlayHolder.unlockCanvasAndPost(canvas);
+                }
             }
             if (msg.what == NetworkProtocol.NETWORK_RET_DONE) {
                 notifyToken();
@@ -661,9 +697,9 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
             tts.shutdown();
             tts = null;
         }
-        if (preview != null) {
-            preview.close();
-            preview = null;
+        if (cameraPreview != null) {
+            cameraPreview.close();
+            cameraPreview = null;
         }
         if (sensorManager != null) {
             sensorManager.unregisterListener(this);
@@ -803,4 +839,19 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
         }
     }
     /**************** End of battery recording ******************/
+
+    private void drawVizObj(VizObj obj) {
+        int height = overlayPreview.getHeight();
+        int width = overlayPreview.getWidth();
+        if (height * width == 0) {
+            return;
+        }
+
+        float RectLeft = obj.norm.get(0) * width;
+        float RectTop = obj.norm.get(1) * height;
+        float RectRight = obj.norm.get(2) * width;
+        float RectBottom = obj.norm.get(3) * height;
+
+        canvas.drawRect(RectLeft, RectTop, RectRight, RectBottom, paint);
+    }
 }

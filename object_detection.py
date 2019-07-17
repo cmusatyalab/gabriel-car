@@ -123,7 +123,13 @@ def tpod_request(img, url):
         if class_name not in by_class.keys():
             by_class[class_name] = []
 
-        intermediate = {"class_name": obj_list_form[0], "dimensions": obj_list_form[1], "confidence": obj_list_form[2]}
+        norm = obj_list_form[1]
+        norm[0] /= img.shape[1]
+        norm[2] /= img.shape[1]
+        norm[1] /= img.shape[0]
+        norm[3] /= img.shape[0]
+
+        intermediate = {"class_name": obj_list_form[0], "dimensions": obj_list_form[1], "confidence": obj_list_form[2], "norm": norm}
 
         conflicts = [x for x in by_class[class_name] if intersecting_objs(intermediate, x)]
         non_conflicts = [x for x in by_class[class_name] if x not in conflicts]
@@ -143,7 +149,8 @@ def tpod_request(img, url):
             detected_objects.append({
                 "class_name": obj["class_name"],
                 "dimensions": obj["dimensions"],
-                "confidence": obj["confidence"]})
+                "confidence": obj["confidence"],
+                "norm": obj["norm"]})
 
     return detected_objects
 

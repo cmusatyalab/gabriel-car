@@ -22,31 +22,36 @@
         <ImageView
             android:id="@+id/guidance_image"
             android:layout_width="250dp"
-            android:layout_height="250dp"
+            android:layout_height="wrap_content"
             android:visibility="gone" />
 
         <ImageView
             android:id="@+id/legend_image"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_height="wrap_content"
             android:visibility="gone"/>
 
         <VideoView
             android:id="@+id/guidance_video"
             android:layout_width="250dp"
-            android:layout_height="250dp"
+            android:layout_height="wrap_content"
             android:visibility="gone" />
 
-        <ImageView
-            android:id="@+id/viz_objects_image"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:visibility="visible"/>
-        
-        <edu.cmu.cs.gabrielclient.CameraPreview
-            android:id="@+id/camera_preview"
-            android:layout_width="1dp"
-            android:layout_height="1dp" />
+        <RelativeLayout
+            android:layout_width="600dp"
+            android:layout_height="338dp"
+            android:orientation="vertical" >
+
+                    <edu.cmu.cs.gabrielclient.CameraPreview
+                        android:id="@+id/camera_preview"
+                        android:layout_height="fill_parent"
+                        android:layout_width="wrap_content" />
+                    <SurfaceView
+                        android:layout_alignParentTop="true"
+                        android:id="@+id/viz_overlay"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content" />
+       </RelativeLayout>
     </LinearLayout>
 
 </LinearLayout>
