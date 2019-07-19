@@ -34,6 +34,11 @@ class Detector:
                 "thick_wheel_side",
                 "thin_rim_side",
                 "thin_wheel_side"
+            },
+            "906bfa52f5f1": {
+                "back_pink",
+                "brown_good",
+                "brown_bad"
             }
         }
         

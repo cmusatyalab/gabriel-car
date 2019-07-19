@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 import os
 from requests import get
+from decimal import Decimal
 
 import config
 import object_detection
@@ -17,7 +18,8 @@ resources = os.path.abspath("resources/images")
 video_url = "http://" + ip + ":9095/"
 stable_threshold = 20
 wheel_compare_threshold = 15
-
+dark_pixel_threshold = 0.5
+pink_gear_side_threshold = 0.5
 
 class FrameRecorder:
     def __init__(self, size):
@@ -97,6 +99,12 @@ class Task:
         self.detector = object_detection.Detector()
         self.frame_count = 0
 
+        self.surf = cv2.xfeatures2d.SURF_create()
+        self.image = None 
+
+    def get_image(self, image_frame):
+        self.image = image_frame
+
     def get_objects_by_categories(self, img, categories):
         return self.detector.detect_object(img, categories, self.frame_count)
 
@@ -121,81 +129,125 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "insert_back_green_washer_1"
-        elif self.current_state == "layout_wheels_rims_1":
-            inter = self.layout_wheels_rims(img, True)
+            self.current_state = "back_pink_gear_1"
+        elif self.current_state == "brown_gear_1":
+            inter = self.brown_gear_1(img)
             if inter["next"] is True:
-                self.current_state = "combine_wheel_rim_1"
-        elif self.current_state == "combine_wheel_rim_1":
-            inter = self.combine_wheel_rim(True)
-            if inter["next"] is True:
-                self.current_state = "layout_wheels_rims_2"
-        elif self.current_state == "layout_wheels_rims_2":
-            inter = self.layout_wheels_rims(img, False)
-            if inter["next"] is True:
-                self.current_state = "combine_wheel_rim_2"
-        elif self.current_state == "combine_wheel_rim_2":
-            inter = self.combine_wheel_rim(False)
-            if inter["next"] is True:
-                self.current_state = "axle_into_wheel_1"
-        elif self.current_state == "acquire_axle":
-            inter = self.acquire_axle_1(img)
-            if inter["next"] is True:
-                self.current_state = "axle_into_wheel_1"
-        elif self.current_state == "axle_into_wheel_1":
-            inter = self.axle_into_wheel_1(img)
-            if inter["next"] is True:
-                self.current_state = "acquire_black_frame_1"
-        elif self.current_state == "acquire_black_frame_1":
-            inter = self.acquire_black_frame_1(img)
-            if inter["next"] is True:
-                self.current_state = "insert_front_green_washer_1"
-        elif self.current_state == "insert_front_green_washer_1":
-            inter = self.insert_front_green_washer_1(img)
-            if inter["next"] is True:
-                self.current_state = "insert_front_gold_washer_1"
-        elif self.current_state == "insert_front_gold_washer_1":
-            inter = self.insert_front_gold_washer_1(img)
-            if inter["next"] is True:
-                self.current_state = "insert_pink_gear_1"
-        elif self.current_state == "insert_pink_gear_1":
-            inter = self.insert_pink_gear_1(img)
-            if inter["next"] is True:
-                self.current_state = "insert_axle_1"
-        elif self.current_state == "insert_axle_1":
-            inter = self.insert_axle_1(img)
-            if inter["next"] is True:
-                self.current_state = "insert_back_green_washer_1"
-        elif self.current_state == "insert_back_green_washer_1":
-            inter = self.insert_back_green_washer_1(img)
-            if inter["next"] is True:
-                self.current_state = "insert_back_gold_washer_1"
-        elif self.current_state == "insert_back_gold_washer_1":
-            inter = self.insert_back_gold_washer_1(img)
-            if inter["next"] is True:
-                self.current_state = "press_wheel_1"
-        elif self.current_state == "press_wheel_1":
-            inter = self.press_wheel_1(img)
-            if inter["next"] is True:
-                self.current_state = "check_front_wheel_assembly"
-        elif self.current_state == "check_front_wheel_assembly":
-            inter = self.check_front_wheel_assembly(img)
-            if inter["next"] is True:
-                self.current_state = "front_wheel_assembly_complete"
-        elif self.current_state == "front_wheel_assembly_complete":
-            inter = self.front_wheel_assembly_complete()
+                self.current_state = "back_pink_gear_1"
+        elif self.current_state == "back_pink_gear_1":
+            inter = self.back_pink_gear_1(img)
             if inter["next"] is True:
                 self.current_state = "nothing"
         elif self.current_state == "nothing":
             self.history = defaultdict(lambda: False)
             time.sleep(10)
             self.current_state = "start"
-efefef
         for field in inter.keys():
             if field != "next":
                 result[field] = inter[field]
 
         return [], result
+
+    def brown_gear_1(self, img):
+        out = defaultdict(lambda: None)
+        if self.history["brown_gear_1"] is False:
+            self.clear_states()
+            self.history["brown_gear_1"] = True
+            out["speech"] = "Please find the brown gear and place in bottom right slot with the nudge facing towards the middle of the black frame."
+            # out["image"] = read_image("brown-gear.jpg")
+            return out
+
+        gear = self.get_objects_by_categories(img,{"brown_good", "brown_bad"})
+        
+        if len(gear) == 1:
+            if self.frame_recs[0].add_and_check_stable(gear[0]):
+                if self.frame_recs[0].averaged_class() == "brown_good":
+                    out["next"] = True
+        else:
+            self.frame_recs[0].staged_clear()
+
+        return out
+    
+    def back_pink_gear_1(self, img):
+        out = defaultdict(lambda: None)
+        # if self.history["back_pink_gear_1"] is False:
+        #     self.clear_states()
+        #     self.history["back_pink_gear_1"] = True
+        #     out["speech"] = "Please find the pink gear and place in the slot on the left of the brown gear. Make sure the teeths are points away from the center of the black frame."
+        #     # out["image"] = read_image("back_pink_gear.jpg")
+        #     return out
+
+        gear = self.get_objects_by_categories(img,{"back_pink"})
+        
+        if len(gear) == 1:
+            if self.frame_recs[0].add_and_check_stable(gear[0]):
+                hold_image = self.image[int(gear[0]['dimensions'][1]):int(gear[0]['dimensions'][3]),int(gear[0]['dimensions'][0]):int(gear[0]['dimensions'][2])]
+                hold_image = cv2.cvtColor(hold_image, cv2.COLOR_RGB2GRAY)
+                
+                #resize
+                scale_percent = 400
+                width = int(hold_image.shape[1] * scale_percent / 100)
+                height = int(hold_image.shape[0] * scale_percent / 100)
+                dim = (width, height)
+                hold_image = cv2.resize(hold_image, dim, interpolation = cv2.INTER_AREA)
+
+                #cut black parts from the left
+                throw_out_cols_cap = 0 
+                for x in range(hold_image.shape[1]):
+                    white_pixels = 0
+                    for y in range(hold_image.shape[0]):
+                        if not check_dark_pixel(hold_image[y][x],dark_pixel_threshold):
+                            white_pixels += 1
+                    if float(white_pixels) / float(hold_image.shape[0]) > pink_gear_side_threshold:
+                        break
+                    else:
+                        throw_out_cols_cap = x 
+                hold_image = hold_image[0:hold_image.shape[0],throw_out_cols_cap:]
+
+                #cut black parts from the right
+                for x in reversed(range(hold_image.shape[1])):
+                    white_pixels = 0
+                    for y in reversed(range(hold_image.shape[0])):
+                        if not check_dark_pixel(hold_image[y][x],dark_pixel_threshold):
+                            white_pixels += 1
+                    if float(white_pixels) / float(hold_image.shape[0]) > pink_gear_side_threshold:
+                        break
+                    else:
+                        throw_out_cols_cap = x 
+                hold_image = hold_image[0:hold_image.shape[0],0:throw_out_cols_cap]
+
+                #count dark pixels for left and right side of the screen
+                width = hold_image.shape[1]
+                midpoint = width / 2
+
+                left_dark_pixels = 0
+                right_dark_pixels = 0
+                for x in range(hold_image.shape[1]):
+                    for y in range(hold_image.shape[0]):
+                        if x <= midpoint:
+                            if check_dark_pixel(hold_image[y][x],dark_pixel_threshold):
+                                left_dark_pixels += 1
+                        else:
+                            if check_dark_pixel(hold_image[y][x],dark_pixel_threshold):
+                                right_dark_pixels += 1
+                # if left_dark_pixels < right_dark_pixels:
+                #     print("teeth points right")
+                # else:
+                #     print("teeth points left")
+                # cv2.imshow("after",hold_image)
+                # cv2.waitKey(5000)
+                # cv2.destroyWindow("after")
+
+                if self.detect_teeth(keypoints_surf,midpoint) == "teeth points right":
+                    out["next"] = True
+                else:
+                    out["speech"] = "Please take the pink gear out and turn it around so the teeths are point away from the center of the black frame."
+
+
+        else:
+            self.frame_recs[0].staged_clear()
+
+        return out
 
     def layout_wheels_rims(self, img, first_pair):
         out = defaultdict(lambda: None)
@@ -644,4 +696,7 @@ def separate_left_right(objects):
         right = obj1
 
     return left, right
+
+def check_dark_pixel(pixel,threshold):
+    return True if pixel <= threshold * 255 else False
 
