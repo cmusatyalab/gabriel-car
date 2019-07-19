@@ -1,7 +1,6 @@
 import math
 import time
 from collections import defaultdict, deque
-import numpy as np
 import cv2
 import os
 from requests import get
@@ -17,6 +16,8 @@ resources = os.path.abspath("resources/images")
 video_url = "http://" + ip + ":9095/"
 stable_threshold = 20
 wheel_compare_threshold = 15
+dark_pixel_threshold = 0.5
+pink_gear_side_threshold = 0.5
 
 
 class FrameRecorder:
@@ -96,6 +97,11 @@ class Task:
 
         self.detector = object_detection.Detector()
         self.frame_count = 0
+
+        self.image = None
+
+    def get_image(self, image_frame):
+        self.image = image_frame
 
     def get_objects_by_categories(self, img, categories):
         return self.detector.detect_object(img, categories, self.frame_count)
@@ -547,25 +553,76 @@ class Task:
         if self.history["insert_pink_gear_back"] is False:
             self.clear_states()
             self.history["insert_pink_gear_back"] = True
-            out["speech"] = "Now, place the pink gear next to the brown gear as shown. The teeth should be facing out."
+            out["speech"] = "Now, place the pink gear next to the brown gear as shown. The teeth should be facing the brown gear."
             out["video"] = video_url + "pink_gear_2.mp4"
             return out
 
-        # bad_pink = self.get_objects_by_categories(img, {"back_pink_gear_bad"})
-        # if len(bad_pink) >= 1:
-        #     out["speech"] = "Make sure the gear is oriented correctly. The teeth should be facing out."
-        #     self.frame_recs[0].clear()
-        #     self.delay_flag = True
-        #     return out
+        gear = self.get_objects_by_categories(img, {"back_pink"})
 
-        good_pink = self.get_objects_by_categories(img, {"back_pink"})
-        if len(good_pink) == 1:
-            if self.frame_recs[0].add_and_check_stable(good_pink[0]) is True:
-                out["next"] = True
+        if len(gear) == 1:
+            if self.frame_recs[0].add_and_check_stable(gear[0]):
+                hold_image = self.image[int(gear[0]['dimensions'][1]):int(gear[0]['dimensions'][3]),
+                             int(gear[0]['dimensions'][0]):int(gear[0]['dimensions'][2])]
+                hold_image = cv2.cvtColor(hold_image, cv2.COLOR_RGB2GRAY)
+
+                # resize
+                scale_percent = 400
+                width = int(hold_image.shape[1] * scale_percent / 100)
+                height = int(hold_image.shape[0] * scale_percent / 100)
+                dim = (width, height)
+                hold_image = cv2.resize(hold_image, dim, interpolation=cv2.INTER_AREA)
+
+                # cut black parts from the left
+                throw_out_cols_cap = 0
+                for x in range(hold_image.shape[1]):
+                    white_pixels = 0
+                    for y in range(hold_image.shape[0]):
+                        if not check_dark_pixel(hold_image[y][x], dark_pixel_threshold):
+                            white_pixels += 1
+                    if float(white_pixels) / float(hold_image.shape[0]) > pink_gear_side_threshold:
+                        break
+                    else:
+                        throw_out_cols_cap = x
+                hold_image = hold_image[0:hold_image.shape[0], throw_out_cols_cap:]
+
+                # cut black parts from the right
+                for x in reversed(range(hold_image.shape[1])):
+                    white_pixels = 0
+                    for y in reversed(range(hold_image.shape[0])):
+                        if not check_dark_pixel(hold_image[y][x], dark_pixel_threshold):
+                            white_pixels += 1
+                    if float(white_pixels) / float(hold_image.shape[0]) > pink_gear_side_threshold:
+                        break
+                    else:
+                        throw_out_cols_cap = x
+                hold_image = hold_image[0:hold_image.shape[0], 0:throw_out_cols_cap]
+
+                # count dark pixels for left and right side of the screen
+                width = hold_image.shape[1]
+                midpoint = width / 2
+
+                left_dark_pixels = 0
+                right_dark_pixels = 0
+                for x in range(hold_image.shape[1]):
+                    for y in range(hold_image.shape[0]):
+                        if x <= midpoint:
+                            if check_dark_pixel(hold_image[y][x], dark_pixel_threshold):
+                                left_dark_pixels += 1
+                        else:
+                            if check_dark_pixel(hold_image[y][x], dark_pixel_threshold):
+                                right_dark_pixels += 1
+
+                if left_dark_pixels < right_dark_pixels:
+                    out["next"] = True
+                else:
+                    out["speech"] = "Please take the pink gear out and turn it around so the teeths are point away " \
+                                    "from the center of the black frame."
+
         else:
             self.frame_recs[0].staged_clear()
 
         return out
+
 
     def add_gear_axle(self, img):
         out = defaultdict(lambda: None)
@@ -728,4 +785,7 @@ def get_orientation(side_marker, horn):
         flipped = right_obj["class_name"] == "frame_horn"
 
     return side, flipped
+
+def check_dark_pixel(pixel,threshold):
+    return True if pixel <= threshold * 255 else False
 
