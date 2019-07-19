@@ -144,11 +144,7 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
         print("object detection result: %s" % [obj["class_name"] for obj in objects])
         LOG.info("object detection result: %s" % objects)
 
-        if config.VISUALIZE_ALL:
-            vis_objects = objects
-
-        img_object = util.vis_detections(img, objects)
-        rtn_data['image'] = b64encode(util.cv_image2raw_png(img_object))
+        rtn_data["viz_obj"] = json.dumps(objects)
 
         return json.dumps(rtn_data)
 
