@@ -23,13 +23,16 @@ class Detector:
                 "frame_marker_right",
                 "frame_horn"
             },
-            "a692bcd22538": {
+            "8a79c18a0006": {
                 "front_gear_good",
                 "front_gear_bad",
-                "back_gear_good",
-                "back_gear_bad_brown",
-                "back_gear_bad_pink",
-                "back_gear_bad_both",
+                "back_pink",
+                "pink_back",
+                "brown_good",
+                "brown_bad",
+                "gear_on_axle"
+            },
+            "f1440988bafa": {
                 "thick_rim_side",
                 "thick_wheel_side",
                 "thin_rim_side",
@@ -102,6 +105,7 @@ class Detector:
     def cleanup(self):
         if self.container is not None:
             self.container.kill()
+            self.container = None
 
 
 def tpod_request(img, url):
@@ -123,7 +127,7 @@ def tpod_request(img, url):
         if class_name not in by_class.keys():
             by_class[class_name] = []
 
-        norm = obj_list_form[1]
+        norm = obj_list_form[1][:]
         norm[0] /= img.shape[1]
         norm[2] /= img.shape[1]
         norm[1] /= img.shape[0]
