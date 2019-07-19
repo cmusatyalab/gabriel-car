@@ -600,9 +600,9 @@ class Task:
             if len(back_pink_gear) == 1 and len(back_brown_gear) == 1:
                 back_pink_check = self.frame_recs[3].add_and_check_stable(back_pink_gear[0])
                 back_brown_check = self.frame_recs[4].add_and_check_stable(back_brown_gear[0])
-                if right_check and back_pink_check is True and back_brown_check is True and
+                if right_check and back_pink_check is True and back_brown_check is True and \
                     check_gear_axle_back(self.frame_recs[1].averaged_bbox(), self.frame_recs[3].averaged_bbox(),
-                                         self.frame_recs[4].averaged_bbox())
+                                         self.frame_recs[4].averaged_bbox()):
                     back_check = True
             else:
                 self.frame_recs[3].staged_clear()
