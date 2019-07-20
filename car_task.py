@@ -122,7 +122,7 @@ class Task:
         # the start, branch into desired instruction
         if self.current_state == "start":
             # self.current_state = "layout_wheels_rims_1"
-            self.current_state = "insert_green_washer_1"
+            self.current_state = "final_check"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -214,7 +214,8 @@ class Task:
         elif self.current_state == "final_check":
             inter = self.final_check(img)
             if inter["next"] is True:
-                self.current_state = "complete"
+                self.current_state = "nothing"
+                # self.current_state = "complete"
         elif self.current_state == "complete":
             inter = self.complete()
             if inter["next"] is True:
@@ -574,29 +575,77 @@ class Task:
         return out
 
     def final_check(self, img):
-        # TODO
         out = defaultdict(lambda: None)
-        if self.history["final_check"] is False:
+        if self.history["final_check_1"] is False:
             self.clear_states()
-            self.history["final_check"] = True
+            self.history["final_check_1"] = True
             out["speech"] = "Please show me what you have, like this."
             out["image"] = read_image("final_check.jpg")
             return out
+        elif self.history["final_check_2"] is False:
+            wheels = self.get_objects_by_categories(img, {"thin_wheel_side", "thick_wheel_side"})
 
-        wheels = self.get_objects_by_categories(img, {"thin_wheel_side", "thick_wheel_side"})
+            if len(wheels) == 4:
+                wheel_1 = self.frame_recs[0].add_and_check_stable(wheels[0])
+                wheel_2 = self.frame_recs[1].add_and_check_stable(wheels[1])
+                wheel_3 = self.frame_recs[2].add_and_check_stable(wheels[2])
+                wheel_4 = self.frame_recs[3].add_and_check_stable(wheels[3])
 
-        if len(wheels) == 2:
-            top, bottom = separate_two(wheels, False)
-            top_check = self.frame_recs[0].add_and_check_stable(top)
-            bottom_check = self.frame_recs[1].add_and_check_stable(bottom)
+                if self.frame_recs[0].add_and_check_stable(wheels[0]) and self.frame_recs[1].add_and_check_stable(wheels[1]) and self.frame_recs[2].add_and_check_stable(wheels[2]) and self.frame_recs[3].add_and_check_stable(wheels[3]): 
+                    thin_wheels = []
+                    thick_wheels = []
+                    for i in range(4):
+                        if self.frame_recs[i].averaged_class() == "thin_wheel_side":
+                            thin_wheels.append(self.frame_recs[i].averaged_bbox())
+                        else:
+                            thick_wheels.append(self.frame_recs[i].averaged_bbox())
+                    
+                    verify_1 = 2
+                    for i in range(len(thin_wheels)):
+                        verify_2 = 2
+                        for j in range(len(thick_wheels)):
+                            if thin_wheels[i][0] < thick_wheels[i][0]:
+                                verify_2 -= 1
+                        if verify_2 == 0:
+                            verify_1 -= 1
+                    
+                    if verify_1 == 0:
+                        self.history["final_check_2"] = True
+                        out["speech"] = "Please hold still so we can check the gears."
+                        self.clear_states()
+            else:
+                self.frame_recs[0].staged_clear()
+                self.frame_recs[1].staged_clear()
+                self.frame_recs[2].staged_clear()
+                self.frame_recs[3].staged_clear()
 
-            if top_check is True and bottom_check is True:
-                var = compare(self.frame_recs[0].averaged_bbox(), self.frame_recs[1].averaged_bbox(), wheel_compare_threshold)
-                if var == "same":
-                    out["next"] = True
-        else:
-            self.frame_recs[0].staged_clear()
-            self.frame_recs[1].staged_clear()
+        elif self.history["final_check_3"] is False:
+            gears = self.get_objects_by_categories(img, {"front_gear_good", "front_gear_bad", "back_pink", "brown_bad", "brown_good", "pink_back"})
+            
+            if len(gears) == 3:
+                if self.frame_recs[0].add_and_check_stable(gears[0]) and self.frame_recs[1].add_and_check_stable(gears[1]) and self.frame_recs[2].add_and_check_stable(gears[2]):
+                    brown_gear = []
+                    pink_gear = []
+
+                    for i in range(3):
+                        if self.frame_recs[i].averaged_class() == "brown_good":
+                            brown_gear.append(self.frame_recs[i].averaged_bbox())
+                        elif self.frame_recs[i].averaged_class() == "pink_back":
+                            pink_gear.append(self.frame_recs[i].averaged_bbox())
+                        elif self.frame_recs[i].averaged_class() == "brown_bad":
+                            out["speech"] = "Brown gear is in the wrong orientation. Please fix it."
+                            return out
+                        elif self.frame_recs[i].averaged_class() == "front_gear_bad":
+                            out["speech"] = "Left pink gear is in the wrong orientation. Please fix it."
+                            return out
+                    if brown_gear[0][1] < pink_gear[0][1]:
+                        out["next"] = True
+                        out["speech"] = "final check done"
+            else:
+                self.frame_recs[0].staged_clear()
+                self.frame_recs[1].staged_clear()
+                self.frame_recs[2].staged_clear()
+
 
         return out
 
