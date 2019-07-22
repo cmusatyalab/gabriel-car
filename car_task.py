@@ -203,13 +203,13 @@ class Task:
         elif self.current_state == "insert_gold_washer_3":
             inter = self.insert_gold_washer(img, 3)
             if inter["next"] is True:
-                self.current_state = "insert_brown_gear"
-        elif self.current_state == "insert_brown_gear":
-            inter = self.insert_brown_gear(img)
-            if inter["next"] is True:
                 self.current_state = "insert_pink_gear_back"
         elif self.current_state == "insert_pink_gear_back":
             inter = self.insert_pink_gear_back(img)
+            if inter["next"] is True:
+                self.current_state = "insert_brown_gear"
+        elif self.current_state == "insert_brown_gear":
+            inter = self.insert_brown_gear(img)
             if inter["next"] is True:
                 self.current_state = "insert_axle_2"
         elif self.current_state == "insert_axle_2":
