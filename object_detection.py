@@ -132,7 +132,7 @@ def tpod_request(img, url):
         if class_name not in by_class.keys():
             by_class[class_name] = []
 
-        norm = obj_list_form[1]
+        norm = obj_list_form[1][:]
         norm[0] /= img.shape[1]
         norm[2] /= img.shape[1]
         norm[1] /= img.shape[0]

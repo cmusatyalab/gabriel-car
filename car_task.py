@@ -17,7 +17,8 @@ resources = os.path.abspath("resources/images")
 video_url = "http://" + ip + ":9095/"
 stable_threshold = 20
 wheel_compare_threshold = 15
-
+dark_pixel_threshold = 0.3
+pink_gear_side_threshold = 0.5
 
 class FrameRecorder:
     def __init__(self, size):
@@ -96,6 +97,10 @@ class Task:
 
         self.detector = object_detection.Detector()
         self.frame_count = 0
+        self.image = None 
+
+    def get_image(self, image_frame):
+        self.image = image_frame
 
     def get_objects_by_categories(self, img, categories):
         return self.detector.detect_object(img, categories, self.frame_count)
@@ -121,8 +126,8 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            # self.current_state = "layout_wheels_rims_1"
-            self.current_state = "final_check"
+            self.current_state = "insert_pink_gear_back"
+            # self.current_state = "final_check"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -502,14 +507,14 @@ class Task:
             out["video"] = video_url + "brown_gear.mp4"
             return out
 
-        bad_brown = self.get_objects_by_categories(img, {"brown_gear_bad"})
+        bad_brown = self.get_objects_by_categories(img, {"brown_bad"})
         if len(bad_brown) >= 1:
             out["speech"] = "Make sure the gear is oriented correctly. The part that sticks out should be facing the inside of the frame."
             self.frame_recs[0].clear()
             self.delay_flag = True
             return out
 
-        good_brown = self.get_objects_by_categories(img, {"brown_gear_good"})
+        good_brown = self.get_objects_by_categories(img, {"brown_good"})
         if len(good_brown) == 1:
             if self.frame_recs[0].add_and_check_stable(good_brown[0]) is True:
                 out["next"] = True
@@ -520,24 +525,105 @@ class Task:
 
     def insert_pink_gear_back(self, img):
         out = defaultdict(lambda: None)
-        if self.history["insert_pink_gear_back"] is False:
+        if self.history["back_pink_gear_1"] is False:
             self.clear_states()
-            self.history["insert_pink_gear_back"] = True
-            out["speech"] = "Now, place the pink gear next to the brown gear as shown. The teeth should be facing out."
-            out["video"] = video_url + "brown_gear.mp4"
+            self.history["back_pink_gear_1"] = True
+            out["speech"] = "Please find the pink gear and place in the slot on the left of the brown gear. Make sure the teeths are points away from the center of the black frame."
+            # out["image"] = read_image("back_pink_gear.jpg")
             return out
 
-        bad_pink = self.get_objects_by_categories(img, {"back_pink_gear_bad"})
-        if len(bad_pink) >= 1:
-            out["speech"] = "Make sure the gear is oriented correctly. The teeth should be facing out."
-            self.frame_recs[0].clear()
-            self.delay_flag = True
-            return out
+        gear = self.get_objects_by_categories(img,{"back_pink","pink_back"})
+        
+        if len(gear) == 1:
+            if self.frame_recs[0].add_and_check_stable(gear[0]):
+                img = img[int(gear[0]['dimensions'][1]):int(gear[0]['dimensions'][3]),int(gear[0]['dimensions'][0]):int(gear[0]['dimensions'][2])]
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+                
+                #resize
+                scale_percent = 400
+                width = int(img.shape[1] * scale_percent / 100)
+                height = int(img.shape[0] * scale_percent / 100)
+                dim = (width, height)
+                img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 
-        good_pink = self.get_objects_by_categories(img, {"back_pink_gear_good"})
-        if len(good_pink) == 1:
-            if self.frame_recs[0].add_and_check_stable(good_pink[0]) is True:
-                out["next"] = True
+                # #cut black parts from the left
+                # throw_out_cols_cap = 0 
+                # for x in range(img.shape[1]):
+                #     white_pixels = 0
+                #     for y in range(img.shape[0]):
+                #         if not check_dark_pixel(img[y][x],dark_pixel_threshold):
+                #             white_pixels += 1
+                #     if float(white_pixels) / float(img.shape[0]) > pink_gear_side_threshold:
+                #         break
+                #     else:
+                #         throw_out_cols_cap = x 
+                # img = img[0:img.shape[0],throw_out_cols_cap:]
+
+                # #cut black parts from the right
+                # for x in reversed(range(img.shape[1])):
+                #     white_pixels = 0
+                #     for y in reversed(range(img.shape[0])):
+                #         if not check_dark_pixel(img[y][x],dark_pixel_threshold):
+                #             white_pixels += 1
+                #     if float(white_pixels) / float(img.shape[0]) > pink_gear_side_threshold:
+                #         break
+                #     else:
+                #         throw_out_cols_cap = x 
+                # img = img[0:img.shape[0],0:throw_out_cols_cap]
+
+                #cut black parts from the up
+                throw_out_cols_cap = 0 
+                for y in range(img.shape[0]):
+                    white_pixels = 0
+                    for x in range(img.shape[1]):
+                        if not check_dark_pixel(img[y][x],dark_pixel_threshold):
+                            white_pixels += 1
+                    if float(white_pixels) / float(img.shape[1]) > pink_gear_side_threshold:
+                        break
+                    else:
+                        throw_out_cols_cap = y
+                img = img[throw_out_cols_cap:,0:img.shape[1]]
+
+                #cut black parts from the down
+                for y in reversed(range(img.shape[0])):
+                    white_pixels = 0
+                    for x in reversed(range(img.shape[1])):
+                        if not check_dark_pixel(img[y][x],dark_pixel_threshold):
+                            white_pixels += 1
+                    if float(white_pixels) / float(img.shape[1]) > pink_gear_side_threshold:
+                        break
+                    else:
+                        throw_out_cols_cap = y
+                img = img[0:throw_out_cols_cap,0:img.shape[1]]
+
+                #count dark pixels for left and right side of the screen
+                height = img.shape[0]
+                midpoint = height / 2
+
+                up_dark_pixels = 0
+                down_dark_pixels = 0
+                for x in range(img.shape[1]):
+                    for y in range(img.shape[0]):
+                        if y <= midpoint:
+                            if check_dark_pixel(img[y][x],dark_pixel_threshold):
+                                up_dark_pixels += 1
+                        else:
+                            if check_dark_pixel(img[y][x],dark_pixel_threshold):
+                                down_dark_pixels += 1
+                # if left_dark_pixels < right_dark_pixels:
+                #     print("teeth points right")
+                # else:
+                #     print("teeth points left")
+                # cv2.imshow("after",hold_image)
+                # cv2.waitKey(5000)
+                # cv2.destroyWindow("after")
+                if up_dark_pixels > down_dark_pixels:
+                    # out["next"] = True
+                    out["speech"] = "Great! you're done"
+                else:
+                    out["speech"] = "Please take the pink gear out and turn it around so the teeths are point away from the center of the black frame."
+
+
         else:
             self.frame_recs[0].staged_clear()
 
@@ -554,8 +640,8 @@ class Task:
 
         gear_on_axle = self.get_objects_by_categories(img, {"gear_on_axle"})
         front_pink_gear = self.get_objects_by_categories(img, {"front_gear_good"})
-        back_pink_gear = self.get_objects_by_categories(img, {"back_pink_gear_good"})
-        back_brown_gear = self.get_objects_by_categories(img, {"back_brown_gear_good"})
+        back_pink_gear = self.get_objects_by_categories(img, {"back_pink"})
+        back_brown_gear = self.get_objects_by_categories(img, {"brown_good"})
 
         if len(gear_on_axle) == 2 and len(front_pink_gear) == 1 and len(back_pink_gear) == 1 and len(back_brown_gear) == 1:
             left, right = separate_two(gear_on_axle, True)
@@ -726,4 +812,7 @@ def get_orientation(side_marker, horn):
         flipped = right_obj["class_name"] == "frame_horn"
 
     return side, flipped
+
+def check_dark_pixel(pixel,threshold):
+    return True if pixel <= threshold * 255 else False
 

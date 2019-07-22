@@ -119,7 +119,7 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
         LOG.info("%s\n" % header)
 
         rtn_data = {}
-
+ 
         if self.first_n_cnt < 10:
             header['status'] = 'success'
             # rtn_data = self.gen_output(header, None, None)
@@ -132,6 +132,7 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
             img = self.rotate_90(img)
         if config.RESIZE_IMAGE:
             img = cv2.resize(img, (720, 480))
+        self.task.get_image(img)
 
         viz_objects, instruction = self.task.get_instruction(img, header)
         header['status'] = 'success'
