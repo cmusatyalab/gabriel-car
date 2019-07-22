@@ -24,7 +24,6 @@ from __future__ import print_function
 
 import json
 import multiprocessing
-import os
 import pprint
 import Queue
 import struct
@@ -38,9 +37,7 @@ import cv2
 import gabriel
 import gabriel.proxy
 import car_task
-import ribloc_task
 import util
-import object_detection
 
 
 LOG = gabriel.logging.getLogger(__name__)
