@@ -126,7 +126,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "insert_axle_2"
+            self.current_state = "layout_wheels_rims_1"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -384,21 +384,11 @@ class Task:
             return out
 
         frame_marker = self.get_objects_by_categories(img, {"frame_marker_right", "frame_marker_left"})
-        # horn = self.get_objects_by_categories(img, {"frame_horn"})
-
-        # if len(frame_marker) != 1 and len(horn) != 1:
-        #     self.all_staged_clear()
-        #     return out
-
+        
         marker_check = False
         if len(frame_marker) == 1:
             if self.frame_recs[0].add_and_check_stable(frame_marker[0]):
                 marker_check = True
-
-        # horn_check = False
-        # if len(horn) == 1:
-        #     if self.frame_recs[1].add_and_check_stable(horn[0]):
-        #         horn_check = True
 
         if marker_check is True:
             out["next"] = True
