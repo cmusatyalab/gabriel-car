@@ -721,7 +721,7 @@ class Task:
         if self.history["final_check_1"] is False:
             self.clear_states()
             self.history["final_check_1"] = True
-            out["speech"] = "Please show me what you have, like this."
+            out["speech"] = "Let me do a final check on everything. Please show me what you have, like this."
             out["image"] = read_image("final_check.jpg")
             return out
         elif self.history["final_check_2"] is False:
@@ -733,7 +733,7 @@ class Task:
                 wheel_3 = self.frame_recs[2].add_and_check_stable(wheels[2])
                 wheel_4 = self.frame_recs[3].add_and_check_stable(wheels[3])
 
-                if self.frame_recs[0].add_and_check_stable(wheels[0]) and self.frame_recs[1].add_and_check_stable(wheels[1]) and self.frame_recs[2].add_and_check_stable(wheels[2]) and self.frame_recs[3].add_and_check_stable(wheels[3]): 
+                if wheel_1 and wheel_2 and wheel_3 and wheel_4:
                     thin_wheels = []
                     thick_wheels = []
                     for i in range(4):
@@ -753,13 +753,10 @@ class Task:
                     
                     if verify_1 == 0:
                         self.history["final_check_2"] = True
-                        out["speech"] = "Please hold still so we can check the gears."
+                        out["speech"] = "The wheels look good! Please keep the camera still for a little longer. Now I'm checking the gears."
                         self.clear_states()
             else:
-                self.frame_recs[0].staged_clear()
-                self.frame_recs[1].staged_clear()
-                self.frame_recs[2].staged_clear()
-                self.frame_recs[3].staged_clear()
+                self.all_staged_clear()
 
         elif self.history["final_check_3"] is False:
             gears = self.get_objects_by_categories(img, {"front_gear_good", "front_gear_bad", "back_pink", "brown_bad", "brown_good", "pink_back"})
@@ -795,7 +792,7 @@ class Task:
         out = defaultdict(lambda: None)
         if self.history["complete"] is False:
             self.history["complete"] = True
-            out["speech"] = "Great job! We've finished assembling the wheels and gear train!"
+            out["speech"] = "Everything looks good. Great job! We've finished assembling the wheels and gear train!"
             out["next"] = True
 
         return out
@@ -910,4 +907,3 @@ def get_orientation(side_marker, horn):
 
 def check_dark_pixel(pixel,threshold):
     return True if pixel <= threshold * 255 else False
-
