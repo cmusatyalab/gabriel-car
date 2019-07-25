@@ -126,8 +126,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "add_gear_axle"
-            # self.current_state = "final_check"
+            self.current_state = "press_wheel_2"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -529,8 +528,15 @@ class Task:
 
         wheels = self.get_objects_by_categories(img, {"%s_wheel_side" % good_str})
 
-        if len(wheels) == 2:
-            if self.frame_recs[0].add_and_check_stable(wheels[0]) and self.frame_recs[1].add_and_check_stable(wheels[1]):
+        if len(wheels) == 2 or len(wheels) == 4:
+            if len(wheels) == 2:
+                check_wheels = wheels
+            else:
+                four_wheels = separate_four_rect(wheels)
+                indices = (0, 2) if count == 1 else (1, 3)
+                check_wheels = [four_wheels[indices[0]], four_wheels[indices[1]]]
+            if self.frame_recs[0].add_and_check_stable(check_wheels[0]) and \
+                self.frame_recs[1].add_and_check_stable(check_wheels[1]):
                 out["next"] = True
         else:
             self.frame_recs[0].staged_clear()
@@ -657,10 +663,13 @@ class Task:
         front_check = False
         back_check = False
 
-        if len(gear_on_axle) == 2:
-            left, right = separate_two(gear_on_axle, True)
+        if 0 < len(gear_on_axle) < 3:
+            if len(gear_on_axle) == 2:
+                left, right = separate_two(gear_on_axle, True)
+            else:
+                left = gear_on_axle[0]
             left_check = self.frame_recs[0].add_and_check_stable(left)
-            right_check = self.frame_recs[1].add_and_check_stable(right)
+            # right_check = self.frame_recs[1].add_and_check_stable(right)
 
             if len(front_pink_gear) == 1:
                 front_gear_check = self.frame_recs[2].add_and_check_stable(left)
@@ -812,6 +821,36 @@ def separate_two(objects, left_right=True):
         two = obj1
 
     return one, two
+
+def separate_four_rect(objects):
+    pairwise_x_dist = {}
+    pairwise_y_dist = {}
+    for i in range(len(objects)):
+        for j in range(i+1, len(objects)):
+            i_center = bbox_center(objects[i]["dimensions"])
+            j_center = bbox_center(objects[j]["dimensions"])
+
+            x_dist = abs(i_center[0] - j_center[0])
+            y_dist = abs(i_center[1] - j_center[1])
+
+            pairwise_x_dist[x_dist] = (objects[i], objects[j])
+            pairwise_y_dist[y_dist] = (objects[i], objects[j])
+
+    sorted_y = sorted(list(pairwise_y_dist.keys()))
+    num_rows = 2
+
+    rows = [pairwise_y_dist[sorted_y[i]] for i in range(num_rows)]
+    for ro in rows:
+        ro.sort(key=lambda obj: bbox_center(obj["dimensions"][0]))  # sort values in rows by x coord
+    rows.sort(key=lambda r: bbox_center(r[0]["dimensions"])[1])  # sort rows by first value's y coord
+
+    top_left = rows[0][0]
+    top_right = rows[0][1]
+    bottom_left = rows[1][0]
+    bottom_right = rows[1][1]
+
+    return top_left, top_right, bottom_left, bottom_right
+
 
 def bbox_center(dims):
     return abs(dims[2] - dims[0])/2 + dims[0], abs(dims[3] - dims[1])/2 + dims[1]
