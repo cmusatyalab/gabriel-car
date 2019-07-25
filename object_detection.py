@@ -171,6 +171,10 @@ def group_class_names(name):
         return "rim"
     elif name in {"hole_green", "hole_gold"}:
         return "hole_filled"
+    elif name in {"front_gear_bad", "front_gear_good"}:
+        return "front_gear"
+    elif name in {"brown_bad", "brown_good"}:
+        return "brown_gear"
 
     return name
 
