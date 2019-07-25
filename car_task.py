@@ -126,8 +126,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "insert_pink_gear_back"
-            # self.current_state = "final_check"
+            self.current_state = "final_check"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -209,7 +208,7 @@ class Task:
             if inter["next"] is True:
                 self.current_state = "insert_brown_gear"
         elif self.current_state == "insert_brown_gear":
-            inter = self.insert_brown_gear(img)
+            inter = self.insert_brown_gear_back(img)
             if inter["next"] is True:
                 self.current_state = "insert_axle_2"
         elif self.current_state == "insert_axle_2":
@@ -235,8 +234,7 @@ class Task:
         elif self.current_state == "final_check":
             inter = self.final_check(img)
             if inter["next"] is True:
-                self.current_state = "nothing"
-                # self.current_state = "complete"
+                self.current_state = "complete"
         elif self.current_state == "complete":
             inter = self.complete()
             if inter["next"] is True:
@@ -272,28 +270,35 @@ class Task:
         if len(tires) == 2 and len(rims) == 2:
             left_tire, right_tire = separate_two(tires)
             left_rim, right_rim = separate_two(rims)
-            if self.frame_recs[0].add_and_check_stable(left_tire) and self.frame_recs[1].add_and_check_stable(right_tire) and self.frame_recs[2].add_and_check_stable(left_rim) and self.frame_recs[3].add_and_check_stable(right_rim): 
-                if self.frame_recs[0].averaged_bbox()[1] > self.frame_recs[2].averaged_bbox()[1] and self.frame_recs[1].averaged_bbox()[1] > self.frame_recs[3].averaged_bbox()[1]:
-                    rim_diff = compare(self.frame_recs[2].averaged_bbox(),self.frame_recs[3].averaged_bbox(),wheel_compare_threshold)
 
-                    if self.frame_recs[0].averaged_class() == "thick_wheel_side" and self.frame_recs[1].averaged_class() == "thin_wheel_side" and self.frame_recs[2].averaged_class() == "thick_rim_side" and self.frame_recs[3].averaged_class() == "thin_rim_side":
+            if self.frame_recs[0].add_and_check_stable(left_tire) and self.frame_recs[1].add_and_check_stable(right_tire) and self.frame_recs[2].add_and_check_stable(left_rim) and self.frame_recs[3].add_and_check_stable(right_rim):
+                left_tire = self.frame_recs[0]
+                right_tire = self.frame_recs[1]
+                left_rim = self.frame_recs[2]
+                right_rim = self.frame_recs[3]
+                if left_tire.averaged_bbox()[1] > left_rim.averaged_bbox()[1] and right_tire.averaged_bbox()[1] > right_rim.averaged_bbox()[1]:
+                    rim_diff = compare(left_rim.averaged_bbox(),right_rim.averaged_bbox(),wheel_compare_threshold)
+
+                    if left_tire.averaged_class() == "thick_wheel_side" and right_tire.averaged_class() == "thin_wheel_side" and\
+                    left_rim.averaged_class() == "thick_rim_side" and right_rim.averaged_class() == "thin_rim_side":
                         out['next'] = True
-                    elif self.frame_recs[0].averaged_class() != "thick_wheel_side":
+                    elif (left_tire.averaged_class() == "thin_wheel_side" and right_tire.averaged_class() == "thick_wheel_side"):
+                        out["speech"] = "Please switch the positions of the tires."
+                    elif left_tire.averaged_class() != "thick_wheel_side":
                         out["speech"] = "Please switch out the left tire with a bigger tire."
-                    elif self.frame_recs[1].averaged_class() != "thin_wheel_side":
+                    elif right_tire.averaged_class() != "thin_wheel_side":
                         out["speech"] = "Please switch out the right tire with a smaller tire."
                     elif rim_diff == "second":
                         out["speech"] = "Please switch the positions of the rims."
                     elif rim_diff == "same":
-                        # out["speech"] = "Please switch one of the rims with a different sized one."
-                        if self.frame_recs[2].averaged_class() != "thick_rim_side":
+                        if left_rim.averaged_class() != "thick_rim_side":
                             out["speech"] = "Please switch out the left rim with a bigger rim."
-                        elif self.frame_recs[3].averaged_class() != "thin_rim_side":
+                        elif right_rim.averaged_class() != "thin_rim_side":
                             out["speech"] = "Please switch out the right rim with a smaller rim."
 
-                elif self.frame_recs[0].averaged_bbox()[1] > self.frame_recs[2].averaged_bbox()[1] and self.frame_recs[1].averaged_bbox()[1] < self.frame_recs[3].averaged_bbox()[1]:
+                elif left_tire.averaged_bbox()[1] > left_rim.averaged_bbox()[1] and right_tire.averaged_bbox()[1] < right_rim.averaged_bbox()[1]:
                     out['speech'] = "The orientation of tire and rim on the right is wrong. Please switch their positions"
-                elif self.frame_recs[0].averaged_bbox()[1] < self.frame_recs[2].averaged_bbox()[1] and self.frame_recs[1].averaged_bbox()[1] > self.frame_recs[3].averaged_bbox()[1]:
+                elif left_tire.averaged_bbox()[1] < left_rim.averaged_bbox()[1] and right_tire.averaged_bbox()[1] > right_rim.averaged_bbox()[1]:
                     out["speech"] = "The orientation of tire and rim on the left is wrong. Please switch their positions"
                 else:
                     out["speech"] = "The orientation of tire and rim on the left and the right is wrong. Please switch the positions of the tire and rim on the left and then switch the positions of the tire and rim on the right."
@@ -524,13 +529,17 @@ class Task:
             out["video"] = video_url + name + ".mp4"
             return out
 
-        wheels = self.get_objects_by_categories(img, {"%s_wheel_side" % good_str})
-
+        wheels = self.get_objects_by_categories(img, {"thin_wheel_side", "thick_wheel_side"})
         if len(wheels) == 2:
             if self.frame_recs[0].add_and_check_stable(wheels[0]) and self.frame_recs[1].add_and_check_stable(wheels[1]):
-                out["next"] = True
+                if self.frame_recs[0].averaged_class() != self.frame_recs[1].averaged_class():
+                    correct_str = "thin" if good_str == "thick" else "thick"
+                    out["speech"] = "You pressed the %s wheel. Please redo and press the %s wheel." % (correct_str,good_str)
+                else:
+                    out["next"] = True
         else:
             self.frame_recs[0].staged_clear()
+            self.frame_recs[1].staged_clear()
 
         return out
 
@@ -564,8 +573,8 @@ class Task:
         if self.history["back_pink_gear_1"] is False:
             self.clear_states()
             self.history["back_pink_gear_1"] = True
-            out["speech"] = "Please find the pink gear and place in the slot on the left of the brown gear. Make sure the teeths are points away from the center of the black frame."
-            # out["image"] = read_image("back_pink_gear.jpg")
+            out["speech"] = "Please find the pink gear and place in the slot shown in the picture. Make sure the teeths are points away from the center of the black frame."
+            out["image"] = read_image("back_pink_gear.jpg")
             return out
 
         gear = self.get_objects_by_categories(img,{"back_pink","pink_back"})
@@ -646,25 +655,37 @@ class Task:
                         else:
                             if check_dark_pixel(img[y][x],dark_pixel_threshold):
                                 down_dark_pixels += 1
-                # if left_dark_pixels < right_dark_pixels:
-                #     print("teeth points right")
-                # else:
-                #     print("teeth points left")
-                # cv2.imshow("after",hold_image)
-                # cv2.waitKey(5000)
-                # cv2.destroyWindow("after")
+
                 if up_dark_pixels > down_dark_pixels:
-                    # out["next"] = True
+                    out["next"] = True
                     out["speech"] = "Great! you're done"
                 else:
                     out["speech"] = "Please take the pink gear out and turn it around so the teeths are point away from the center of the black frame."
-
-
         else:
             self.frame_recs[0].staged_clear()
 
         return out
 
+    def insert_brown_gear_back(self, img):
+        out = defaultdict(lambda: None)
+        if self.history["insert_brown_gear_back"] is False:
+            self.clear_states()
+            self.history["insert_brown_gear_back"] = True
+            out["speech"] = "Find the brown gear and place it in the slot shown in the picture. Make sure the nudge on the brown gear is points to the center of the black frame."
+            out["image"] = read_image("brown_gear.jpg")
+            return out
+        
+        brown_gear = self.get_objects_by_categories(img, {"brown_good","brown_bad"})
+
+        if len(brown_gear) == 1:
+            if self.frame_recs[0].add_and_check_stable(brown_gear[0]):
+                if self.frame_recs[0].averaged_class() != "brown_good":
+                    out["speech"] = "Please make sure the nudge on the brown gear is points to the center of the black frame."
+                else:
+                    out["next"] = True
+        else:
+            self.frame_recs[0].staged_clear()
+        return out
 
     def add_gear_axle(self, img):
         out = defaultdict(lambda: None)
