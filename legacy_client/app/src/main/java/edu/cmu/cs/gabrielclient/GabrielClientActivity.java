@@ -87,6 +87,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
     private SurfaceView overlayPreview = null;
     private Canvas canvas = null;
     private Paint paint = new Paint();
+    private int canvas_count = 0;
 
     Gson gson = new Gson();
 
@@ -379,6 +380,17 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
                 Camera.Parameters parameters = mCamera.getParameters();
                 if (videoStreamingThread != null){
                     videoStreamingThread.push(frame, parameters);
+
+                    if (canvas_count < 5) {
+                        canvas_count ++;
+                    } else {
+                        canvas = overlayHolder.lockCanvas();
+                        if (canvas != null) {
+                            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+                            overlayHolder.unlockCanvasAndPost(canvas);
+                            canvas_count = 0;
+                        }
+                    }
                 }
             }
             mCamera.addCallbackBuffer(frame);
@@ -601,18 +613,19 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
                 });
                 videoView.start();
             }
+
             if (msg.what == NetworkProtocol.NETWORK_RET_VIZ_OBJ) {
                 canvas = overlayHolder.lockCanvas();
                 if (canvas != null) {
+                    canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
                     Type fooType = new TypeToken<List<VizObj>>() {}.getType();
                     List<VizObj> objs = gson.fromJson((String) msg.obj, fooType);
-                    canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
                     for (VizObj obj : objs) {
                         drawVizObj(obj);
                     }
-
                     overlayHolder.unlockCanvasAndPost(canvas);
+                    canvas_count = 0;
                 }
             }
             if (msg.what == NetworkProtocol.NETWORK_RET_DONE) {
