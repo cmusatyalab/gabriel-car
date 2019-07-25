@@ -248,7 +248,10 @@ class Task:
             if field != "next":
                 result[field] = inter[field]
 
-        return self.detector.all_detected_objects(), result
+        exclude = {"frame_marker_left", "frame_marker_right", "frame_horn"}
+        viz_objects = [obj for obj in self.detector.all_detected_objects() if obj["class_name"] not in exclude]
+
+        return viz_objects, result
 
     def layout_wheels_rims(self, img, count):
         name = "layout_wheels_rims_%s" % count
