@@ -23,15 +23,6 @@ class Detector:
                 "frame_marker_right",
                 "frame_horn"
             },
-            "8a79c18a0006": {
-                "front_gear_good",
-                "front_gear_bad",
-                "back_pink",
-                "pink_back",
-                "brown_good",
-                "brown_bad",
-                "gear_on_axle"
-            },
             "f1440988bafa": {
                 "thick_rim_side",
                 "thick_wheel_side",

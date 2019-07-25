@@ -492,7 +492,7 @@ class Task:
         if self.history[name] is False:
             self.clear_states()
             self.history[name] = True
-            out["speech"] = "Great, now insert the axle through the washers and the pink gear."
+            out["speech"] = "Great, now insert the axle through the washers and the pink gear. Then lay the black frame down."
             out["video"] = video_url + name + ".mp4"
             return out
 
@@ -505,10 +505,13 @@ class Task:
         if len(good) == 1 and 0 < len(axles) < 3:
             good_check = self.frame_recs[1].add_and_check_stable(good[0])
 
-            if len(axles) == 2:
+            if count == 1 and len(axles) == 1:
+                ax = axles[0]
+            elif count == 2 and len(axles) == 2:
                 _, ax = separate_two(axles, True)
             else:
-                ax = axles[0]
+                self.all_staged_clear()
+                return out
             axle_check = self.frame_recs[2].add_and_check_stable(ax)
             if good_check and axle_check:
                 out["next"] = True
@@ -591,30 +594,6 @@ class Task:
                 dim = (width, height)
                 img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 
-                # #cut black parts from the left
-                # throw_out_cols_cap = 0 
-                # for x in range(img.shape[1]):
-                #     white_pixels = 0
-                #     for y in range(img.shape[0]):
-                #         if not check_dark_pixel(img[y][x],dark_pixel_threshold):
-                #             white_pixels += 1
-                #     if float(white_pixels) / float(img.shape[0]) > pink_gear_side_threshold:
-                #         break
-                #     else:
-                #         throw_out_cols_cap = x 
-                # img = img[0:img.shape[0],throw_out_cols_cap:]
-
-                # #cut black parts from the right
-                # for x in reversed(range(img.shape[1])):
-                #     white_pixels = 0
-                #     for y in reversed(range(img.shape[0])):
-                #         if not check_dark_pixel(img[y][x],dark_pixel_threshold):
-                #             white_pixels += 1
-                #     if float(white_pixels) / float(img.shape[0]) > pink_gear_side_threshold:
-                #         break
-                #     else:
-                #         throw_out_cols_cap = x 
-                # img = img[0:img.shape[0],0:throw_out_cols_cap]
 
                 #cut black parts from the up
                 throw_out_cols_cap = 0 
@@ -655,12 +634,19 @@ class Task:
                         else:
                             if check_dark_pixel(img[y][x],dark_pixel_threshold):
                                 down_dark_pixels += 1
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5cb8da505f92059e9e506ca5bdde163b50c076d8
                 if up_dark_pixels > down_dark_pixels:
                     out["next"] = True
                     out["speech"] = "Great! you're done"
+                    out["next"] = True
                 else:
-                    out["speech"] = "Please take the pink gear out and turn it around so the teeths are point away from the center of the black frame."
+                    out["speech"] = "Please turn the pink gear around so that the teeth are pointed away from the center of the black frame."
+                    self.delay_flag = True
+                self.frame_recs.clear()
+
         else:
             self.frame_recs[0].staged_clear()
 
@@ -693,7 +679,7 @@ class Task:
             self.clear_states()
             self.history["add_gear_axle"] = True
             out["speech"] = "Finally, find the gear axle. Use it to connect the two gear systems together."
-            out["video"] = video_url + "add_gear_axle.mp4"
+            out["video"] = video_url + "gear_axle.mp4"
             return out
 
         gear_on_axle = self.get_objects_by_categories(img, {"gear_on_axle"})
@@ -717,19 +703,22 @@ class Task:
             else:
                 self.frame_recs[2].staged_clear()
 
-            if len(back_pink_gear) == 1 and len(back_brown_gear) == 1:
-                back_pink_check = self.frame_recs[3].add_and_check_stable(back_pink_gear[0])
-                back_brown_check = self.frame_recs[4].add_and_check_stable(back_brown_gear[0])
-                if right_check and back_pink_check is True and back_brown_check is True and \
-                    check_gear_axle_back(self.frame_recs[1].averaged_bbox(), self.frame_recs[3].averaged_bbox(),
-                                         self.frame_recs[4].averaged_bbox()):
-                    back_check = True
-            else:
-                self.frame_recs[3].staged_clear()
-                self.frame_recs[4].staged_clear()
-
-            if front_check is True and back_check is True:
+            if front_check:
                 out["next"] = True
+
+            # if len(back_pink_gear) == 1 and len(back_brown_gear) == 1:
+            #     back_pink_check = self.frame_recs[3].add_and_check_stable(back_pink_gear[0])
+            #     back_brown_check = self.frame_recs[4].add_and_check_stable(back_brown_gear[0])
+            #     if right_check and back_pink_check is True and back_brown_check is True and \
+            #         check_gear_axle_back(self.frame_recs[1].averaged_bbox(), self.frame_recs[3].averaged_bbox(),
+            #                              self.frame_recs[4].averaged_bbox()):
+            #         back_check = True
+            # else:
+            #     self.frame_recs[3].staged_clear()
+            #     self.frame_recs[4].staged_clear()
+
+            # if front_check is True and back_check is True:
+            #     out["next"] = True
         else:
             self.all_staged_clear()
 
