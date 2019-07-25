@@ -126,7 +126,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "final_check"
+            self.current_state = "insert_axle_2"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -496,14 +496,13 @@ class Task:
             out["video"] = video_url + name + ".mp4"
             return out
 
-        axles = self.get_objects_by_categories(img, {"wheel_axle"})
+        axles = self.get_objects_by_categories(img, {"axle_in_frame_good"})
 
-        good_str = "thin" if count == 1 else "thick"
+        # good_str = "thin" if count == 1 else "thick"
 
-        good = self.get_objects_by_categories(img, {"wheel_in_axle_%s" % good_str})
+        # good = self.get_objects_by_categories(img, {"wheel_in_axle_%s" % good_str})
 
-        if len(good) == 1 and 0 < len(axles) < 3:
-            good_check = self.frame_recs[1].add_and_check_stable(good[0])
+        if 0 < len(axles) < 3:
 
             if count == 1 and len(axles) == 1:
                 ax = axles[0]
@@ -513,7 +512,7 @@ class Task:
                 self.all_staged_clear()
                 return out
             axle_check = self.frame_recs[2].add_and_check_stable(ax)
-            if good_check and axle_check:
+            if axle_check:
                 out["next"] = True
         else:
             self.all_staged_clear()
@@ -634,10 +633,6 @@ class Task:
                         else:
                             if check_dark_pixel(img[y][x],dark_pixel_threshold):
                                 down_dark_pixels += 1
-<<<<<<< HEAD
-
-=======
->>>>>>> 5cb8da505f92059e9e506ca5bdde163b50c076d8
                 if up_dark_pixels > down_dark_pixels:
                     out["next"] = True
                     out["speech"] = "Great! you're done"

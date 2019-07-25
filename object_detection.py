@@ -37,6 +37,9 @@ class Detector:
                 "front_gear_good",
                 "gear_on_axle",
                 "pink_back"
+            },
+            "a8d3d274845f":{
+                "axle_in_frame_good"
             }
         }
         
