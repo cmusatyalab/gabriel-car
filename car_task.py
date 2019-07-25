@@ -126,7 +126,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "layout_wheels_rims_1"
+            self.current_state = "press_wheel_1"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -258,8 +258,8 @@ class Task:
             self.history[name] = True
             out['image'] = read_image('tire-rim-legend.jpg')
             speech = {
-                1: 'Please find two different sized rims,two different sized tires, and arrange them like this.',
-                2: 'Find the other set of two different sized rims, two different sized tires, and show me this configuration.'
+                1: 'Please find two different sized green rims,two different sized black tires, and arrange them like this.',
+                2: 'Find the other set of two different sized green rims, two different sized black tires, and show me this configuration again.'
             }
             out['speech'] = speech[count]
             return out
@@ -283,13 +283,13 @@ class Task:
                     left_rim.averaged_class() == "thick_rim_side" and right_rim.averaged_class() == "thin_rim_side":
                         out['next'] = True
                     elif (left_tire.averaged_class() == "thin_wheel_side" and right_tire.averaged_class() == "thick_wheel_side"):
-                        out["speech"] = "Please switch the positions of the tires."
+                        out["speech"] = "Please switch the positions of the black tires."
                     elif left_tire.averaged_class() != "thick_wheel_side":
                         out["speech"] = "Please switch out the left tire with a bigger tire."
                     elif right_tire.averaged_class() != "thin_wheel_side":
                         out["speech"] = "Please switch out the right tire with a smaller tire."
                     elif rim_diff == "second":
-                        out["speech"] = "Please switch the positions of the rims."
+                        out["speech"] = "Please switch the positions of the green rims."
                     elif rim_diff == "same":
                         if left_rim.averaged_class() != "thick_rim_side":
                             out["speech"] = "Please switch out the left rim with a bigger rim."
@@ -297,11 +297,9 @@ class Task:
                             out["speech"] = "Please switch out the right rim with a smaller rim."
 
                 elif left_tire.averaged_bbox()[1] > left_rim.averaged_bbox()[1] and right_tire.averaged_bbox()[1] < right_rim.averaged_bbox()[1]:
-                    out['speech'] = "The orientation of tire and rim on the right is wrong. Please switch their positions"
+                    out['speech'] = "Please switch the positions of tire and rim on the right."
                 elif left_tire.averaged_bbox()[1] < left_rim.averaged_bbox()[1] and right_tire.averaged_bbox()[1] > right_rim.averaged_bbox()[1]:
-                    out["speech"] = "The orientation of tire and rim on the left is wrong. Please switch their positions"
-                else:
-                    out["speech"] = "The orientation of tire and rim on the left and the right is wrong. Please switch the positions of the tire and rim on the left and then switch the positions of the tire and rim on the right."
+                    out["speech"] = "Please switch the positions of tire and rim on the left."
                 self.clear_states()
         else:
             self.all_staged_clear()
@@ -317,7 +315,7 @@ class Task:
             out["video"] = video_url + "tire_rim_combine.mp4"
         else:
             out["next"] = True
-            time.sleep(10)
+            time.sleep(20)
         return out
     
     def acquire_axle(self, count):
@@ -355,6 +353,7 @@ class Task:
         if len(bad) == 1:
             bad_check = self.frame_recs[0].add_and_check_stable(bad[0])
             if bad_check is True:
+                good_str = "smaller" if good_str == "thin" else "bigger"
                 out["speech"] = "You have the %s wheel. Please use the %s wheel instead" % (bad_str, good_str)
                 self.delay_flag = True
                 self.clear_states()
@@ -385,21 +384,33 @@ class Task:
         marker_check = False
         if len(frame_marker) == 1:
             if self.frame_recs[0].add_and_check_stable(frame_marker[0]):
-                marker_check = True
+
+                if self.frame_recs[0].averaged_class() == "frame_marker_right":
+                    marker_check = True
+                else:
+                    out["speech"] = "Please show me the opposite side of what you have."
 
         if marker_check is True:
             out["next"] = True
 
         return out
-
     def insert_green_washer(self, img, count):
         name = "green_washer_%s" % count
+        find = "find_green_washer_%s" % count
         side_str = "left" if count == 1 or count == 2 else "right"
         out = defaultdict(lambda: None)
-        if self.history[name] is False:
+
+        if self.history[find] is False: 
             self.clear_states()
+            self.history[find] = True
+            out["speech"] = "Find a green washer." 
+            out["image"] = read_image("green_washer.png")
+            return out
+        if self.history[name] is False:
+            time.sleep(4)
+            # self.clear_states()
             self.history[name] = True
-            out["speech"] = "Insert the green washer into the %s hole." % side_str
+            out["speech"] = "Insert the green washer into the %s hole. Then, show me where you put the green washer." % side_str
             out["video"] = video_url + name + ".mp4"
             return out
 
@@ -424,11 +435,19 @@ class Task:
 
     def insert_gold_washer(self, img, count):
         name = "gold_washer_%s" % count
+        find = "find_gold_washer_%s" % count
         out = defaultdict(lambda: None)
-        if self.history[name] is False:
+        if self.history[find] is False: 
             self.clear_states()
+            self.history[find] = True
+            out["speech"] = "Great, now find a gold washer." 
+            out["image"] = read_image("gold_washer.png")
+            return out
+        if self.history[name] is False:
+            time.sleep(4)
+            # self.clear_states()
             self.history[name] = True
-            out["speech"] = "Great, now insert the gold washer into the green washer."
+            out["speech"] = "Insert the gold washer into the green washer and show me where you inserted the gold washer."
             out["video"] = video_url + name + ".mp4"
             return out
 
@@ -456,13 +475,13 @@ class Task:
         if self.history["insert_pink_gear_front"] is False:
             self.clear_states()
             self.history["insert_pink_gear_front"] = True
-            out['speech'] = "Lay the black frame down. Now place a pink gear as shown."
+            out['speech'] = "Lay the black frame down and place a pink gear in the slot that is shown in the video. The teeths of the gear should be pointing towards you."
             out['video'] = video_url + "pink_gear_1.mp4"
             return out
 
         bad_pink = self.get_objects_by_categories(img, {"front_gear_bad"})
         if len(bad_pink) >= 1:
-            out["speech"] = "Please flip the pink gear around."
+            out["speech"] = "Make sure the teeths of the pink gear is facing you."
             self.frame_recs[0].clear()
             self.delay_flag = True
             return out
@@ -513,7 +532,7 @@ class Task:
         if self.history[name] is False:
             self.clear_states()
             self.history[name] = True
-            out["speech"] = "Finally, press the other %s wheel into the axle. It should be the same size as the first wheel." % good_str
+            out["speech"] = "Press the other %s wheel into the axle. Then, show me the bird's eye view." % good_str
             out["video"] = video_url + name + ".mp4"
             return out
 
