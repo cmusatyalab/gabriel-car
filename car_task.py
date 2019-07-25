@@ -14,10 +14,17 @@ OBJECTS = config.LABELS
 STATES = ["start", "wheel-stage", "wheel-compare"]
 resources = os.path.abspath("resources/images")
 video_url = "http://" + ip + ":9095/"
+
+#stable_threshold units: number of stable frames
 stable_threshold = 20
+#wheel_compare_threshold units: number of pixels
 wheel_compare_threshold = 15
+#dark_pixel_threshold units: percentage out of 255 range 
 dark_pixel_threshold = 0.3
+#pink_gear_side_threshold units: percentage of a pixel column that is dark
 pink_gear_side_threshold = 0.5
+#clutter_threshold units: number of cluttered frames
+clutter_threshold = 5
 
 class FrameRecorder:
     def __init__(self, size):
@@ -97,6 +104,8 @@ class Task:
         self.detector = object_detection.Detector()
         self.frame_count = 0
         self.image = None 
+
+        self.clutter_count = 0
 
     def get_image(self, image_frame):
         self.image = image_frame
@@ -555,9 +564,15 @@ class Task:
                     out["speech"] = "You pressed the %s wheel. Please redo and press the %s wheel." % (correct_str,good_str)
                 else:
                     out["next"] = True
+        elif len(wheels) == 3 or len(wheels) > 4: 
+            self.clutter_add()
         else:
             self.frame_recs[0].staged_clear()
             self.frame_recs[1].staged_clear()
+        
+        if self.clutter_check(clutter_threshold):
+            out["speech"] = "Your workspace is cluttered. Please clean it up so that only the frame can be seen."
+            
 
         return out
 
@@ -826,6 +841,18 @@ class Task:
     def all_staged_clear(self):
         for rec in self.frame_recs.values():
             rec.staged_clear()
+    
+    def clutter_add(self):
+        self.clutter_count += 1
+
+    def clutter_reset(self):
+        self.clutter_count = 0
+
+    def clutter_check(self, clutter_limit):
+        if self.clutter_count == clutter_limit:
+            self.clutter_reset()
+            return True
+        return False
 
 def check_gear_axle_front(gear_on_axle_box, pink_box):
     intersecting = object_detection.intersecting_bbox(gear_on_axle_box, pink_box)
