@@ -96,7 +96,7 @@ class Task:
                 raise ValueError('Unknown init state: {}'.format(init_state))
             self.current_state = init_state
 
-        self.frame_recs = defaultdict(lambda: FrameRecorder(10))
+        self.frame_recs = defaultdict(lambda: FrameRecorder(30))
         self.last_id = None
         self.wait_count = 0
         self.history = defaultdict(lambda: False)
@@ -432,8 +432,7 @@ class Task:
         if self.history[name] is False:
             time.sleep(4)
             self.history[name] = True
-            speech = {1: "Insert the green washer into the %s hole. "
-                         "Then, show me a side view of the holes like in the video." % side_str,
+            speech = {1: "Insert the green washer into the %s hole. Then, show me a side view of the holes like in the video." % side_str,
                       2: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes.",
                       3: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes.",
                       4: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes."}
