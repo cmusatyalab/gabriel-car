@@ -136,7 +136,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "insert_brown_gear"
+            self.current_state = "press_wheel_2"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -588,7 +588,7 @@ class Task:
             out["video"] = video_url + name + ".mp4"
             return out
 
-        wheels = self.get_objects_by_categories(img, {"%s_wheel_side" % good_str})
+        wheels = self.get_objects_by_categories(img, {"thick_wheel_side", "thin_wheel_side"})
 
         if len(wheels) == 2 or len(wheels) == 4:
             if len(wheels) == 2:
@@ -602,6 +602,8 @@ class Task:
                 if self.frame_recs[0].averaged_class() != self.frame_recs[1].averaged_class():
                     correct_str = "thin" if good_str == "thick" else "thick"
                     out["speech"] = "You put in the %s wheel. Please use the %s wheel instead." % (correct_str,good_str)
+                    self.clear_states()
+                    self.delay_flag = True
                 else:
                     out["next"] = True
                     self.clutter_reset()
