@@ -25,6 +25,7 @@ dark_pixel_threshold = 0.3
 pink_gear_side_threshold = 0.5
 #clutter_threshold units: number of cluttered frames
 clutter_threshold = 5
+clutter_speech = "Your workspace is cluttered. Please remove any stray parts from my view."
 
 class FrameRecorder:
     def __init__(self, size):
@@ -135,7 +136,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "insert_green_washer_1"
+            self.current_state = "layout_wheels_rims_1"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -320,7 +321,7 @@ class Task:
         if len(tires) > 2 or len(rims) > 2:
             self.clutter_add()
         if self.clutter_check(clutter_threshold):
-            out["speech"] = "Your workspace is cluttered. Please clean it up so that only the configuration can be seen."
+            out["speech"] = clutter_speech
 
         return out
 
@@ -329,7 +330,7 @@ class Task:
         out = defaultdict(lambda: None)
         if self.history[name] is False:
             self.history[name] = True
-            out["speech"] = "Well done. Now assemble the tires and rims as shown in the video."
+            out["speech"] = "Well done. Now put the tires and rims together."
             out["video"] = video_url + "tire_rim_combine.mp4"
         else:
             out["next"] = True
@@ -341,7 +342,11 @@ class Task:
         out = defaultdict(lambda: None)
         if self.history[name] is False:
             self.history[name] = True
-            out["speech"] = "Grab the wheel axle. Note that it has no yellow gears at the end."
+            speech = {
+                1: "Moving on, grab the wheel axle. Note that it has no yellow gears at the end.",
+                2: "Moving on, grab the other wheel axle."
+            }
+            out['speech'] = speech[count]
             out["image"] = read_image("wheel_axle.jpg")
         else:
             out["next"] = True
@@ -358,7 +363,7 @@ class Task:
             self.clear_states()
             self.history[name] = True
             out["image"] = read_image("wheel_in_axle_%s.jpg" % good_str)
-            out["speech"] = "Then insert the axle into one of the %s wheels. Then hold it up like this." % good_str
+            out["speech"] = "Now. Insert the axle into one of the %s wheels. Then hold it up like this." % good_str
             return out
 
         good = self.get_objects_by_categories(img, {"wheel_in_axle_%s" % good_str})
@@ -393,7 +398,7 @@ class Task:
         if self.history[name] is False:
             self.clear_states()
             self.history[name] = True
-            out["speech"] = "Put the axle down and grab the black frame. Show it to me like this."
+            out["speech"] = "Moving on. Grab the black frame. Show me a birds-eye view like this."
             out['video'] = video_url + name + ".mp4"
             return out
 
@@ -418,17 +423,22 @@ class Task:
         side_str = "left" if count == 1 or count == 2 else "right"
         out = defaultdict(lambda: None)
 
-        if self.history[find] is False: 
+        if count == 1 and self.history[find] is False:
             self.clear_states()
             self.history[find] = True
-            out["speech"] = "Find a green washer." 
+            out["speech"] = "Great, now find a green washer."
             out["image"] = read_image("green_washer.png")
             return out
         if self.history[name] is False:
             time.sleep(4)
-            # self.clear_states()
             self.history[name] = True
-            out["speech"] = "Insert the green washer into the %s hole. Then, show me where you put the green washer." % side_str
+            speech = {1: "Insert the green washer into the %s hole. "
+                         "Then, show me a side view of the holes like in the video." % side_str,
+                      2: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes.",
+                      3: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes.",
+                      4: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes."}
+            out["speech"] = speech[count]
+
             out["video"] = video_url + name + ".mp4"
             return out
 
@@ -442,6 +452,8 @@ class Task:
                 other_hol = right if side_str == "left" else left
                 if other_hol["class_name"] == "hole_green":
                     out["speech"] = "You put the green washer in the wrong hole. Please put it in the %s hole." % side_str
+                    self.delay_flag = True
+                    self.clear_states()
             else:
                 hol = holes[0]
 
@@ -458,14 +470,14 @@ class Task:
             self.clutter_add()
 
         if self.clutter_check(clutter_threshold):
-            out["speech"] = "Your workspace is cluttered. Please clean it up so that only the frame can be seen."
+            out["speech"] = clutter_speech
         return out
 
     def insert_gold_washer(self, img, count):
         name = "gold_washer_%s" % count
         find = "find_gold_washer_%s" % count
         out = defaultdict(lambda: None)
-        if self.history[find] is False: 
+        if count == 1 and self.history[find] is False:
             self.clear_states()
             self.history[find] = True
             out["speech"] = "Great, now find a gold washer." 
@@ -473,9 +485,8 @@ class Task:
             return out
         if self.history[name] is False:
             time.sleep(4)
-            # self.clear_states()
             self.history[name] = True
-            out["speech"] = "Insert the gold washer into the green washer and show me where you inserted the gold washer."
+            out["speech"] = "Insert the gold washer into the green washer."
             out["video"] = video_url + name + ".mp4"
             return out
 
@@ -501,7 +512,7 @@ class Task:
             self.clutter_add()
 
         if self.clutter_check(clutter_threshold):
-            out["speech"] = "Your workspace is cluttered. Please clean it up so that only the frame can be seen."
+            out["speech"] = clutter_speech
         return out
 
     def insert_pink_gear_front(self, img):
@@ -509,13 +520,13 @@ class Task:
         if self.history["insert_pink_gear_front"] is False:
             self.clear_states()
             self.history["insert_pink_gear_front"] = True
-            out['speech'] = "Lay the black frame down and place a pink gear in the slot that is shown in the video. The teeths of the gear should be pointing towards you."
-            out['video'] = video_url + "pink_gear_1.mp4"
+            out['speech'] = "Great job! Now. Lay the black frame down and give me a birds-eye view. Then, insert the pink gear, making sure its teeth are facing towards you."
+            out['image'] = read_image("pink_gear_1.jpg")
             return out
 
         bad_pink = self.get_objects_by_categories(img, {"front_gear_bad"})
         if len(bad_pink) >= 1:
-            out["speech"] = "Make sure the teeths of the pink gear is facing you."
+            out["speech"] = "Please make sure the teeth are facing towards you."
             self.frame_recs[0].clear()
             self.delay_flag = True
             return out
@@ -535,7 +546,7 @@ class Task:
         if self.history[name] is False:
             self.clear_states()
             self.history[name] = True
-            out["speech"] = "Great, now insert the axle through the washers and the pink gear. Then lay the black frame down."
+            out["speech"] = "Great, now insert the axle through the washers and the pink gear. Then give me a birds eye view."
             out["video"] = video_url + name + ".mp4"
             return out
 
@@ -583,7 +594,7 @@ class Task:
                 self.frame_recs[1].add_and_check_stable(check_wheels[1]):
                 if self.frame_recs[0].averaged_class() != self.frame_recs[1].averaged_class():
                     correct_str = "thin" if good_str == "thick" else "thick"
-                    out["speech"] = "You pressed the %s wheel. Please redo and press the %s wheel." % (correct_str,good_str)
+                    out["speech"] = "You put in the %s wheel. Please use the %s wheel instead." % (correct_str,good_str)
                 else:
                     out["next"] = True
                     self.clutter_reset()
@@ -594,7 +605,7 @@ class Task:
             self.frame_recs[1].staged_clear()
         
         if self.clutter_check(clutter_threshold):
-            out["speech"] = "Your workspace is cluttered. Please clean it up so that only the frame can be seen."
+            out["speech"] = clutter_speech
             
         return out
 
@@ -603,13 +614,13 @@ class Task:
         if self.history["insert_brown_gear"] is False:
             self.clear_states()
             self.history["insert_brown_gear"] = True
-            out["speech"] = "Place the brown gear as shown. Orient it such that the part that sticks out is facing in."
+            out["speech"] = "Now. Place the brown gear next to the pink gear. Make sure the part in the center that sticks out is facing the pink gear."
             out["video"] = video_url + "brown_gear.mp4"
             return out
 
         bad_brown = self.get_objects_by_categories(img, {"brown_bad"})
         if len(bad_brown) >= 1:
-            out["speech"] = "Make sure the gear is oriented correctly. The part that sticks out should be facing the inside of the frame."
+            out["speech"] = "Make sure the gear is oriented correctly. The part in the center that sticks out should be facing the pink gear."
             self.frame_recs[0].clear()
             self.delay_flag = True
             return out
@@ -628,8 +639,8 @@ class Task:
         if self.history["back_pink_gear_1"] is False:
             self.clear_states()
             self.history["back_pink_gear_1"] = True
-            out["speech"] = "Please find the pink gear and place in the slot shown in the picture. Make sure the teeths are points away from the center of the black frame."
-            out["image"] = read_image("back_pink_gear.jpg")
+            out["speech"] = "Now. Place the other pink gear into the frame. Make sure the teeth point away from you."
+            out["image"] = read_image("pink_gear_2.jpg")
             return out
 
         gear = self.get_objects_by_categories(img,{"back_pink","pink_back"})
@@ -691,7 +702,7 @@ class Task:
                     out["speech"] = "Great! you're done"
                     out["next"] = True
                 else:
-                    out["speech"] = "Please turn the pink gear around so that the teeth are pointed away from the center of the black frame."
+                    out["speech"] = "Please turn the pink gear around so that the teeth are pointed away from you."
                     self.delay_flag = True
                 self.frame_recs.clear()
 
@@ -780,7 +791,7 @@ class Task:
         if self.history["final_check_1"] is False:
             self.clear_states()
             self.history["final_check_1"] = True
-            out["speech"] = "Let me do a final check on everything. Please show me what you have, like this."
+            out["speech"] = "Let me do a final check on everything. Please show me a birds-eye view."
             out["image"] = read_image("final_check.jpg")
             return out
         elif self.history["final_check_2"] is False:
@@ -812,7 +823,7 @@ class Task:
                     
                     if verify_1 == 0:
                         self.history["final_check_2"] = True
-                        out["speech"] = "The wheels look good! Please keep the camera still for a little longer. Now I'm checking the gears."
+                        out["speech"] = "The wheels look good! Please stay still for a little longer. Now I'm checking the gears."
                         self.clear_states()
             else:
                 self.all_staged_clear()
@@ -831,14 +842,13 @@ class Task:
                         elif self.frame_recs[i].averaged_class() == "pink_back":
                             pink_gear.append(self.frame_recs[i].averaged_bbox())
                         elif self.frame_recs[i].averaged_class() == "brown_bad":
-                            out["speech"] = "Brown gear is in the wrong orientation. Please fix it."
+                            out["speech"] = "The brown gear is facing the wrong way. Please flip it."
                             return out
                         elif self.frame_recs[i].averaged_class() == "front_gear_bad":
-                            out["speech"] = "Left pink gear is in the wrong orientation. Please fix it."
+                            out["speech"] = "The left pink gear is facing the wrong way. Please flip it."
                             return out
                     if brown_gear[0][1] < pink_gear[0][1]:
                         out["next"] = True
-                        out["speech"] = "final check done"
             else:
                 self.frame_recs[0].staged_clear()
                 self.frame_recs[1].staged_clear()
