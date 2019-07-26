@@ -96,7 +96,7 @@ class Task:
                 raise ValueError('Unknown init state: {}'.format(init_state))
             self.current_state = init_state
 
-        self.frame_recs = defaultdict(lambda: FrameRecorder(30))
+        self.frame_recs = defaultdict(lambda: FrameRecorder(15))
         self.last_id = None
         self.wait_count = 0
         self.history = defaultdict(lambda: False)
@@ -136,7 +136,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "layout_wheels_rims_1"
+            self.current_state = "insert_brown_gear"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -343,14 +343,14 @@ class Task:
         if self.history[name] is False:
             self.history[name] = True
             speech = {
-                1: "Moving on, grab the wheel axle. Note that it has no yellow gears at the end.",
-                2: "Moving on, grab the other wheel axle."
+                1: "Moving on. Grab the wheel axle. Note that it has no yellow gears at the end.",
+                2: "Moving on. Grab the other wheel axle."
             }
             out['speech'] = speech[count]
             out["image"] = read_image("wheel_axle.jpg")
         else:
             out["next"] = True
-            time.sleep(5)
+            self.delay_flag = True
         return out
 
     def axle_into_wheel(self, img, count):
@@ -398,7 +398,7 @@ class Task:
         if self.history[name] is False:
             self.clear_states()
             self.history[name] = True
-            out["speech"] = "Moving on. Grab the black frame. Show me a birds-eye view like this."
+            out["speech"] = "Moving on. Grab the black frame. Show me a side view of the axle holes like this."
             out['video'] = video_url + name + ".mp4"
             return out
 
@@ -408,10 +408,10 @@ class Task:
         if len(frame_marker) == 1:
             if self.frame_recs[0].add_and_check_stable(frame_marker[0]):
 
-                if self.frame_recs[0].averaged_class() == "frame_marker_right":
-                    marker_check = True
-                else:
-                    out["speech"] = "Please show me the opposite side of what you have."
+                # if self.frame_recs[0].averaged_class() == "frame_marker_right":
+                marker_check = True
+                # else:
+                    # out["speech"] = "Please show me the opposite side of what you have."
 
         if marker_check is True:
             out["next"] = True
@@ -449,15 +449,23 @@ class Task:
                 hol = left if side_str == "left" else right
 
                 other_hol = right if side_str == "left" else left
-                if other_hol["class_name"] == "hole_green":
-                    out["speech"] = "You put the green washer in the wrong hole. Please put it in the %s hole." % side_str
-                    self.delay_flag = True
-                    self.clear_states()
+                # if other_hol["class_name"] == "hole_green":
+                #     out["speech"] = "You put the green washer in the wrong hole. Please put it in the %s hole." % side_str
+                #     self.delay_flag = True
+                #     self.clear_states()
             else:
+                other_hol = None
                 hol = holes[0]
 
             if hol["class_name"] == "hole_green":
                 if self.frame_recs[0].add_and_check_stable(hol):
+                    if other_hol != None:
+                        if other_hol["class_name"] == "hole_green":
+                            out["speech"] = "You put the green washer in the wrong hole. Please put it in the %s hole." % side_str
+                            self.delay_flag = True
+                            self.clear_states()
+                            return out
+
                     self.clutter_reset()
                     out["next"] = True
             else:
