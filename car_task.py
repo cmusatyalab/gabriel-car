@@ -135,7 +135,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "press_wheel_1"
+            self.current_state = "insert_green_washer_1"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -294,6 +294,7 @@ class Task:
                     if left_tire.averaged_class() == "thick_wheel_side" and right_tire.averaged_class() == "thin_wheel_side" and\
                     left_rim.averaged_class() == "thick_rim_side" and right_rim.averaged_class() == "thin_rim_side":
                         out['next'] = True
+                        self.clutter_reset()
                     elif (left_tire.averaged_class() == "thin_wheel_side" and right_tire.averaged_class() == "thick_wheel_side"):
                         out["speech"] = "Please switch the positions of the black tires."
                     elif left_tire.averaged_class() != "thick_wheel_side":
@@ -315,6 +316,11 @@ class Task:
                 self.clear_states()
         else:
             self.all_staged_clear()
+
+        if len(tires) > 2 or len(rims) > 2:
+            self.clutter_add()
+        if self.clutter_check(clutter_threshold):
+            out["speech"] = "Your workspace is cluttered. Please clean it up so that only the configuration can be seen."
 
         return out
 
@@ -432,17 +438,27 @@ class Task:
             if len(holes) == 2:
                 left, right = separate_two(holes)
                 hol = left if side_str == "left" else right
+
+                other_hol = right if side_str == "left" else left
+                if other_hol["class_name"] == "hole_green":
+                    out["speech"] = "You put the green washer in the wrong hole. Please put it in the %s hole." % side_str
             else:
                 hol = holes[0]
 
             if hol["class_name"] == "hole_green":
                 if self.frame_recs[0].add_and_check_stable(hol):
+                    self.clutter_reset()
                     out["next"] = True
             else:
                 self.frame_recs[0].staged_clear()
         else:
             self.frame_recs[0].staged_clear()
 
+        if len(holes) > 2:
+            self.clutter_add()
+
+        if self.clutter_check(clutter_threshold):
+            out["speech"] = "Your workspace is cluttered. Please clean it up so that only the frame can be seen."
         return out
 
     def insert_gold_washer(self, img, count):
@@ -474,12 +490,18 @@ class Task:
 
             if hol["class_name"] == "hole_gold":
                 if self.frame_recs[0].add_and_check_stable(hol):
+                    self.clutter_reset()
                     out["next"] = True
             else:
                 self.frame_recs[0].staged_clear()
         else:
             self.frame_recs[0].staged_clear()
 
+        if len(holes) > 2:
+            self.clutter_add()
+
+        if self.clutter_check(clutter_threshold):
+            out["speech"] = "Your workspace is cluttered. Please clean it up so that only the frame can be seen."
         return out
 
     def insert_pink_gear_front(self, img):
@@ -564,6 +586,7 @@ class Task:
                     out["speech"] = "You pressed the %s wheel. Please redo and press the %s wheel." % (correct_str,good_str)
                 else:
                     out["next"] = True
+                    self.clutter_reset()
         elif len(wheels) == 3 or len(wheels) > 4: 
             self.clutter_add()
         else:
@@ -573,7 +596,6 @@ class Task:
         if self.clutter_check(clutter_threshold):
             out["speech"] = "Your workspace is cluttered. Please clean it up so that only the frame can be seen."
             
-
         return out
 
     def insert_brown_gear(self, img):
