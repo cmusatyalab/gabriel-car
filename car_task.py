@@ -433,9 +433,9 @@ class Task:
             time.sleep(4)
             self.history[name] = True
             speech = {1: "Insert the green washer into the %s hole. Then, show me a side view of the holes like in the video." % side_str,
-                      2: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes.",
-                      3: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes.",
-                      4: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes."}
+                      2: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes." % side_str,
+                      3: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes." % side_str,
+                      4: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes." % side_str}
             out["speech"] = speech[count]
 
             out["video"] = video_url + name + ".mp4"
