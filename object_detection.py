@@ -110,6 +110,10 @@ class Detector:
             self.container.kill()
             self.container = None
 
+    def reset(self):
+        self.last_image = None
+        self.cleanup()
+
 
 def tpod_request(img, url):
     headers = {'User-Agent': 'Mozilla/5.0'}

@@ -21,8 +21,8 @@
 
         <ImageView
             android:id="@+id/guidance_image"
-            android:layout_width="250dp"
-            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_height="400dp"
             android:visibility="gone" />
 
         <ImageView
@@ -33,13 +33,13 @@
 
         <VideoView
             android:id="@+id/guidance_video"
-            android:layout_width="250dp"
+            android:layout_width="400dp"
             android:layout_height="wrap_content"
             android:visibility="gone" />
 
         <RelativeLayout
-            android:layout_width="600dp"
-            android:layout_height="338dp"
+            android:layout_width="300dp"
+            android:layout_height="168.75dp"
             android:orientation="vertical" >
 
                     <edu.cmu.cs.gabrielclient.CameraPreview
