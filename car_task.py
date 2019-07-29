@@ -117,8 +117,8 @@ class Task:
     def get_image(self, image_frame):
         self.image = image_frame
 
-    def get_objects_by_categories(self, img, categories):
-        return self.detector.detect_object(img, categories, self.frame_count)
+    def get_objects_by_categories(self, img, categories, image_id=None):
+        return self.detector.detect_object(img, categories, self.frame_count, image_id)
 
     def get_instruction(self, img, header=None):
         if header is not None and "task_id" in header:

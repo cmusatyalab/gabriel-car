@@ -58,14 +58,17 @@ class Detector:
         atexit.register(self.cleanup)
 
 
-    def init_docker_classifier(self, objects):
-        for obj in objects:
-            if obj not in self.objs_to_docker_image.keys():
-                raise ValueError("Unknown object %s. Make sure object is registered in object_detection.py")
-            image_for_objects = self.objs_to_docker_image[obj]
+    def init_docker_classifier(self, objects, image_id=None):
+        if image_id is not None:
+            image_for_objects = image_id
+        else:
+            for obj in objects:
+                if obj not in self.objs_to_docker_image.keys():
+                    raise ValueError("Unknown object %s. Make sure object is registered in object_detection.py")
+                image_for_objects = self.objs_to_docker_image[obj]
 
-        if image_for_objects == self.last_image:
-            return
+            if image_for_objects == self.last_image:
+                return
 
         self.last_image = image_for_objects
         self.cleanup()
@@ -80,12 +83,12 @@ class Detector:
         return True
 
 
-    def detect_object(self, img, objects, f_id):
+    def detect_object(self, img, objects, f_id, image_id=None):
         if f_id != self.last_id:
             self.last_id = f_id
             self.cache = []
 
-        self.init_docker_classifier(objects)
+        self.init_docker_classifier(objects, image_id)
 
         out = []
 
