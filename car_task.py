@@ -136,13 +136,17 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "press_wheel_2"
+            self.current_state = "confirm_combine_wheel_rim_1"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
                 self.current_state = "combine_wheel_rim_1"
         elif self.current_state == "combine_wheel_rim_1":
             inter = self.combine_wheel_rim(1)
+            if inter["next"] is True:
+                self.current_state = "confirm_combine_wheel_rim_1"
+        elif self.current_state == "confirm_combine_wheel_rim_1":
+            inter = self.confirm_combine_wheel_rim(img,1)
             if inter["next"] is True:
                 self.current_state = "layout_wheels_rims_2"
         elif self.current_state == "layout_wheels_rims_2":
@@ -151,6 +155,10 @@ class Task:
                 self.current_state = "combine_wheel_rim_2"
         elif self.current_state == "combine_wheel_rim_2":
             inter = self.combine_wheel_rim(2)
+            if inter["next"] is True:
+                self.current_state = "confirm_combine_wheel_rim_2"
+        elif self.current_state == "confirm_combine_wheel_rim_2":
+            inter = self.confirm_combine_wheel_rim(img,2)
             if inter["next"] is True:
                 self.current_state = "acquire_axle_1"
         elif self.current_state == "acquire_axle_1":
@@ -337,6 +345,27 @@ class Task:
             time.sleep(20)
         return out
     
+    def confirm_combine_wheel_rim(self, img, count):
+        name = "confirm_combine_wheel_rim_%s" % count
+        out = defaultdict(lambda: None)
+        if self.history[name] is False:
+            self.clear_states()
+            self.history[name] = True
+            out["speech"] = "Finally, show me the wheels like this."
+            out["image"] = read_image("wheels.jpg")
+
+        wheels = self.get_objects_by_categories(img, {"wrong_wheel","thick_wheel_side", "thin_wheel_side"})
+        if len(wheels) == 2:
+            left_wheel, right_wheel = separate_two(wheels)
+            if self.frame_recs[0].add_and_check_stable(left_wheel) and self.frame_recs[1].add_and_check_stable(right_wheel):
+                if self.frame_recs[0].averaged_class() == "wrong_wheel" or self.frame_recs[1].averaged_class() == "wrong_wheel":
+                    out["speech"] = "Both of the wheels are assembled with the wrong pair. Please reassemble it by swaping the rims."
+                else:
+                    out["next"] = True         
+        else:
+            self.all_staged_clear()
+        return out
+
     def acquire_axle(self, count):
         name = "acquire_axle_%s" % count
         out = defaultdict(lambda: None)
