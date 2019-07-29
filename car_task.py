@@ -16,7 +16,7 @@ resources = os.path.abspath("resources/images")
 video_url = "http://" + ip + ":9095/"
 
 #stable_threshold units: number of stable frames
-stable_threshold = 20
+stable_threshold = 30
 #wheel_compare_threshold units: number of pixels
 wheel_compare_threshold = 15
 #dark_pixel_threshold units: percentage out of 255 range 
@@ -142,13 +142,17 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "insert_green_washer_1"
+            self.current_state = "confirm_combine_wheel_rim_1"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
                 self.current_state = "combine_wheel_rim_1"
         elif self.current_state == "combine_wheel_rim_1":
             inter = self.combine_wheel_rim(1)
+            if inter["next"] is True:
+                self.current_state = "confirm_combine_wheel_rim_1"
+        elif self.current_state == "confirm_combine_wheel_rim_1":
+            inter = self.confirm_combine_wheel_rim(img, 1)
             if inter["next"] is True:
                 self.current_state = "layout_wheels_rims_2"
         elif self.current_state == "layout_wheels_rims_2":
@@ -157,6 +161,10 @@ class Task:
                 self.current_state = "combine_wheel_rim_2"
         elif self.current_state == "combine_wheel_rim_2":
             inter = self.combine_wheel_rim(2)
+            if inter["next"] is True:
+                self.current_state = "confirm_combine_wheel_rim_2"
+        elif self.current_state == "confirm_combine_wheel_rim_2":
+            inter = self.confirm_combine_wheel_rim(img, 2)
             if inter["next"] is True:
                 self.current_state = "acquire_axle_1"
         elif self.current_state == "acquire_axle_1":
@@ -335,21 +343,38 @@ class Task:
 
         return out
 
-    def combine_wheel_rim(self, img, count):
+    def combine_wheel_rim(self, count):
         name = "combine_wheel_rim_%s" % count
         out = defaultdict(lambda: None)
         if self.history[name] is False:
-            self.clear_states()
             self.history[name] = True
             out["speech"] = "Well done. Now put the tires and rims together."
             out["video"] = video_url + "tire_rim_combine.mp4"
+        else:
+            out["next"] = True
+            time.sleep(6)
+        return out
 
-        wheels = self.get_objects_by_categories(img, {"wrong_wheel", "thick_wheel_side", "thin_wheel_side"})
+    def confirm_combine_wheel_rim(self, img, count):
+        name = "confirm_combine_wheel_rim_%s" % count
+        out = defaultdict(lambda: None)
+        out["good_frame"] = False
+        if self.history[name] is False:
+            self.clear_states()
+            self.history[name] = True
+            out["speech"] = "Then, show me the wheels like this."
+            out["image"] = read_image("wheels_assembled.jpg")
+
+        wheels = self.get_objects_by_categories(img, {"wrong_wheel", "thick_wheel_side", "thin_wheel_side"}, "a4b34fd8f0f6")
         if len(wheels) == 2:
+            out["good_frame"] = True
             left_wheel, right_wheel = separate_two(wheels)
             if self.frame_recs[0].add_and_check_stable(left_wheel) and self.frame_recs[1].add_and_check_stable(right_wheel):
-                if self.frame_recs[0].averaged_class() == "wrong_wheel" or self.frame_recs[1].averaged_class() == "wrong_wheel":
-                    out["speech"] = "You combined the wrong tire rim pairs. Please swap the parts between each pair."
+                if self.frame_recs[0].averaged_class() == "wrong_wheel" or \
+                      self.frame_recs[1].averaged_class() == "wrong_wheel":
+                    out["speech"] = "You combined the wrong tire rim pairs. Please swap the parts of each pair."
+                    self.delay_flag = True
+                    self.clear_states()
                 else:
                     out["next"] = True
         else:

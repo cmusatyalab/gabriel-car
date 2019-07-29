@@ -67,8 +67,8 @@ class Detector:
                     raise ValueError("Unknown object %s. Make sure object is registered in object_detection.py")
                 image_for_objects = self.objs_to_docker_image[obj]
 
-            if image_for_objects == self.last_image:
-                return
+        if image_for_objects == self.last_image:
+            return
 
         self.last_image = image_for_objects
         self.cleanup()
