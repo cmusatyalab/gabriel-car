@@ -80,11 +80,17 @@ class FrameRecorder:
         return [v / len(self.deque) for v in out]
 
     def averaged_class(self):
-        all_class = []
+        all_class = defaultdict(lambda: 0)
         for i in range(len(self.deque)):
-            if self.deque[i]["class_name"] not in all_class:
-                all_class.append(self.deque[i]["class_name"])
-        return max(set(all_class), key = all_class.count) 
+            name = self.deque[i]["class_name"]
+            all_class[name] += 1
+
+        best = (None, 0)
+        for k in all_class.keys():
+            if all_class[k] > best[1]:
+                best = (k, all_class[k])
+
+        return best[0]
 
 
 class Task:
@@ -122,7 +128,7 @@ class Task:
                 self.last_id = header["task_id"]
                 self.current_state = "start"
                 self.history.clear()
-                self.detector.cleanup()
+                self.detector.reset()
 
         if self.delay_flag is True:
             time.sleep(7)
@@ -268,12 +274,15 @@ class Task:
 
         exclude = {"frame_marker_left", "frame_marker_right", "frame_horn"}
         viz_objects = [obj for obj in self.detector.all_detected_objects() if obj["class_name"] not in exclude]
+        for obj in viz_objects:
+            obj["good_frame"] = inter["good_frame"]
 
         return viz_objects, result
 
     def layout_wheels_rims(self, img, count):
         name = "layout_wheels_rims_%s" % count
         out = defaultdict(lambda: None)
+        out["good_frame"] = False
         if self.history[name] is False:
             self.clear_states()
             self.history[name] = True
@@ -291,6 +300,7 @@ class Task:
         if len(tires) == 2 and len(rims) == 2:
             left_tire, right_tire = separate_two(tires)
             left_rim, right_rim = separate_two(rims)
+            out["good_frame"] = True
 
             if self.frame_recs[0].add_and_check_stable(left_tire) and self.frame_recs[1].add_and_check_stable(right_tire) and self.frame_recs[2].add_and_check_stable(left_rim) and self.frame_recs[3].add_and_check_stable(right_rim):
                 left_tire = self.frame_recs[0]
@@ -385,6 +395,7 @@ class Task:
     def axle_into_wheel(self, img, count):
         name = "axle_into_wheel_%s" % count
         out = defaultdict(lambda: None)
+        out["good_frame"] = False
         good_str = "thin" if count == 1 else "thick"
         bad_str = "thick" if count == 1 else "thin"
         
@@ -403,6 +414,7 @@ class Task:
             return out
 
         if len(bad) == 1:
+            out["good_frame"] = True
             bad_check = self.frame_recs[0].add_and_check_stable(bad[0])
             if bad_check is True:
                 good_str = "smaller" if good_str == "thin" else "bigger"
@@ -413,6 +425,7 @@ class Task:
             self.frame_recs[0].staged_clear()
 
         if len(good) == 1:
+            out["good_frame"] = True
             good_check = self.frame_recs[1].add_and_check_stable(good[0])
             if good_check is True:
                 out["next"] = True
@@ -424,6 +437,7 @@ class Task:
     def acquire_frame(self, img, count):
         name = "acquire_frame_%s" % count
         out = defaultdict(lambda: None)
+        out["good_frame"] = False
         if self.history[name] is False:
             self.clear_states()
             self.history[name] = True
@@ -435,6 +449,7 @@ class Task:
         
         marker_check = False
         if len(frame_marker) == 1:
+            out["good_frame"] = True
             if self.frame_recs[0].add_and_check_stable(frame_marker[0]):
 
                 # if self.frame_recs[0].averaged_class() == "frame_marker_right":
@@ -451,15 +466,16 @@ class Task:
         find = "find_green_washer_%s" % count
         side_str = "left" if count == 1 or count == 2 else "right"
         out = defaultdict(lambda: None)
+        out["good_frame"] = False
 
         if count == 1 and self.history[find] is False:
             self.clear_states()
             self.history[find] = True
             out["speech"] = "Great, now find a green washer."
-            out["image"] = read_image("green_washer.png")
+            out["image"] = read_image("green_washer.jpg")
+            self.delay_flag = True
             return out
         if self.history[name] is False:
-            time.sleep(4)
             self.history[name] = True
             speech = {1: "Insert the green washer into the %s hole. Then, show me a side view of the holes like in the video." % side_str,
                       2: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes." % side_str,
@@ -473,54 +489,49 @@ class Task:
         holes = self.get_objects_by_categories(img, {"hole_empty", "hole_green"})
 
         if 0 < len(holes) < 3:
+            out["good_frame"] = True
             if len(holes) == 2:
                 left, right = separate_two(holes)
                 hol = left if side_str == "left" else right
 
                 other_hol = right if side_str == "left" else left
-                # if other_hol["class_name"] == "hole_green":
-                #     out["speech"] = "You put the green washer in the wrong hole. Please put it in the %s hole." % side_str
-                #     self.delay_flag = True
-                #     self.clear_states()
+                if other_hol["class_name"] == "hole_green":
+                    if self.frame_recs[1].add_and_check_stable(other_hol):
+                        out["speech"] = "You put the green washer in the wrong hole. Please put it in the %s hole." % side_str
+                        self.delay_flag = True
+                        self.clear_states()
             else:
-                other_hol = None
                 hol = holes[0]
 
             if hol["class_name"] == "hole_green":
                 if self.frame_recs[0].add_and_check_stable(hol):
-                    if other_hol != None:
-                        if other_hol["class_name"] == "hole_green":
-                            out["speech"] = "You put the green washer in the wrong hole. Please put it in the %s hole." % side_str
-                            self.delay_flag = True
-                            self.clear_states()
-                            return out
-
                     self.clutter_reset()
                     out["next"] = True
             else:
                 self.frame_recs[0].staged_clear()
         else:
-            self.frame_recs[0].staged_clear()
+            self.all_staged_clear()
 
         if len(holes) > 2:
             self.clutter_add()
-
         if self.clutter_check(clutter_threshold):
             out["speech"] = clutter_speech
+
         return out
 
     def insert_gold_washer(self, img, count):
         name = "gold_washer_%s" % count
         find = "find_gold_washer_%s" % count
         out = defaultdict(lambda: None)
+        out["good_frame"] = False
         if count == 1 and self.history[find] is False:
             self.clear_states()
             self.history[find] = True
             out["speech"] = "Great, now find a gold washer." 
-            out["image"] = read_image("gold_washer.png")
+            out["image"] = read_image("gold_washer.jpg")
+            self.delay_flag = True
             return out
         if self.history[name] is False:
-            time.sleep(4)
             self.history[name] = True
             out["speech"] = "Insert the gold washer into the green washer."
             out["video"] = video_url + name + ".mp4"
@@ -529,6 +540,7 @@ class Task:
         holes = self.get_objects_by_categories(img, {"hole_empty", "hole_green", "hole_gold"})
 
         if 0 < len(holes) < 3:
+            out["good_frame"] = True
             if len(holes) == 2:
                 left, right = separate_two(holes)
                 hol = left if count <= 2 else right
@@ -553,6 +565,7 @@ class Task:
 
     def insert_pink_gear_front(self, img):
         out = defaultdict(lambda: None)
+        out["good_frame"] = False
         if self.history["insert_pink_gear_front"] is False:
             self.clear_states()
             self.history["insert_pink_gear_front"] = True
@@ -562,13 +575,18 @@ class Task:
 
         bad_pink = self.get_objects_by_categories(img, {"front_gear_bad"})
         if len(bad_pink) >= 1:
-            out["speech"] = "Please make sure the teeth are facing towards you."
-            self.frame_recs[0].clear()
-            self.delay_flag = True
-            return out
+            out["good_frame"] = True
+            if self.frame_recs[1].add_and_check_stable(bad_pink[0]):
+                out["speech"] = "Please make sure the teeth are facing towards you."
+                self.frame_recs[0].clear()
+                self.delay_flag = True
+                return out
+        else:
+            self.frame_recs[1].staged_clear()
 
         good_pink = self.get_objects_by_categories(img, {"front_gear_good"})
         if len(good_pink) == 1:
+            out["good_frame"] = True
             if self.frame_recs[0].add_and_check_stable(good_pink[0]) is True:
                 out["next"] = True
         else:
@@ -579,6 +597,7 @@ class Task:
     def insert_axle(self, img, count):
         name = "axle_into_frame_%s" % count
         out = defaultdict(lambda: None)
+        out["good_frame"] = False
         if self.history[name] is False:
             self.clear_states()
             self.history[name] = True
@@ -589,7 +608,6 @@ class Task:
         axles = self.get_objects_by_categories(img, {"axle_in_frame_good"})
 
         if 0 < len(axles) < 3:
-
             if count == 1 and len(axles) == 1:
                 ax = axles[0]
             elif count == 2 and len(axles) == 2:
@@ -597,6 +615,7 @@ class Task:
             else:
                 self.all_staged_clear()
                 return out
+            out["good_frame"] = True
             axle_check = self.frame_recs[2].add_and_check_stable(ax)
             if axle_check:
                 out["next"] = True
@@ -608,6 +627,7 @@ class Task:
     def press_wheel(self, img, count):
         name = "press_wheel_%s" % count
         out = defaultdict(lambda: None)
+        out["good_frame"] = False
         good_str = "thin" if count == 1 else "thick"
 
         if self.history[name] is False:
@@ -620,6 +640,7 @@ class Task:
         wheels = self.get_objects_by_categories(img, {"thick_wheel_side", "thin_wheel_side"})
 
         if len(wheels) == 2 or len(wheels) == 4:
+            out["good_frame"] = True
             if len(wheels) == 2:
                 check_wheels = wheels
             else:
@@ -647,33 +668,9 @@ class Task:
             
         return out
 
-    def insert_brown_gear(self, img):
-        out = defaultdict(lambda: None)
-        if self.history["insert_brown_gear"] is False:
-            self.clear_states()
-            self.history["insert_brown_gear"] = True
-            out["speech"] = "Now. Place the brown gear next to the pink gear. Make sure the part in the center that sticks out is facing the pink gear."
-            out["video"] = video_url + "brown_gear.mp4"
-            return out
-
-        bad_brown = self.get_objects_by_categories(img, {"brown_bad"})
-        if len(bad_brown) >= 1:
-            out["speech"] = "Make sure the gear is oriented correctly. The part in the center that sticks out should be facing the pink gear."
-            self.frame_recs[0].clear()
-            self.delay_flag = True
-            return out
-
-        good_brown = self.get_objects_by_categories(img, {"brown_good"})
-        if len(good_brown) == 1:
-            if self.frame_recs[0].add_and_check_stable(good_brown[0]) is True:
-                out["next"] = True
-        else:
-            self.frame_recs[0].staged_clear()
-
-        return out
-
     def insert_pink_gear_back(self, img):
         out = defaultdict(lambda: None)
+        out["good_frame"] = False
         if self.history["back_pink_gear_1"] is False:
             self.clear_states()
             self.history["back_pink_gear_1"] = True
@@ -684,6 +681,7 @@ class Task:
         gear = self.get_objects_by_categories(img,{"back_pink","pink_back"})
         
         if len(gear) == 1:
+            out["good_frame"] = True
             if self.frame_recs[0].add_and_check_stable(gear[0]):
                 img = img[int(gear[0]['dimensions'][1]):int(gear[0]['dimensions'][3]),int(gear[0]['dimensions'][0]):int(gear[0]['dimensions'][2])]
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -751,19 +749,21 @@ class Task:
 
     def insert_brown_gear_back(self, img):
         out = defaultdict(lambda: None)
+        out["good_frame"] = False
         if self.history["insert_brown_gear_back"] is False:
             self.clear_states()
             self.history["insert_brown_gear_back"] = True
-            out["speech"] = "Find the brown gear and place it in the slot shown in the picture. Make sure the nudge on the brown gear is points to the center of the black frame."
+            out["speech"] = "Find the brown gear and place it next to the pink gear. Make sure the nudge on the brown gear is points towards the pink gear."
             out["image"] = read_image("brown_gear.jpg")
             return out
         
-        brown_gear = self.get_objects_by_categories(img, {"brown_good","brown_bad"})
+        brown_gear = self.get_objects_by_categories(img, {"brown_good", "brown_bad"})
 
         if len(brown_gear) == 1:
+            out["good_frame"] = True
             if self.frame_recs[0].add_and_check_stable(brown_gear[0]):
                 if self.frame_recs[0].averaged_class() != "brown_good":
-                    out["speech"] = "Please make sure the nudge on the brown gear is points to the center of the black frame."
+                    out["speech"] = "Please make sure the nudge on the brown gear points towards the pink gear."
                 else:
                     out["next"] = True
         else:
@@ -772,6 +772,7 @@ class Task:
 
     def add_gear_axle(self, img):
         out = defaultdict(lambda: None)
+        out["good_frame"] = False
         if self.history["add_gear_axle"] is False:
             self.clear_states()
             self.history["add_gear_axle"] = True
@@ -788,6 +789,7 @@ class Task:
         back_check = False
 
         if 0 < len(gear_on_axle) < 3:
+            out["good_frame"] = True
             if len(gear_on_axle) == 2:
                 left, right = separate_two(gear_on_axle, True)
             else:
@@ -826,6 +828,7 @@ class Task:
 
     def final_check(self, img):
         out = defaultdict(lambda: None)
+        out["good_frame"] = False
         if self.history["final_check_1"] is False:
             self.clear_states()
             self.history["final_check_1"] = True
@@ -836,6 +839,7 @@ class Task:
             wheels = self.get_objects_by_categories(img, {"thin_wheel_side", "thick_wheel_side"})
 
             if len(wheels) == 4:
+                out["good_frame"] = True
                 wheel_1 = self.frame_recs[0].add_and_check_stable(wheels[0])
                 wheel_2 = self.frame_recs[1].add_and_check_stable(wheels[1])
                 wheel_3 = self.frame_recs[2].add_and_check_stable(wheels[2])
@@ -867,31 +871,25 @@ class Task:
                 self.all_staged_clear()
 
         elif self.history["final_check_3"] is False:
-            gears = self.get_objects_by_categories(img, {"front_gear_good", "front_gear_bad", "back_pink", "brown_bad", "brown_good", "pink_back"})
+            gears = self.get_objects_by_categories(img, {"front_gear_good", "front_gear_bad", "brown_bad", "brown_good"})
             
-            if len(gears) == 3:
-                if self.frame_recs[0].add_and_check_stable(gears[0]) and self.frame_recs[1].add_and_check_stable(gears[1]) and self.frame_recs[2].add_and_check_stable(gears[2]):
-                    brown_gear = []
-                    pink_gear = []
+            if len(gears) == 2:
+                out["good_frame"] = True
+                left, right = separate_two(gears, True)
+                if self.frame_recs[0].add_and_check_stable(left) and self.frame_recs[1].add_and_check_stable(right):
 
-                    for i in range(3):
-                        if self.frame_recs[i].averaged_class() == "brown_good":
-                            brown_gear.append(self.frame_recs[i].averaged_bbox())
-                        elif self.frame_recs[i].averaged_class() == "pink_back":
-                            pink_gear.append(self.frame_recs[i].averaged_bbox())
-                        elif self.frame_recs[i].averaged_class() == "brown_bad":
-                            out["speech"] = "The brown gear is facing the wrong way. Please flip it."
-                            return out
-                        elif self.frame_recs[i].averaged_class() == "front_gear_bad":
-                            out["speech"] = "The left pink gear is facing the wrong way. Please flip it."
-                            return out
-                    if brown_gear[0][1] < pink_gear[0][1]:
+                    if self.frame_recs[1].averaged_class() == "brown_bad":
+                        out["speech"] = "The brown gear is facing the wrong way. Please flip it."
+                        self.delay_flag = True
+                        self.clear_states()
+                    elif self.frame_recs[0].averaged_class() == "pink_bad":
+                        out["speech"] = "The left pink gear is facing the wrong way. Please flip it."
+                        self.delay_flag = True
+                        self.clear_states()
+                    else:
                         out["next"] = True
             else:
-                self.frame_recs[0].staged_clear()
-                self.frame_recs[1].staged_clear()
-                self.frame_recs[2].staged_clear()
-
+                self.all_staged_clear()
 
         return out
 
@@ -971,9 +969,9 @@ def separate_four_rect(objects):
     sorted_y = sorted(list(pairwise_y_dist.keys()))
     num_rows = 2
 
-    rows = [pairwise_y_dist[sorted_y[i]] for i in range(num_rows)]
+    rows = [list(pairwise_y_dist[sorted_y[i]]) for i in range(num_rows)]
     for ro in rows:
-        ro.sort(key=lambda obj: bbox_center(obj["dimensions"][0]))  # sort values in rows by x coord
+        ro.sort(key=lambda obj: bbox_center(obj["dimensions"])[0])  # sort values in rows by x coord
     rows.sort(key=lambda r: bbox_center(r[0]["dimensions"])[1])  # sort rows by first value's y coord
 
     top_left = rows[0][0]

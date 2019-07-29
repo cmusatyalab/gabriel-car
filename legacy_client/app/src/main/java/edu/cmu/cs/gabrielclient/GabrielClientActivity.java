@@ -185,7 +185,6 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
             overlayHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
             paint.setStyle(Paint.Style.STROKE);
-            paint.setColor(Color.RED);
             paint.setStrokeWidth(5);
         }
 
@@ -864,6 +863,12 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
         float RectTop = obj.norm.get(1) * height;
         float RectRight = obj.norm.get(2) * width;
         float RectBottom = obj.norm.get(3) * height;
+
+        if (obj.good_frame) {
+            paint.setColor(Color.BLUE);
+        } else {
+            paint.setColor(Color.RED);
+        }
 
         canvas.drawRect(RectLeft, RectTop, RectRight, RectBottom, paint);
     }
