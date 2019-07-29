@@ -16,7 +16,7 @@ resources = os.path.abspath("resources/images")
 video_url = "http://" + ip + ":9095/"
 
 #stable_threshold units: number of stable frames
-stable_threshold = 20
+stable_threshold = 30
 #wheel_compare_threshold units: number of pixels
 wheel_compare_threshold = 15
 #dark_pixel_threshold units: percentage out of 255 range 
@@ -117,8 +117,8 @@ class Task:
     def get_image(self, image_frame):
         self.image = image_frame
 
-    def get_objects_by_categories(self, img, categories):
-        return self.detector.detect_object(img, categories, self.frame_count)
+    def get_objects_by_categories(self, img, categories, image_id=None):
+        return self.detector.detect_object(img, categories, self.frame_count, image_id)
 
     def get_instruction(self, img, header=None):
         if header is not None and "task_id" in header:
@@ -152,7 +152,11 @@ class Task:
             if inter["next"] is True:
                 self.current_state = "confirm_combine_wheel_rim_1"
         elif self.current_state == "confirm_combine_wheel_rim_1":
+<<<<<<< HEAD
             inter = self.confirm_combine_wheel_rim(img,1)
+=======
+            inter = self.confirm_combine_wheel_rim(img, 1)
+>>>>>>> 3fce9b57edf58cde04915f9f008a4c4bbc7a889b
             if inter["next"] is True:
                 self.current_state = "layout_wheels_rims_2"
         elif self.current_state == "layout_wheels_rims_2":
@@ -164,7 +168,11 @@ class Task:
             if inter["next"] is True:
                 self.current_state = "confirm_combine_wheel_rim_2"
         elif self.current_state == "confirm_combine_wheel_rim_2":
+<<<<<<< HEAD
             inter = self.confirm_combine_wheel_rim(img,2)
+=======
+            inter = self.confirm_combine_wheel_rim(img, 2)
+>>>>>>> 3fce9b57edf58cde04915f9f008a4c4bbc7a889b
             if inter["next"] is True:
                 self.current_state = "acquire_axle_1"
         elif self.current_state == "acquire_axle_1":
@@ -352,7 +360,33 @@ class Task:
             out["video"] = video_url + "tire_rim_combine.mp4"
         else:
             out["next"] = True
-            time.sleep(20)
+            time.sleep(6)
+        return out
+
+    def confirm_combine_wheel_rim(self, img, count):
+        name = "confirm_combine_wheel_rim_%s" % count
+        out = defaultdict(lambda: None)
+        out["good_frame"] = False
+        if self.history[name] is False:
+            self.clear_states()
+            self.history[name] = True
+            out["speech"] = "Then, show me the wheels like this."
+            out["image"] = read_image("wheels_assembled.jpg")
+
+        wheels = self.get_objects_by_categories(img, {"wrong_wheel", "thick_wheel_side", "thin_wheel_side"}, "a4b34fd8f0f6")
+        if len(wheels) == 2:
+            out["good_frame"] = True
+            left_wheel, right_wheel = separate_two(wheels)
+            if self.frame_recs[0].add_and_check_stable(left_wheel) and self.frame_recs[1].add_and_check_stable(right_wheel):
+                if self.frame_recs[0].averaged_class() == "wrong_wheel" or \
+                      self.frame_recs[1].averaged_class() == "wrong_wheel":
+                    out["speech"] = "You combined the wrong tire rim pairs. Please swap the parts of each pair."
+                    self.delay_flag = True
+                    self.clear_states()
+                else:
+                    out["next"] = True
+        else:
+            self.all_staged_clear()
         return out
     
     def confirm_combine_wheel_rim(self, img, count):
