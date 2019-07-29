@@ -335,16 +335,25 @@ class Task:
 
         return out
 
-    def combine_wheel_rim(self, count):
+    def combine_wheel_rim(self, img, count):
         name = "combine_wheel_rim_%s" % count
         out = defaultdict(lambda: None)
         if self.history[name] is False:
+            self.clear_states()
             self.history[name] = True
             out["speech"] = "Well done. Now put the tires and rims together."
             out["video"] = video_url + "tire_rim_combine.mp4"
+
+        wheels = self.get_objects_by_categories(img, {"wrong_wheel", "thick_wheel_side", "thin_wheel_side"})
+        if len(wheels) == 2:
+            left_wheel, right_wheel = separate_two(wheels)
+            if self.frame_recs[0].add_and_check_stable(left_wheel) and self.frame_recs[1].add_and_check_stable(right_wheel):
+                if self.frame_recs[0].averaged_class() == "wrong_wheel" or self.frame_recs[1].averaged_class() == "wrong_wheel":
+                    out["speech"] = "You combined the wrong tire rim pairs. Please swap the parts between each pair."
+                else:
+                    out["next"] = True
         else:
-            out["next"] = True
-            time.sleep(20)
+            self.all_staged_clear()
         return out
     
     def acquire_axle(self, count):
