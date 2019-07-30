@@ -142,7 +142,11 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
+<<<<<<< HEAD
             self.current_state = "acquire_axle_1"
+=======
+            self.current_state = "intro"
+>>>>>>> ab656aaf4789fe328b970a90002621962a7b1e13
         elif self.current_state == "intro":
             inter = self.intro()
             if inter["next"] is True:
@@ -694,7 +698,7 @@ class Task:
                 else:
                     out["next"] = True
                     self.clutter_reset()
-        elif len(wheels) == 3 or len(wheels) > 4: 
+        elif (len(wheels) > 2 and count == 1) or len(wheels) > 4:
             self.clutter_add()
         else:
             self.frame_recs[0].staged_clear()
