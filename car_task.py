@@ -142,11 +142,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-<<<<<<< HEAD
-            self.current_state = "acquire_axle_1"
-=======
             self.current_state = "intro"
->>>>>>> ab656aaf4789fe328b970a90002621962a7b1e13
         elif self.current_state == "intro":
             inter = self.intro()
             if inter["next"] is True:
