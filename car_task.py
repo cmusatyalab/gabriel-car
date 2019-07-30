@@ -16,7 +16,7 @@ resources = os.path.abspath("resources/images")
 video_url = "http://" + ip + ":9095/"
 
 #stable_threshold units: number of stable frames
-stable_threshold = 30
+stable_threshold = 50
 #wheel_compare_threshold units: number of pixels
 wheel_compare_threshold = 15
 #dark_pixel_threshold units: percentage out of 255 range 
@@ -131,7 +131,7 @@ class Task:
                 self.detector.reset()
 
         if self.delay_flag is True:
-            time.sleep(7)
+            time.sleep(4)
             self.delay_flag = False
 
         result = defaultdict(lambda: None)
@@ -142,7 +142,11 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "confirm_combine_wheel_rim_1"
+            self.current_state = "final_check"
+        elif self.current_state == "intro":
+            inter = self.intro()
+            if inter["next"] is True:
+                self.current_state = "layout_wheels_rims_1"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -152,11 +156,7 @@ class Task:
             if inter["next"] is True:
                 self.current_state = "confirm_combine_wheel_rim_1"
         elif self.current_state == "confirm_combine_wheel_rim_1":
-<<<<<<< HEAD
-            inter = self.confirm_combine_wheel_rim(img,1)
-=======
             inter = self.confirm_combine_wheel_rim(img, 1)
->>>>>>> 3fce9b57edf58cde04915f9f008a4c4bbc7a889b
             if inter["next"] is True:
                 self.current_state = "layout_wheels_rims_2"
         elif self.current_state == "layout_wheels_rims_2":
@@ -168,11 +168,7 @@ class Task:
             if inter["next"] is True:
                 self.current_state = "confirm_combine_wheel_rim_2"
         elif self.current_state == "confirm_combine_wheel_rim_2":
-<<<<<<< HEAD
-            inter = self.confirm_combine_wheel_rim(img,2)
-=======
             inter = self.confirm_combine_wheel_rim(img, 2)
->>>>>>> 3fce9b57edf58cde04915f9f008a4c4bbc7a889b
             if inter["next"] is True:
                 self.current_state = "acquire_axle_1"
         elif self.current_state == "acquire_axle_1":
@@ -286,7 +282,36 @@ class Task:
             obj["good_frame"] = inter["good_frame"]
 
         return viz_objects, result
-
+    
+    def intro(self):
+        out = defaultdict(lambda: None)
+        if self.history["intro_1"] is False:
+            self.history["intro_1"] = True 
+            out["speech"] = "Hi, thanks for using our Auto Assembly Assistant."
+            self.delay_flag = True
+        elif self.history["intro_2"] is False:
+            self.history["intro_2"] = True
+            out["speech"] = "My name is Gabriel and I will be your assistant in building this car model."
+            self.delay_flag = True
+        elif self.history["intro_3"] is False:
+            self.history["intro_3"] = True
+            out["speech"] = "Here are some tips for our detection process."
+            self.delay_flag = True
+        elif self.history["intro_4"] is False:
+            self.history["intro_4"] = True
+            out["speech"] = "Red boxes are objects that we have detected."
+            self.delay_flag = True
+        elif self.history["intro_5"] is False:
+            self.history["intro_5"] = True
+            out["speech"] = "Blue boxes are objects that we are currently processing."
+            self.delay_flag = True
+        elif self.history["intro_6"] is False:
+            self.history["intro_6"] = True
+            out["speech"] = "Try to capture all the blue boxes. Good luck."
+            self.delay_flag = True
+            out['next'] = True
+        
+        return out 
     def layout_wheels_rims(self, img, count):
         name = "layout_wheels_rims_%s" % count
         out = defaultdict(lambda: None)
@@ -296,7 +321,7 @@ class Task:
             self.history[name] = True
             out['image'] = read_image('tire-rim-legend.jpg')
             speech = {
-                1: 'Please find two different sized green rims,two different sized black tires, and arrange them like this.',
+                1: 'Please find two different sized green rims,two different sized black tires, and arrange them like this while keeping all the parts close to each other.',
                 2: 'Find the other set of two different sized green rims, two different sized black tires, and show me this configuration again.'
             }
             out['speech'] = speech[count]
@@ -348,6 +373,7 @@ class Task:
             self.clutter_add()
         if self.clutter_check(clutter_threshold):
             out["speech"] = clutter_speech
+            self.delay_flag = True
 
         return out
 
@@ -385,27 +411,6 @@ class Task:
                     self.clear_states()
                 else:
                     out["next"] = True
-        else:
-            self.all_staged_clear()
-        return out
-    
-    def confirm_combine_wheel_rim(self, img, count):
-        name = "confirm_combine_wheel_rim_%s" % count
-        out = defaultdict(lambda: None)
-        if self.history[name] is False:
-            self.clear_states()
-            self.history[name] = True
-            out["speech"] = "Finally, show me the wheels like this."
-            out["image"] = read_image("wheels.jpg")
-
-        wheels = self.get_objects_by_categories(img, {"wrong_wheel","thick_wheel_side", "thin_wheel_side"})
-        if len(wheels) == 2:
-            left_wheel, right_wheel = separate_two(wheels)
-            if self.frame_recs[0].add_and_check_stable(left_wheel) and self.frame_recs[1].add_and_check_stable(right_wheel):
-                if self.frame_recs[0].averaged_class() == "wrong_wheel" or self.frame_recs[1].averaged_class() == "wrong_wheel":
-                    out["speech"] = "Both of the wheels are assembled with the wrong pair. Please reassemble it by swaping the rims."
-                else:
-                    out["next"] = True         
         else:
             self.all_staged_clear()
         return out
@@ -550,6 +555,7 @@ class Task:
             self.clutter_add()
         if self.clutter_check(clutter_threshold):
             out["speech"] = clutter_speech
+            self.delay_flag = True
 
         return out
 
@@ -595,6 +601,7 @@ class Task:
 
         if self.clutter_check(clutter_threshold):
             out["speech"] = clutter_speech
+            self.delay_flag = True
         return out
 
     def insert_pink_gear_front(self, img):
@@ -699,6 +706,7 @@ class Task:
         
         if self.clutter_check(clutter_threshold):
             out["speech"] = clutter_speech
+            self.delay_flag = True
             
         return out
 
@@ -916,7 +924,7 @@ class Task:
                         out["speech"] = "The brown gear is facing the wrong way. Please flip it."
                         self.delay_flag = True
                         self.clear_states()
-                    elif self.frame_recs[0].averaged_class() == "pink_bad":
+                    elif self.frame_recs[0].averaged_class() == "front_gear_bad":
                         out["speech"] = "The left pink gear is facing the wrong way. Please flip it."
                         self.delay_flag = True
                         self.clear_states()
