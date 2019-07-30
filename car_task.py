@@ -16,7 +16,7 @@ resources = os.path.abspath("resources/images")
 video_url = "http://" + ip + ":9095/"
 
 #stable_threshold units: number of stable frames
-stable_threshold = 30
+stable_threshold = 50
 #wheel_compare_threshold units: number of pixels
 wheel_compare_threshold = 15
 #dark_pixel_threshold units: percentage out of 255 range 
@@ -142,7 +142,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "confirm_combine_wheel_rim_1"
+            self.current_state = "layout_wheels_rims_1"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -662,7 +662,7 @@ class Task:
                 else:
                     out["next"] = True
                     self.clutter_reset()
-        elif len(wheels) == 3 or len(wheels) > 4: 
+        elif (len(wheels) > 2 and count == 1) or len(wheels) > 4:
             self.clutter_add()
         else:
             self.frame_recs[0].staged_clear()
