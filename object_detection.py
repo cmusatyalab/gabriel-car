@@ -40,6 +40,15 @@ class Detector:
             },
             "a8d3d274845f":{
                 "axle_in_frame_good"
+            },
+            "a4b34fd8f0f6":{
+                "wrong_wheel",
+                "thick_rim_side",
+                "thick_wheel_side",
+                "thick_wheel_top",
+                "thin_rim_side",
+                "thin_wheel_side",
+                "thin_wheel_top"
             }
         }
         

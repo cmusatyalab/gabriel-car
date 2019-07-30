@@ -131,7 +131,7 @@ class Task:
                 self.detector.reset()
 
         if self.delay_flag is True:
-            time.sleep(7)
+            time.sleep(4)
             self.delay_flag = False
 
         result = defaultdict(lambda: None)
@@ -142,7 +142,11 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "layout_wheels_rims_1"
+            self.current_state = "intro"
+        elif self.current_state == "intro":
+            inter = self.intro()
+            if inter["next"] is True:
+                self.current_state = "layout_wheels_rims_1"
         elif self.current_state == "layout_wheels_rims_1":
             inter = self.layout_wheels_rims(img, 1)
             if inter["next"] is True:
@@ -278,7 +282,36 @@ class Task:
             obj["good_frame"] = inter["good_frame"]
 
         return viz_objects, result
-
+    
+    def intro(self):
+        out = defaultdict(lambda: None)
+        if self.history["intro_1"] is False:
+            self.history["intro_1"] = True 
+            out["speech"] = "Hi, thanks for using our Auto Assembly Assistant."
+            self.delay_flag = True
+        elif self.history["intro_2"] is False:
+            self.history["intro_2"] = True
+            out["speech"] = "My name is Gabriel and I will be your assistant in building this car model."
+            self.delay_flag = True
+        elif self.history["intro_3"] is False:
+            self.history["intro_3"] = True
+            out["speech"] = "Here are some tips for our detection process."
+            self.delay_flag = True
+        elif self.history["intro_4"] is False:
+            self.history["intro_4"] = True
+            out["speech"] = "Red boxes are objects that we have detected."
+            self.delay_flag = True
+        elif self.history["intro_5"] is False:
+            self.history["intro_5"] = True
+            out["speech"] = "Blue boxes are objects that we are currently processing."
+            self.delay_flag = True
+        elif self.history["intro_6"] is False:
+            self.history["intro_6"] = True
+            out["speech"] = "Try to capture all the blue boxes. Good luck."
+            self.delay_flag = True
+            out['next'] = True
+        
+        return out 
     def layout_wheels_rims(self, img, count):
         name = "layout_wheels_rims_%s" % count
         out = defaultdict(lambda: None)
@@ -288,7 +321,7 @@ class Task:
             self.history[name] = True
             out['image'] = read_image('tire-rim-legend.jpg')
             speech = {
-                1: 'Please find two different sized green rims,two different sized black tires, and arrange them like this.',
+                1: 'Please find two different sized green rims,two different sized black tires, and arrange them like this while keeping all the parts close to each other.',
                 2: 'Find the other set of two different sized green rims, two different sized black tires, and show me this configuration again.'
             }
             out['speech'] = speech[count]
@@ -340,6 +373,7 @@ class Task:
             self.clutter_add()
         if self.clutter_check(clutter_threshold):
             out["speech"] = clutter_speech
+            self.delay_flag = True
 
         return out
 
@@ -380,7 +414,7 @@ class Task:
         else:
             self.all_staged_clear()
         return out
-    
+
     def acquire_axle(self, count):
         name = "acquire_axle_%s" % count
         out = defaultdict(lambda: None)
@@ -521,6 +555,7 @@ class Task:
             self.clutter_add()
         if self.clutter_check(clutter_threshold):
             out["speech"] = clutter_speech
+            self.delay_flag = True
 
         return out
 
@@ -566,6 +601,7 @@ class Task:
 
         if self.clutter_check(clutter_threshold):
             out["speech"] = clutter_speech
+            self.delay_flag = True
         return out
 
     def insert_pink_gear_front(self, img):
@@ -670,6 +706,7 @@ class Task:
         
         if self.clutter_check(clutter_threshold):
             out["speech"] = clutter_speech
+            self.delay_flag = True
             
         return out
 
@@ -887,7 +924,7 @@ class Task:
                         out["speech"] = "The brown gear is facing the wrong way. Please flip it."
                         self.delay_flag = True
                         self.clear_states()
-                    elif self.frame_recs[0].averaged_class() == "pink_bad":
+                    elif self.frame_recs[0].averaged_class() == "front_gear_bad":
                         out["speech"] = "The left pink gear is facing the wrong way. Please flip it."
                         self.delay_flag = True
                         self.clear_states()
