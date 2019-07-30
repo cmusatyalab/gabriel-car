@@ -142,7 +142,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "final_check"
+            self.current_state = "acquire_axle_1"
         elif self.current_state == "intro":
             inter = self.intro()
             if inter["next"] is True:
@@ -288,29 +288,25 @@ class Task:
         if self.history["intro_1"] is False:
             self.history["intro_1"] = True 
             out["speech"] = "Hi, thanks for using our Auto Assembly Assistant."
-            self.delay_flag = True
         elif self.history["intro_2"] is False:
             self.history["intro_2"] = True
             out["speech"] = "My name is Gabriel and I will be your assistant in building this car model."
-            self.delay_flag = True
         elif self.history["intro_3"] is False:
             self.history["intro_3"] = True
             out["speech"] = "Here are some tips for our detection process."
-            self.delay_flag = True
         elif self.history["intro_4"] is False:
             self.history["intro_4"] = True
             out["speech"] = "Red boxes are objects that we have detected."
-            self.delay_flag = True
+            out["image"] = read_image("red_box_ex.jpg")
         elif self.history["intro_5"] is False:
             self.history["intro_5"] = True
             out["speech"] = "Blue boxes are objects that we are currently processing."
-            self.delay_flag = True
+            out["image"] = read_image("blue_box_ex.jpg")
         elif self.history["intro_6"] is False:
             self.history["intro_6"] = True
             out["speech"] = "Try to capture all the blue boxes. Good luck."
-            self.delay_flag = True
             out['next'] = True
-        
+        self.delay_flag = True
         return out 
     def layout_wheels_rims(self, img, count):
         name = "layout_wheels_rims_%s" % count
@@ -418,6 +414,7 @@ class Task:
     def acquire_axle(self, count):
         name = "acquire_axle_%s" % count
         out = defaultdict(lambda: None)
+        self.delay_flag = True
         if self.history[name] is False:
             self.history[name] = True
             speech = {
@@ -428,7 +425,6 @@ class Task:
             out["image"] = read_image("wheel_axle.jpg")
         else:
             out["next"] = True
-            self.delay_flag = True
         return out
 
     def axle_into_wheel(self, img, count):
@@ -442,7 +438,7 @@ class Task:
             self.clear_states()
             self.history[name] = True
             out["image"] = read_image("wheel_in_axle_%s.jpg" % good_str)
-            out["speech"] = "Now. Insert the axle into one of the %s wheels. Then hold it up like this." % good_str
+            out["speech"] = "Now, insert the axle into one of the %s wheels. Then hold it up like this." % good_str
             return out
 
         good = self.get_objects_by_categories(img, {"wheel_in_axle_%s" % good_str})
@@ -610,7 +606,7 @@ class Task:
         if self.history["insert_pink_gear_front"] is False:
             self.clear_states()
             self.history["insert_pink_gear_front"] = True
-            out['speech'] = "Great job! Now. Lay the black frame down and give me a birds-eye view. Then, insert the pink gear, making sure its teeth are facing towards you."
+            out['speech'] = "Great job! Now, Lay the black frame down and give me a birds-eye view. Then, insert the pink gear, making sure its teeth are facing towards you."
             out['image'] = read_image("pink_gear_1.jpg")
             return out
 
