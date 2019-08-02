@@ -6,9 +6,26 @@ import time
 import atexit
 
 class Detector:
-    def __init__(self):
-        self.tpod_url = "http://0.0.0.0:8000"
+    """
+    Object that handles all aspects of object detection including:
+    1. Spinning up a specific TPOD classifier container
+    2. Sending image to container for object detection
+    3. Cleaning up container once finished
 
+    Detector works with an API call containing
+    1. the image
+    2. what objects you want to detect
+    """
+    def __init__(self, url):
+        self.tpod_url = url
+
+        """
+        registry of TPOD classifier docker image IDs and the objects they should be used to recognize 
+        (does not need to include every object a container recognizes)
+        
+        every key and value should be unique. for containers that detect the same objects, just list the object in the
+        container that should be used for detection
+        """
         self.docker_image_to_objs = {
             "7af40405c31b": {
                 "wheel_in_axle_thick",
@@ -51,23 +68,31 @@ class Detector:
                 "thin_wheel_top"
             }
         }
-        
+
+        # reverse look up dict
         self.objs_to_docker_image = {}
         for url in self.docker_image_to_objs.keys():
             objs = self.docker_image_to_objs[url]
             for o in objs:
                 self.objs_to_docker_image[o] = url
-        
-        self.last_id = None
-        self.cache = []
 
+        self.last_id = None  # image ID of last classifier (to determine whether or not to spin up a new one)
+        self.cache = []  # cache of detected objects to avoid multiple calls with same image. wiped on new frame
+
+        # Docker API to spin up/destroy containers
         self.client = docker.from_env()
         self.last_image = None
         self.container = None
+
         atexit.register(self.cleanup)
 
 
     def init_docker_classifier(self, objects, image_id=None):
+        """
+        Spin up the Docker container to detect certain objects
+        :param objects: to detect
+        :param image_id: overrides registry look up and spins up a specific classifier by image ID
+        """
         if image_id is not None:
             image_for_objects = image_id
         else:
@@ -89,10 +114,25 @@ class Detector:
                                                     runtime="nvidia")
         time.sleep(4)
 
-        return True
-
 
     def detect_object(self, img, objects, f_id, image_id=None):
+        """
+        Detects objects in an image
+
+        :param img: to detect
+        :param objects: expected in the img to detect
+        :param f_id: frame ID to determine whether or not use cache
+        :param image_id: overrides registry look up and spins up a specific classifier by image ID
+        :return: list of detected objects in the form
+            {
+            "class_name": label of classified object
+            "dimensions": bounding box dimensions in form [top-left corner x, t-l y, bottom-right corner x, br y]
+                units are pixels
+            "norm": normed dimensions (0 to 1)
+            "confidence": confidence of detection (0 to 1)
+            }
+        """
+        # clear cache if new frame
         if f_id != self.last_id:
             self.last_id = f_id
             self.cache = []
@@ -114,24 +154,45 @@ class Detector:
         return out
 
     def color_detected_object(self, color_dict):
+        """
+        Adds a color field to detected object in cache
+        :param color_dict: mapping objects to colors
+        """
         for obj in self.cache:
             if obj["class_name"] in color_dict.keys():
                 obj["color"] = color_dict[obj["class_name"]]
 
     def all_detected_objects(self):
+        """
+        Returns all object detections from this frame, regardless of the objects requested in detect_object call
+        :return: list of detected objects
+        """
         return self.cache[:]
 
     def cleanup(self):
+        """
+        Stop Docker container if it's running
+        """
         if self.container is not None:
             self.container.kill()
             self.container = None
 
     def reset(self):
+        """
+        Reset detector for a new client connection
+        """
         self.last_image = None
         self.cleanup()
 
 
 def tpod_request(img, url):
+    """
+    Send a TPOD HTTP request for object detection
+    If bounding boxes of the same class or certain groups of classes intersect, only the highest confidence is returned
+    :param img: to detect
+    :param url: of TPOD classifier
+    :return: objects detected
+    """
     headers = {'User-Agent': 'Mozilla/5.0'}
     payload = {"confidence": 0.5, "format": "box"}
 
@@ -150,6 +211,7 @@ def tpod_request(img, url):
         if class_name not in by_class.keys():
             by_class[class_name] = []
 
+        # norm dimensions field
         norm = obj_list_form[1][:]
         norm[0] /= img.shape[1]
         norm[2] /= img.shape[1]
@@ -158,6 +220,7 @@ def tpod_request(img, url):
 
         intermediate = {"class_name": obj_list_form[0], "dimensions": obj_list_form[1], "confidence": obj_list_form[2], "norm": norm}
 
+        # wipe intersecting bounding boxes for same class or certain groups of classes
         conflicts = [x for x in by_class[class_name] if intersecting_objs(intermediate, x)]
         non_conflicts = [x for x in by_class[class_name] if x not in conflicts]
 
@@ -183,6 +246,11 @@ def tpod_request(img, url):
 
 
 def group_class_names(name):
+    """
+    Returns the group name of a class, for intersecting bounding box reduction
+    :param name: of class
+    :return: group name of class
+    """
     if name in {"thin_wheel_top", "thick_wheel_top"}:
         return "wheel"
     elif name in {"thin_wheel_side", "thick_wheel_side"}:
@@ -199,6 +267,12 @@ def group_class_names(name):
     return name
 
 def intersecting_objs(obj1, obj2):
+    """
+    Checks if two objects are intersecting and returns the more confident one if so.
+    :param obj1: object to check intersection
+    :param obj2: other object to check intersection
+    :return: the object of higher confidence if bounding boxes intersect, otherwise False
+    """
     if intersecting_bbox(obj1["dimensions"], obj2["dimensions"]):
         return obj1 if obj1["confidence"] > obj2["confidence"] else obj2
 

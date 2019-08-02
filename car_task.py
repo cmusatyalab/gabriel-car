@@ -14,6 +14,7 @@ OBJECTS = config.LABELS
 STATES = ["start", "wheel-stage", "wheel-compare"]
 resources = os.path.abspath("resources/images")
 video_url = "http://" + ip + ":9095/"
+tpod_url = "http://0.0.0.0:8000"
 
 #stable_threshold units: number of stable frames
 stable_threshold = 50
@@ -102,7 +103,7 @@ class Task:
         self.history = defaultdict(lambda: False)
         self.delay_flag = False
 
-        self.detector = object_detection.Detector()
+        self.detector = object_detection.Detector(tpod_url)
         self.frame_count = 0
         self.image = None 
 
