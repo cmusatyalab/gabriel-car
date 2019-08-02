@@ -139,19 +139,13 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-<<<<<<< HEAD
-            self.current_state = "final_check"
+            self.current_state = "intro"
         elif self.current_state == "intro":
             inter = self.intro()
             if inter["next"] is True:
                 self.current_state = "layout_wheel_rim_1"
         elif self.current_state == "layout_wheel_rim_1":
             inter = self.layout_wheel_rim(img, 1)
-=======
-            self.current_state = "layout_wheels_rims_1"
-        elif self.current_state == "layout_wheels_rims_1":
-            inter = self.layout_wheels_rims(img, 1)
->>>>>>> parent of bfbd90c... Tested, complete except for checking wheel rim assembly
             if inter["next"] is True:
                 self.current_state = "combine_wheel_rim_1"
         elif self.current_state == "combine_wheel_rim_1":
@@ -920,7 +914,6 @@ class Task:
             
             if len(gears) == 3:
                 out["good_frame"] = True
-<<<<<<< HEAD
                 left, right = separate_two(gears, True)
                 if self.frame_recs[0].add_and_check_stable(left) and self.frame_recs[1].add_and_check_stable(right):
 
@@ -933,24 +926,6 @@ class Task:
                         self.delay_flag = True
                         self.clear_states()
                     else:
-=======
-                if self.frame_recs[0].add_and_check_stable(gears[0]) and self.frame_recs[1].add_and_check_stable(gears[1]) and self.frame_recs[2].add_and_check_stable(gears[2]):
-                    brown_gear = []
-                    pink_gear = []
-
-                    for i in range(3):
-                        if self.frame_recs[i].averaged_class() == "brown_good":
-                            brown_gear.append(self.frame_recs[i].averaged_bbox())
-                        elif self.frame_recs[i].averaged_class() == "pink_back":
-                            pink_gear.append(self.frame_recs[i].averaged_bbox())
-                        elif self.frame_recs[i].averaged_class() == "brown_bad":
-                            out["speech"] = "The brown gear is facing the wrong way. Please flip it."
-                            return out
-                        elif self.frame_recs[i].averaged_class() == "front_gear_bad":
-                            out["speech"] = "The left pink gear is facing the wrong way. Please flip it."
-                            return out
-                    if brown_gear[0][1] < pink_gear[0][1]:
->>>>>>> parent of bfbd90c... Tested, complete except for checking wheel rim assembly
                         out["next"] = True
             else:
                 self.frame_recs[0].staged_clear()
