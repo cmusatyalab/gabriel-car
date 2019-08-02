@@ -7,7 +7,7 @@ public class VizObj {
     public List<Float> dimensions;
     public double confidence;
     public List<Float> norm;
-    public boolean good_frame;
+    public String color;
 
     VizObj() {
         // empty constructor

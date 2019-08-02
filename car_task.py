@@ -114,6 +114,9 @@ class Task:
 
         self.clutter_count = 0
 
+        self.time = None
+        self.time_trigger = False
+
     def get_image(self, image_frame):
         self.image = image_frame
 
@@ -142,29 +145,29 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
-            self.current_state = "intro"
+            self.current_state = "final_check"
         elif self.current_state == "intro":
             inter = self.intro()
             if inter["next"] is True:
-                self.current_state = "layout_wheels_rims_1"
-        elif self.current_state == "layout_wheels_rims_1":
-            inter = self.layout_wheels_rims(img, 1)
+                self.current_state = "layout_wheel_rim_1"
+        elif self.current_state == "layout_wheel_rim_1":
+            inter = self.layout_wheel_rim(img, 1)
             if inter["next"] is True:
                 self.current_state = "combine_wheel_rim_1"
         elif self.current_state == "combine_wheel_rim_1":
-            inter = self.combine_wheel_rim(1)
+            inter = self.combine_wheel_rim(img, 1)
             if inter["next"] is True:
                 self.current_state = "confirm_combine_wheel_rim_1"
         elif self.current_state == "confirm_combine_wheel_rim_1":
             inter = self.confirm_combine_wheel_rim(img, 1)
             if inter["next"] is True:
-                self.current_state = "layout_wheels_rims_2"
-        elif self.current_state == "layout_wheels_rims_2":
-            inter = self.layout_wheels_rims(img, 2)
+                self.current_state = "layout_wheel_rim_2"
+        elif self.current_state == "layout_wheel_rim_2":
+            inter = self.layout_wheel_rim(img, 2)
             if inter["next"] is True:
                 self.current_state = "combine_wheel_rim_2"
         elif self.current_state == "combine_wheel_rim_2":
-            inter = self.combine_wheel_rim(2)
+            inter = self.combine_wheel_rim(img, 2)
             if inter["next"] is True:
                 self.current_state = "confirm_combine_wheel_rim_2"
         elif self.current_state == "confirm_combine_wheel_rim_2":
@@ -186,8 +189,8 @@ class Task:
         elif self.current_state == "insert_green_washer_1":
             inter = self.insert_green_washer(img, 1)
             if inter["next"] is True:
-                self.current_state = "insert_gold_washer"
-        elif self.current_state == "insert_gold_washer":
+                self.current_state = "insert_gold_washer_1"
+        elif self.current_state == "insert_gold_washer_1":
             inter = self.insert_gold_washer(img, 1)
             if inter["next"] is True:
                 self.current_state = "insert_pink_gear_front"
@@ -279,7 +282,8 @@ class Task:
         exclude = {"frame_marker_left", "frame_marker_right", "frame_horn"}
         viz_objects = [obj for obj in self.detector.all_detected_objects() if obj["class_name"] not in exclude]
         for obj in viz_objects:
-            obj["good_frame"] = inter["good_frame"]
+            if "color" not in obj.keys():
+                obj["color"] = "blue" if inter["good_frame"] else "red"
 
         return viz_objects, result
     
@@ -307,8 +311,10 @@ class Task:
             out["speech"] = "Try to capture all the blue boxes. Good luck."
             out['next'] = True
         self.delay_flag = True
-        return out 
-    def layout_wheels_rims(self, img, count):
+        return out
+
+
+    def layout_wheel_rim(self, img, count):
         name = "layout_wheels_rims_%s" % count
         out = defaultdict(lambda: None)
         out["good_frame"] = False
@@ -317,72 +323,69 @@ class Task:
             self.history[name] = True
             out['image'] = read_image('tire-rim-legend.jpg')
             speech = {
-                1: 'Please find two different sized green rims,two different sized black tires, and arrange them like this while keeping all the parts close to each other.',
-                2: 'Find the other set of two different sized green rims, two different sized black tires, and show me this configuration again.'
+                1: 'Please find two different sized green rims and two different sized black tires.',
+                2: 'Find the other two sets of rims and tires.'
             }
             out['speech'] = speech[count]
             return out
-        
-        tires = self.get_objects_by_categories(img, {"thick_wheel_side", "thin_wheel_side"})
-        rims = self.get_objects_by_categories(img, {"thick_rim_side", "thin_rim_side"})
 
-        if len(tires) == 2 and len(rims) == 2:
-            left_tire, right_tire = separate_two(tires)
-            left_rim, right_rim = separate_two(rims)
-            out["good_frame"] = True
+        thin_rim = self.get_objects_by_categories(img, {"thin_rim_side"})
+        thin_wheel = self.get_objects_by_categories(img, {"thin_wheel_side"})
+        thick_rim = self.get_objects_by_categories(img, {"thick_rim_side"})
+        thick_wheel = self.get_objects_by_categories(img, {"thick_wheel_side"})
 
-            if self.frame_recs[0].add_and_check_stable(left_tire) and self.frame_recs[1].add_and_check_stable(right_tire) and self.frame_recs[2].add_and_check_stable(left_rim) and self.frame_recs[3].add_and_check_stable(right_rim):
-                left_tire = self.frame_recs[0]
-                right_tire = self.frame_recs[1]
-                left_rim = self.frame_recs[2]
-                right_rim = self.frame_recs[3]
-                if left_tire.averaged_bbox()[1] > left_rim.averaged_bbox()[1] and right_tire.averaged_bbox()[1] > right_rim.averaged_bbox()[1]:
-                    rim_diff = compare(left_rim.averaged_bbox(),right_rim.averaged_bbox(),wheel_compare_threshold)
+        if len(thin_rim) == 1 and len(thick_rim) == 1 and len(thin_wheel) == 1 and len(thick_wheel) == 1:
+            thin_rim_check = self.frame_recs[0].add_and_check_stable(thin_rim[0])
+            thick_rim_check = self.frame_recs[1].add_and_check_stable(thick_rim[0])
+            thin_wheel_check = self.frame_recs[2].add_and_check_stable(thin_wheel[0])
+            thick_wheel_check = self.frame_recs[3].add_and_check_stable(thick_wheel[0])
 
-                    if left_tire.averaged_class() == "thick_wheel_side" and right_tire.averaged_class() == "thin_wheel_side" and\
-                    left_rim.averaged_class() == "thick_rim_side" and right_rim.averaged_class() == "thin_rim_side":
-                        out['next'] = True
-                        self.clutter_reset()
-                    elif (left_tire.averaged_class() == "thin_wheel_side" and right_tire.averaged_class() == "thick_wheel_side"):
-                        out["speech"] = "Please switch the positions of the black tires."
-                    elif left_tire.averaged_class() != "thick_wheel_side":
-                        out["speech"] = "Please switch out the left tire with a bigger tire."
-                    elif right_tire.averaged_class() != "thin_wheel_side":
-                        out["speech"] = "Please switch out the right tire with a smaller tire."
-                    elif rim_diff == "second":
-                        out["speech"] = "Please switch the positions of the green rims."
-                    elif rim_diff == "same":
-                        if left_rim.averaged_class() != "thick_rim_side":
-                            out["speech"] = "Please switch out the left rim with a bigger rim."
-                        elif right_rim.averaged_class() != "thin_rim_side":
-                            out["speech"] = "Please switch out the right rim with a smaller rim."
-
-                elif left_tire.averaged_bbox()[1] > left_rim.averaged_bbox()[1] and right_tire.averaged_bbox()[1] < right_rim.averaged_bbox()[1]:
-                    out['speech'] = "Please switch the positions of tire and rim on the right."
-                elif left_tire.averaged_bbox()[1] < left_rim.averaged_bbox()[1] and right_tire.averaged_bbox()[1] > right_rim.averaged_bbox()[1]:
-                    out["speech"] = "Please switch the positions of tire and rim on the left."
-                self.clear_states()
-        else:
-            self.all_staged_clear()
-
-        if len(tires) > 2 or len(rims) > 2:
-            self.clutter_add()
-        if self.clutter_check(clutter_threshold):
-            out["speech"] = clutter_speech
-            self.delay_flag = True
+            if thin_rim_check and thick_rim_check and thin_wheel_check and thick_wheel_check:
+                out["good_frame"] = True
+                out["next"] = True
 
         return out
 
-    def combine_wheel_rim(self, count):
+    def combine_wheel_rim(self, img, count):
         name = "combine_wheel_rim_%s" % count
         out = defaultdict(lambda: None)
         if self.history[name] is False:
             self.history[name] = True
-            out["speech"] = "Well done. Now put the tires and rims together."
+            out["speech"] = "Well done. Now put the tires and rims together by color."
             out["video"] = video_url + "tire_rim_combine.mp4"
-        else:
+            self.time = time.time()
+
+        thin_rim = self.get_objects_by_categories(img, {"thin_rim_side"})
+        thin_wheel = self.get_objects_by_categories(img, {"thin_wheel_side"})
+        thick_rim = self.get_objects_by_categories(img, {"thick_rim_side"})
+        thick_wheel = self.get_objects_by_categories(img, {"thick_wheel_side"})
+
+        if len(thin_rim) == 1 and len(thick_rim) == 1 and len(thin_wheel) == 1 and len(thick_wheel) == 1:
+            if not self.time_trigger:
+                self.time_trigger = True
+                self.time = time.time()
+
+        if len(thin_rim) == 1:
+            self.detector.color_detected_object({
+                "thin_rim_side": "yellow",
+                "thin_wheel_side": "yellow"
+            })
+        if len(thin_wheel) == 1:
+            self.detector.color_detected_object({
+                "thin_wheel_side": "yellow"
+            })
+        if len(thick_rim) == 1:
+            self.detector.color_detected_object({
+                "thick_rim_side": "orange",
+            })
+        if len(thick_wheel) == 1:
+            self.detector.color_detected_object({
+                "thick_wheel_side": "orange"
+            })
+
+        if self.time_trigger and time.time() > self.time + 10:
             out["next"] = True
-            time.sleep(6)
+
         return out
 
     def confirm_combine_wheel_rim(self, img, count):
@@ -836,10 +839,14 @@ class Task:
             # right_check = self.frame_recs[1].add_and_check_stable(right)
 
             if len(front_pink_gear) == 1:
-                front_gear_check = self.frame_recs[2].add_and_check_stable(left)
-                if left_check is True and front_gear_check is True and \
-                    check_gear_axle_front(self.frame_recs[0].averaged_bbox(), self.frame_recs[2].averaged_bbox()):
-                    front_check = True
+                front_gear_check = self.frame_recs[2].add_and_check_stable(front_pink_gear[0])
+                if left_check is True and front_gear_check is True:
+                    if check_gear_axle_front(self.frame_recs[0].averaged_bbox(), self.frame_recs[2].averaged_bbox()):
+                        front_check = True
+                    else:
+                        out["speech"] = "The gear axle doesn't seem to be placed correctly. Make sure its teeth touch the teeth of the pink gears."
+                        self.clear_states()
+                        self.delay_flag = True
             else:
                 self.frame_recs[2].staged_clear()
 
@@ -870,7 +877,7 @@ class Task:
         if self.history["final_check_1"] is False:
             self.clear_states()
             self.history["final_check_1"] = True
-            out["speech"] = "Let me do a final check on everything. Please show me a birds-eye view."
+            out["speech"] = "Great job! Now, let me do a final check on everything. Please show me a birds-eye view."
             out["image"] = read_image("final_check.jpg")
             return out
         elif self.history["final_check_2"] is False:
@@ -962,9 +969,9 @@ class Task:
 
 def check_gear_axle_front(gear_on_axle_box, pink_box):
     intersecting = object_detection.intersecting_bbox(gear_on_axle_box, pink_box)
-    to_right = bbox_center(gear_on_axle_box)[0] > bbox_center(pink_box)[0]
+    # to_right = bbox_center(gear_on_axle_box)[0] > bbox_center(pink_box)[0]
 
-    return intersecting and to_right
+    return intersecting
 
 def check_gear_axle_back(gear_on_axle_box, pink_box, brown_box):
     intersecting = object_detection.intersecting_bbox(gear_on_axle_box, pink_box) and \

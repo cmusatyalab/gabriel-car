@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -18,9 +17,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioRecord;
-import android.media.MediaPlayer;
 import android.media.MediaRecorder;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -49,6 +46,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -64,7 +62,7 @@ import edu.cmu.cs.gabrielclient.token.TokenController;
 import edu.cmu.cs.gabrielclient.util.PingThread;
 import edu.cmu.cs.gabrielclient.util.ResourceMonitoringService;
 
-public class GabrielClientActivity extends Activity implements TextToSpeech.OnInitListener, SensorEventListener{
+public class GabrielClientActivity extends Activity implements TextToSpeech.OnInitListener, SensorEventListener {
 
     private static final String LOG_TAG = "Main";
 
@@ -114,22 +112,29 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
     private boolean isAudioRecording = false;
     private int audioBufferSize = -1;
 
+    private Map<String, Integer> colorDict = new HashMap<String, Integer>() {{
+        put("blue", Color.BLUE);
+        put("red", Color.RED);
+        put("yellow", Color.YELLOW);
+        put("orange", Color.rgb(255,165,0));
+    }};
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.v(LOG_TAG, "++onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED+
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED +
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON +
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         imgView = (ImageView) findViewById(R.id.guidance_image);
         legendView = (ImageView) findViewById(R.id.legend_image);
         videoView = (VideoView) findViewById(R.id.guidance_video);
-        if(Const.SHOW_SUBTITLES){
+        if (Const.SHOW_SUBTITLES) {
             findViewById(R.id.subtitleText).setVisibility(View.VISIBLE);
         }
-        if (Const.SAVE_FRAME_SEQUENCE){
+        if (Const.SAVE_FRAME_SEQUENCE) {
             Const.SAVE_FRAME_SEQUENCE_DIR.mkdirs();
         }
     }
@@ -177,7 +182,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
         if (Const.SENSOR_VIDEO) {
             cameraPreview = (CameraPreview) findViewById(R.id.camera_preview);
             cameraPreview.start(CameraPreview.CameraConfiguration.getInstance(), previewCallback);
-            overlayPreview = (SurfaceView)findViewById(R.id.viz_overlay);
+            overlayPreview = (SurfaceView) findViewById(R.id.viz_overlay);
 
             overlayHolder = overlayPreview.getHolder();
             overlayHolder.setFormat(PixelFormat.TRANSPARENT);
@@ -257,12 +262,14 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
             } else {
                 try {
                     Thread.sleep(20 * 1000);
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                }
                 controlThread.sendControlMsg("ping");
                 // wait a while for ping to finish...
                 try {
                     Thread.sleep(5 * 1000);
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                }
             }
         }
         if (tokenController != null) {
@@ -276,8 +283,8 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
         if (serverIP == null) return;
 
         if (Const.BACKGROUND_PING) {
-	        pingThread = new PingThread(serverIP, Const.PING_INTERVAL);
-	        pingThread.start();
+            pingThread = new PingThread(serverIP, Const.PING_INTERVAL);
+            pingThread.start();
         }
 
         logicalTime = new LogicalTime();
@@ -300,7 +307,8 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
             // wait a while for ping to finish...
             try {
                 Thread.sleep(5 * 1000);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+            }
         }
 
         resultThread = new ResultReceivingThread(serverIP, Const.RESULT_RECEIVING_PORT, returnMsgHandler);
@@ -331,6 +339,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
         TimerTask autoStart = new TimerTask() {
             int ipIndex = 0;
             int tokenIndex = 0;
+
             @Override
             public void run() {
                 GabrielClientActivity.this.runOnUiThread(new Runnable() {
@@ -350,16 +359,16 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
                         // make a new configuration
                         serverIP = Const.SERVER_IP_LIST[ipIndex];
                         int tokenSize = Const.TOKEN_SIZE_LIST[tokenIndex];
-                        File latencyFile = new File (Const.EXP_DIR.getAbsolutePath() + File.separator +
+                        File latencyFile = new File(Const.EXP_DIR.getAbsolutePath() + File.separator +
                                 "latency-" + serverIP + "-" + tokenSize + ".txt");
-                        Log.i(LOG_TAG, "Start new experiment - IP: " + serverIP +"\tToken: " + tokenSize);
+                        Log.i(LOG_TAG, "Start new experiment - IP: " + serverIP + "\tToken: " + tokenSize);
 
                         // run the experiment
                         initPerRun(serverIP, tokenSize, latencyFile);
 
                         // move to the next experiment
                         tokenIndex++;
-                        if (tokenIndex == Const.TOKEN_SIZE_LIST.length){
+                        if (tokenIndex == Const.TOKEN_SIZE_LIST.length) {
                             tokenIndex = 0;
                             ipIndex++;
                         }
@@ -369,7 +378,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
         };
 
         // run 5 minutes for each experiment
-        startTimer.schedule(autoStart, 1000, 5*60*1000);
+        startTimer.schedule(autoStart, 1000, 5 * 60 * 1000);
     }
 
     private PreviewCallback previewCallback = new PreviewCallback() {
@@ -377,11 +386,11 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
         public void onPreviewFrame(byte[] frame, Camera mCamera) {
             if (isRunning) {
                 Camera.Parameters parameters = mCamera.getParameters();
-                if (videoStreamingThread != null){
+                if (videoStreamingThread != null) {
                     videoStreamingThread.push(frame, parameters);
 
                     if (canvas_count < 5) {
-                        canvas_count ++;
+                        canvas_count++;
                     } else {
                         canvas = overlayHolder.lockCanvas();
                         if (canvas != null) {
@@ -417,7 +426,8 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
                 controlLogWriter.write("" + logicalTime.imageTime + "\n");
                 String log = msgJSON.toString();
                 controlLogWriter.write(log + "\n");
-            } catch (IOException e) {}
+            } catch (IOException e) {
+            }
         }
 
         try {
@@ -508,10 +518,10 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
                     camConfig.imgWidth = msgJSON.getInt(NetworkProtocol.SERVER_CONTROL_IMG_WIDTH);
                 if (msgJSON.has(NetworkProtocol.SERVER_CONTROL_IMG_HEIGHT))
                     camConfig.imgHeight = msgJSON.getInt(NetworkProtocol.SERVER_CONTROL_IMG_HEIGHT);
-                if (msgJSON.has(NetworkProtocol.SERVER_CONTROL_FOCUS)){
+                if (msgJSON.has(NetworkProtocol.SERVER_CONTROL_FOCUS)) {
                     throw new UnsupportedOperationException("FOCUS adjustment is not yet supported, but easy to add. See FLASHLIGHT on how to add support.");
                 }
-                if (msgJSON.has(NetworkProtocol.SERVER_CONTROL_FLASHLIGHT)){
+                if (msgJSON.has(NetworkProtocol.SERVER_CONTROL_FLASHLIGHT)) {
                     boolean flashlightOn = msgJSON.getBoolean(NetworkProtocol.SERVER_CONTROL_FLASHLIGHT);
                     if (flashlightOn) {
                         camConfig.flashMode = Camera.Parameters.FLASH_MODE_TORCH;
@@ -560,7 +570,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
             if (msg.what == NetworkProtocol.NETWORK_RET_SPEECH) {
                 String ttsMessage = (String) msg.obj;
 
-                if (tts != null){
+                if (tts != null) {
                     Log.d(LOG_TAG, "tts to be played: " + ttsMessage);
                     // TODO: check if tts is playing something else
                     tts.setSpeechRate(1.0f);
@@ -574,50 +584,51 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
                         tts.speak(splitMSGs[0].toString().trim(), TextToSpeech.QUEUE_FLUSH, null); // the first sentence
                         for (int i = 1; i < splitMSGs.length - 1; i++) {
                             tts.playSilence(350, TextToSpeech.QUEUE_ADD, null); // add pause for every period
-                            tts.speak(splitMSGs[i].toString().trim(),TextToSpeech.QUEUE_ADD, null);
+                            tts.speak(splitMSGs[i].toString().trim(), TextToSpeech.QUEUE_ADD, null);
                         }
                         tts.playSilence(350, TextToSpeech.QUEUE_ADD, null);
-                        tts.speak(splitMSGs[splitMSGs.length - 1].toString().trim(),TextToSpeech.QUEUE_ADD, map); // the last sentence
+                        tts.speak(splitMSGs[splitMSGs.length - 1].toString().trim(), TextToSpeech.QUEUE_ADD, map); // the last sentence
                     }
                 }
                 subtitleView = (TextView) findViewById(R.id.subtitleText);
                 subtitleView.setText(ttsMessage);
             }
             if (msg.what == NetworkProtocol.NETWORK_RET_IMAGE || msg.what == NetworkProtocol.NETWORK_RET_ANIMATION) {
-                Bitmap feedbackImg = (Bitmap) msg.obj;
-                imgView.setVisibility(View.VISIBLE);
-                legendView.setVisibility(View.GONE);
-                videoView.setVisibility(View.GONE);
-                imgView.setImageBitmap(feedbackImg);
+//                Bitmap feedbackImg = (Bitmap) msg.obj;
+//                imgView.setVisibility(View.VISIBLE);
+//                legendView.setVisibility(View.GONE);
+//                videoView.setVisibility(View.GONE);
+//                imgView.setImageBitmap(feedbackImg);
             }
             if (msg.what == NetworkProtocol.NETWORK_RET_LEGEND) {
-                Bitmap feedbackImg = (Bitmap) msg.obj;
-                legendView.setVisibility(View.VISIBLE);
-                imgView.setVisibility(View.GONE);
-                videoView.setVisibility(View.GONE);
-                legendView.setImageBitmap(feedbackImg);
+//                Bitmap feedbackImg = (Bitmap) msg.obj;
+//                legendView.setVisibility(View.VISIBLE);
+//                imgView.setVisibility(View.GONE);
+//                videoView.setVisibility(View.GONE);
+//                legendView.setImageBitmap(feedbackImg);
             }
             if (msg.what == NetworkProtocol.NETWORK_RET_VIDEO) {
-                String url = (String) msg.obj;
-                imgView.setVisibility(View.GONE);
-                legendView.setVisibility(View.GONE);
-                videoView.setVisibility(View.VISIBLE);
-                videoView.setVideoURI(Uri.parse(url));
-                videoView.setMediaController(mediaController);
-                //Video Loop
-                videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                    public void onCompletion(MediaPlayer mp) {
-                        videoView.start();
-                    }
-                });
-                videoView.start();
+//                String url = (String) msg.obj;
+//                imgView.setVisibility(View.GONE);
+//                legendView.setVisibility(View.GONE);
+//                videoView.setVisibility(View.VISIBLE);
+//                videoView.setVideoURI(Uri.parse(url));
+//                videoView.setMediaController(mediaController);
+//                //Video Loop
+//                videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+//                    public void onCompletion(MediaPlayer mp) {
+//                        videoView.start();
+//                    }
+//                });
+//                videoView.start();
             }
 
             if (msg.what == NetworkProtocol.NETWORK_RET_VIZ_OBJ) {
                 canvas = overlayHolder.lockCanvas();
                 if (canvas != null) {
                     canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                    Type fooType = new TypeToken<List<VizObj>>() {}.getType();
+                    Type fooType = new TypeToken<List<VizObj>>() {
+                    }.getType();
                     List<VizObj> objs = gson.fromJson((String) msg.obj, fooType);
 
                     for (VizObj obj : objs) {
@@ -700,7 +711,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
             controlThread.close();
             controlThread = null;
         }
-        if (tokenController != null){
+        if (tokenController != null) {
             tokenController.close();
             tokenController = null;
         }
@@ -762,16 +773,18 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
             int listenerResult = tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                 @Override
                 public void onDone(String utteranceId) {
-                    Log.v(LOG_TAG,"progress on Done " + utteranceId);
+                    Log.v(LOG_TAG, "progress on Done " + utteranceId);
 //                  notifyToken();
                 }
+
                 @Override
                 public void onError(String utteranceId) {
-                    Log.v(LOG_TAG,"progress on Error " + utteranceId);
+                    Log.v(LOG_TAG, "progress on Error " + utteranceId);
                 }
+
                 @Override
                 public void onStart(String utteranceId) {
-                    Log.v(LOG_TAG,"progress on Start " + utteranceId);
+                    Log.v(LOG_TAG, "progress on Start " + utteranceId);
                 }
             });
             if (listenerResult != TextToSpeech.SUCCESS) {
@@ -832,9 +845,9 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
 
     /**************** Battery recording *************************/
     /*
-	 * Resource monitoring of the mobile device
+     * Resource monitoring of the mobile device
      * Checks battery and CPU usage, as well as device temperature
-	 */
+     */
     Intent resourceMonitoringIntent = null;
 
     public void startResourceMonitoring() {
@@ -850,6 +863,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
             resourceMonitoringIntent = null;
         }
     }
+
     /**************** End of battery recording ******************/
 
     private void drawVizObj(VizObj obj) {
@@ -864,11 +878,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
         float RectRight = obj.norm.get(2) * width;
         float RectBottom = obj.norm.get(3) * height;
 
-        if (obj.good_frame) {
-            paint.setColor(Color.BLUE);
-        } else {
-            paint.setColor(Color.RED);
-        }
+        paint.setColor(this.colorDict.get(obj.color));
 
         canvas.drawRect(RectLeft, RectTop, RectRight, RectBottom, paint);
     }
