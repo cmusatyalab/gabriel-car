@@ -80,17 +80,11 @@ class FrameRecorder:
         return [v / len(self.deque) for v in out]
 
     def averaged_class(self):
-        all_class = defaultdict(lambda: 0)
+        all_class = []
         for i in range(len(self.deque)):
-            name = self.deque[i]["class_name"]
-            all_class[name] += 1
-
-        best = (None, 0)
-        for k in all_class.keys():
-            if all_class[k] > best[1]:
-                best = (k, all_class[k])
-
-        return best[0]
+            if self.deque[i]["class_name"] not in all_class:
+                all_class.append(self.deque[i]["class_name"])
+        return max(set(all_class), key = all_class.count) 
 
 
 class Task:
@@ -145,6 +139,7 @@ class Task:
 
         # the start, branch into desired instruction
         if self.current_state == "start":
+<<<<<<< HEAD
             self.current_state = "final_check"
         elif self.current_state == "intro":
             inter = self.intro()
@@ -152,6 +147,11 @@ class Task:
                 self.current_state = "layout_wheel_rim_1"
         elif self.current_state == "layout_wheel_rim_1":
             inter = self.layout_wheel_rim(img, 1)
+=======
+            self.current_state = "layout_wheels_rims_1"
+        elif self.current_state == "layout_wheels_rims_1":
+            inter = self.layout_wheels_rims(img, 1)
+>>>>>>> parent of bfbd90c... Tested, complete except for checking wheel rim assembly
             if inter["next"] is True:
                 self.current_state = "combine_wheel_rim_1"
         elif self.current_state == "combine_wheel_rim_1":
@@ -510,10 +510,10 @@ class Task:
             self.clear_states()
             self.history[find] = True
             out["speech"] = "Great, now find a green washer."
-            out["image"] = read_image("green_washer.jpg")
-            self.delay_flag = True
+            out["image"] = read_image("green_washer.png")
             return out
         if self.history[name] is False:
+            time.sleep(4)
             self.history[name] = True
             speech = {1: "Insert the green washer into the %s hole. Then, show me a side view of the holes like in the video." % side_str,
                       2: "Now, insert a green washer into the %s hole. Then, show me a side view of the holes." % side_str,
@@ -567,10 +567,10 @@ class Task:
             self.clear_states()
             self.history[find] = True
             out["speech"] = "Great, now find a gold washer." 
-            out["image"] = read_image("gold_washer.jpg")
-            self.delay_flag = True
+            out["image"] = read_image("gold_washer.png")
             return out
         if self.history[name] is False:
+            time.sleep(4)
             self.history[name] = True
             out["speech"] = "Insert the gold washer into the green washer."
             out["video"] = video_url + name + ".mp4"
@@ -916,10 +916,11 @@ class Task:
                 self.all_staged_clear()
 
         elif self.history["final_check_3"] is False:
-            gears = self.get_objects_by_categories(img, {"front_gear_good", "front_gear_bad", "brown_bad", "brown_good"})
+            gears = self.get_objects_by_categories(img, {"front_gear_good", "front_gear_bad", "back_pink", "brown_bad", "brown_good", "pink_back"})
             
-            if len(gears) == 2:
+            if len(gears) == 3:
                 out["good_frame"] = True
+<<<<<<< HEAD
                 left, right = separate_two(gears, True)
                 if self.frame_recs[0].add_and_check_stable(left) and self.frame_recs[1].add_and_check_stable(right):
 
@@ -932,9 +933,30 @@ class Task:
                         self.delay_flag = True
                         self.clear_states()
                     else:
+=======
+                if self.frame_recs[0].add_and_check_stable(gears[0]) and self.frame_recs[1].add_and_check_stable(gears[1]) and self.frame_recs[2].add_and_check_stable(gears[2]):
+                    brown_gear = []
+                    pink_gear = []
+
+                    for i in range(3):
+                        if self.frame_recs[i].averaged_class() == "brown_good":
+                            brown_gear.append(self.frame_recs[i].averaged_bbox())
+                        elif self.frame_recs[i].averaged_class() == "pink_back":
+                            pink_gear.append(self.frame_recs[i].averaged_bbox())
+                        elif self.frame_recs[i].averaged_class() == "brown_bad":
+                            out["speech"] = "The brown gear is facing the wrong way. Please flip it."
+                            return out
+                        elif self.frame_recs[i].averaged_class() == "front_gear_bad":
+                            out["speech"] = "The left pink gear is facing the wrong way. Please flip it."
+                            return out
+                    if brown_gear[0][1] < pink_gear[0][1]:
+>>>>>>> parent of bfbd90c... Tested, complete except for checking wheel rim assembly
                         out["next"] = True
             else:
-                self.all_staged_clear()
+                self.frame_recs[0].staged_clear()
+                self.frame_recs[1].staged_clear()
+                self.frame_recs[2].staged_clear()
+
 
         return out
 
@@ -1014,9 +1036,9 @@ def separate_four_rect(objects):
     sorted_y = sorted(list(pairwise_y_dist.keys()))
     num_rows = 2
 
-    rows = [list(pairwise_y_dist[sorted_y[i]]) for i in range(num_rows)]
+    rows = [pairwise_y_dist[sorted_y[i]] for i in range(num_rows)]
     for ro in rows:
-        ro.sort(key=lambda obj: bbox_center(obj["dimensions"])[0])  # sort values in rows by x coord
+        ro.sort(key=lambda obj: bbox_center(obj["dimensions"][0]))  # sort values in rows by x coord
     rows.sort(key=lambda r: bbox_center(r[0]["dimensions"])[1])  # sort rows by first value's y coord
 
     top_left = rows[0][0]

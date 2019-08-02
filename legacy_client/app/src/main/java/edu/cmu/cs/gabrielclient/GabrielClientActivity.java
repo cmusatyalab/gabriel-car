@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -17,7 +18,9 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioRecord;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -594,33 +597,33 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
                 subtitleView.setText(ttsMessage);
             }
             if (msg.what == NetworkProtocol.NETWORK_RET_IMAGE || msg.what == NetworkProtocol.NETWORK_RET_ANIMATION) {
-//                Bitmap feedbackImg = (Bitmap) msg.obj;
-//                imgView.setVisibility(View.VISIBLE);
-//                legendView.setVisibility(View.GONE);
-//                videoView.setVisibility(View.GONE);
-//                imgView.setImageBitmap(feedbackImg);
+                Bitmap feedbackImg = (Bitmap) msg.obj;
+                imgView.setVisibility(View.VISIBLE);
+                legendView.setVisibility(View.GONE);
+                videoView.setVisibility(View.GONE);
+                imgView.setImageBitmap(feedbackImg);
             }
             if (msg.what == NetworkProtocol.NETWORK_RET_LEGEND) {
-//                Bitmap feedbackImg = (Bitmap) msg.obj;
-//                legendView.setVisibility(View.VISIBLE);
-//                imgView.setVisibility(View.GONE);
-//                videoView.setVisibility(View.GONE);
-//                legendView.setImageBitmap(feedbackImg);
+                Bitmap feedbackImg = (Bitmap) msg.obj;
+                legendView.setVisibility(View.VISIBLE);
+                imgView.setVisibility(View.GONE);
+                videoView.setVisibility(View.GONE);
+                legendView.setImageBitmap(feedbackImg);
             }
             if (msg.what == NetworkProtocol.NETWORK_RET_VIDEO) {
-//                String url = (String) msg.obj;
-//                imgView.setVisibility(View.GONE);
-//                legendView.setVisibility(View.GONE);
-//                videoView.setVisibility(View.VISIBLE);
-//                videoView.setVideoURI(Uri.parse(url));
-//                videoView.setMediaController(mediaController);
-//                //Video Loop
-//                videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-//                    public void onCompletion(MediaPlayer mp) {
-//                        videoView.start();
-//                    }
-//                });
-//                videoView.start();
+                String url = (String) msg.obj;
+                imgView.setVisibility(View.GONE);
+                legendView.setVisibility(View.GONE);
+                videoView.setVisibility(View.VISIBLE);
+                videoView.setVideoURI(Uri.parse(url));
+                videoView.setMediaController(mediaController);
+                //Video Loop
+                videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    public void onCompletion(MediaPlayer mp) {
+                        videoView.start();
+                    }
+                });
+                videoView.start();
             }
 
             if (msg.what == NetworkProtocol.NETWORK_RET_VIZ_OBJ) {
