@@ -38,8 +38,8 @@
             android:visibility="gone" />
 
         <RelativeLayout
-            android:layout_width="350dp"
-            android:layout_height="196.88dp"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical" >
 
                     <edu.cmu.cs.gabrielclient.CameraPreview

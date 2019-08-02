@@ -113,6 +113,10 @@ class Detector:
 
         return out
 
+    def color_detected_object(self, color_dict):
+        for obj in self.cache:
+            if obj["class_name"] in color_dict.keys():
+                obj["color"] = color_dict[obj["class_name"]]
 
     def all_detected_objects(self):
         return self.cache[:]
