@@ -129,7 +129,6 @@ class CarApp(gabriel.proxy.CognitiveProcessThread):
             img = self.rotate_90(img)
         if config.RESIZE_IMAGE:
             img = cv2.resize(img, (720, 480))
-        self.task.get_image(img)
 
         viz_objects, instruction = self.task.get_instruction(img, header)
         header['status'] = 'success'

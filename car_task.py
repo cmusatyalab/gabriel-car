@@ -16,15 +16,15 @@ resources = os.path.abspath("resources/images")
 video_url = "http://" + ip + ":9095/"
 tpod_url = "http://0.0.0.0:8000"
 
-#stable_threshold units: number of stable frames
+#stable_threshold: Euclidean distance between consecutive frames in pixel units
 stable_threshold = 50
-#wheel_compare_threshold units: number of pixels
+#wheel_compare_threshold: Height in pixel units
 wheel_compare_threshold = 15
-#dark_pixel_threshold units: percentage out of 255 range 
+#dark_pixel_threshold: percentage of pixel value 
 dark_pixel_threshold = 0.3
-#pink_gear_side_threshold units: percentage of a pixel column that is dark
+#pink_gear_side_threshold: percentage for a pixel column 
 pink_gear_side_threshold = 0.5
-#clutter_threshold units: number of cluttered frames
+#clutter_threshold: number of cluttered frames
 clutter_threshold = 5
 clutter_speech = "Your workspace is cluttered. Please remove any stray parts from my view."
 
@@ -111,9 +111,6 @@ class Task:
 
         self.time = None
         self.time_trigger = False
-
-    def get_image(self, image_frame):
-        self.image = image_frame
 
     def get_objects_by_categories(self, img, categories, image_id=None):
         return self.detector.detect_object(img, categories, self.frame_count, image_id)
@@ -282,6 +279,7 @@ class Task:
 
         return viz_objects, result
     
+    #Subroutine Functions
     def intro(self):
         out = defaultdict(lambda: None)
         if self.history["intro_1"] is False:
@@ -484,11 +482,7 @@ class Task:
         if len(frame_marker) == 1:
             out["good_frame"] = True
             if self.frame_recs[0].add_and_check_stable(frame_marker[0]):
-
-                # if self.frame_recs[0].averaged_class() == "frame_marker_right":
                 marker_check = True
-                # else:
-                    # out["speech"] = "Please show me the opposite side of what you have."
 
         if marker_check is True:
             out["next"] = True
@@ -831,7 +825,6 @@ class Task:
             else:
                 left = gear_on_axle[0]
             left_check = self.frame_recs[0].add_and_check_stable(left)
-            # right_check = self.frame_recs[1].add_and_check_stable(right)
 
             if len(front_pink_gear) == 1:
                 front_gear_check = self.frame_recs[2].add_and_check_stable(front_pink_gear[0])
@@ -945,6 +938,7 @@ class Task:
 
         return out
 
+    #tools
     def clear_states(self):
         for rec in self.frame_recs.values():
             rec.clear()
@@ -968,7 +962,7 @@ class Task:
 def check_gear_axle_front(gear_on_axle_box, pink_box):
     intersecting = object_detection.intersecting_bbox(gear_on_axle_box, pink_box)
     # to_right = bbox_center(gear_on_axle_box)[0] > bbox_center(pink_box)[0]
-
+    
     return intersecting
 
 def check_gear_axle_back(gear_on_axle_box, pink_box, brown_box):
