@@ -12,7 +12,7 @@ The general workflow can be summarized as:
 
 The client is a fairly simple Android application that simply streams its camera feed and can read responses from the server (via HTTP requests). We made extensive changes to the client for additional features not found in other cognitive assistants, such as drawing boxes around detected objects on the client side and sending session IDs.
 
-The server is relatively much more complex. The server component is made up of 3 or more services each with their own IP address: the control server, the ucomm server, the proxy server, and any additional processing services. 
+The server is relatively much more complex. The server component is made up of 3 or more services each with their own IP address: the control server, the ucomm server, the proxy server, and any additional processing services.
 
 Quite simply, the control and ucomm servers handle the connection process of sending and receiving messages. Note that they are not reading and crafting messages, these services are merely the messenger. For our purposes (and more likely than not, yours), we did not have to change anything in the control and ucomm servers, nor did we have to distinguish the two services. The control and ucomm servers are boilerplate code for all Gabriel cognitive assistants.
 
@@ -34,10 +34,12 @@ These are the main files you'd update to introduce changes to AAA or build a new
 `car_stream.py`: Debug proxy server to just run a camera feed and show object detections. You need to spin up the TPOD classifier service yourself
 
 ### Object Detection via TPOD
-TPOD is an all-encompassing tool for object detection. It handles labeling of training videos, training the model, and exporting a Docker container classifier. Running the container will start up a service that you communciate with via HTTP requests. You send images and it'll respond with detections in the form of labeled bounding boxes.
+TPOD is an all-encompassing tool for object detection. It handles labeling of training videos, training the model, and exporting a Docker container classifier. Running the container will start up a service that you communicate with via HTTP requests. You send images and it'll respond with detections in the form of labeled bounding boxes.
 
 Details of how to use TPOD are in its [repo]( https://github.com/cmusatyalab/tpod).
 
-One key detail specific to AAA is that we actually use multiple different containers each that detect different things. This is markedly different from other cognitive assistants, which have one big classifier for everything. We could not do that because of a TPOD bug that limited each classifier to ~50 videos. 
+One key detail specific to AAA is that we actually use multiple different containers each that detect different things. This is markedly different from other cognitive assistants, which have one big classifier for everything. We could not do that because of a TPOD bug that limited each classifier to ~50 videos.
 
 During use, AAA will start up the corresponding classifier service based on what you want to detect. We could not spin them all up at the same time because of limitations with Docker and our machine. Implementation details are in `object_detection.py`
+
+All our trained classifiers (Docker containers) are on the machine at cloudlet011.elijah.cs.cmu.edu i.e. you cannot run AAA on any other machine without training your own classifiers (which you shouldn't do for AAA).
