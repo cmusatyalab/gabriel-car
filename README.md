@@ -32,3 +32,6 @@ AAA is a wearable cognitive assistant which guides a user through the steps of b
 3. Start the AAA Proxy server:
 `python car.py`
 4. Connect the Android client to the Gabriel control server (use the control server's IP)
+
+#### Future Work
+We've started some work on a state-based model where changes to the car are tracked instead of having steps. The demo we have covers inserting the green and gold washers into the frame. It can detect which orientation the frame is in and thus, which hole a washer is put in or removed regardless of the orientation of the frame. The demo is located under the `state_based` branch.
