@@ -8,33 +8,52 @@ from requests import get
 import config
 import object_detection
 
+"""
+This file contains the Task object for the model car kit, which handles all processing of a frame, that is:
+1. Conditions for triggering the next step and catching any errors
+2. Corresponding media (image, video speech)
+3. Additional features such as stable frame detection
+"""
+
 ip = get('https://api.ipify.org').text
 
-OBJECTS = config.LABELS
-STATES = ["start", "wheel-stage", "wheel-compare"]
-resources = os.path.abspath("resources/images")
-video_url = "http://" + ip + ":9095/"
-tpod_url = "http://0.0.0.0:8000"
+resources = os.path.abspath("resources/images")  # for images, which are sent directly from this library
+video_url = "http://" + ip + ":9095/"  # for videos, which are accessed from a separate resource server
+tpod_url = "http://0.0.0.0:8000"  # object detection classifier URL
 
-#stable_threshold: Euclidean distance between consecutive frames in pixel units
+#  max Euclidean distance between consecutive frames in pixels, to be considered stable
 stable_threshold = 50
-#wheel_compare_threshold: Height in pixel units
+#  difference in bbox height in pixels to be considered different sized-wheels
 wheel_compare_threshold = 15
-#dark_pixel_threshold: percentage of pixel value 
+#  for pink gear orientation using traditional image processing, threshold (out of 1) to consider a pixel a "dark" pixel
 dark_pixel_threshold = 0.3
-#pink_gear_side_threshold: percentage for a pixel column 
+#  number of "light" pixels detected to know when to stop cropping gear bbox
 pink_gear_side_threshold = 0.5
-#clutter_threshold: number of cluttered frames
+#  number of frames needed to consider a workspace cluttered
 clutter_threshold = 5
 clutter_speech = "Your workspace is cluttered. Please remove any stray parts from my view."
 
 class FrameRecorder:
+    """
+    FrameRecorder is used to check whether or not a detected object in a frame is "stable" that is:
+    1. Same object is detected in the last n frames
+    2. Object detected in each frame does not move past a threshold from one frame to another
+
+    One FrameRecorder per object
+    This object is given detected object bounding boxes, not raw frames. It is up to the user to figure out which object
+    in the frame to pass in.
+    """
     def __init__(self, size):
         self.deque = deque()
         self.size = size
         self.clear_count = 0
 
     def add(self, obj):
+        """
+        Add an object from a single frame to the recorder
+        Resets the staged clear counter
+        :param obj: to add
+        """
         self.deque.append(obj)
 
         if len(self.deque) > self.size:
@@ -43,6 +62,9 @@ class FrameRecorder:
         self.clear_count = 0
 
     def is_center_stable(self):
+        """
+        Returns whether or not the object being recorded is stable
+        """
         if len(self.deque) != self.size:
             return False
 
@@ -59,18 +81,30 @@ class FrameRecorder:
         return True
 
     def add_and_check_stable(self, obj):
+        """
+        Add a new frame and return if the object is stable
+        """
         self.add(obj)
         return self.is_center_stable()
 
     def staged_clear(self):
+        """
+        A special clear that needs to be called multiple times (max number of frames) to actually clear
+        """
         self.clear_count += 1
         if self.clear_count > self.size:
             self.clear()
 
     def clear(self):
+        """
+        Clears the FrameRecorder's frames
+        """
         self.deque = deque()
 
     def averaged_bbox(self):
+        """
+        Return the averaged bbox from all recorded frames
+        """
         out = [0, 0, 0, 0]
 
         for i in range(len(self.deque)):
@@ -81,6 +115,9 @@ class FrameRecorder:
         return [v / len(self.deque) for v in out]
 
     def averaged_class(self):
+        """
+        Return the mode detected object class from all recorded frames
+        """
         all_class = []
         for i in range(len(self.deque)):
             if self.deque[i]["class_name"] not in all_class:
@@ -89,49 +126,69 @@ class FrameRecorder:
 
 
 class Task:
+    """
+    Object that keeps track of user's state, returns corresponding guidance, and handles all frame processing.
+    Bulk of AAA exists here.
+    """
+
     def __init__(self, init_state=None):
         if init_state is None:
             self.current_state = "start"
         else:
-            if init_state not in STATES:
-                raise ValueError('Unknown init state: {}'.format(init_state))
             self.current_state = init_state
 
-        self.frame_recs = defaultdict(lambda: FrameRecorder(15))
-        self.last_id = None
-        self.wait_count = 0
-        self.history = defaultdict(lambda: False)
-        self.delay_flag = False
+        self.frame_recs = defaultdict(lambda: FrameRecorder(15))  # dictionary of frame recorders for different objs
+        self.session_id = None  # ID from client to know the same session is still going on
+        self.history = defaultdict(lambda: False)  # keeps track of which steps were completed
+        self.delay_flag = False  # set to True to delay processing (usually after user makes mistake, needs time to fix)
 
-        self.detector = object_detection.Detector(tpod_url)
-        self.frame_count = 0
-        self.image = None 
+        self.detector = object_detection.Detector(tpod_url)  # Detector object for object detection
+        self.frame_id = 0  #  unique ID for each frame, for detector's cache
 
-        self.clutter_count = 0
+        self.clutter_count = 0  #  tracks number of times workspace was detected to be cluttered, before triggering message
 
+        #  used for waiting based on time (instead of frames)
         self.time = None
         self.time_trigger = False
 
     def get_objects_by_categories(self, img, categories, image_id=None):
-        return self.detector.detect_object(img, categories, self.frame_count, image_id)
+        """
+        Detects objects in a given frame/image. Need to supply objects to be detected
+
+        :param img: to detect objects in
+        :param categories: object labels to look for
+        :param image_id: if a specific classifier is to be used (instead of looking up based on objects), supply its
+                         Docker image ID
+        """
+        return self.detector.detect_object(img, categories, self.frame_id, image_id)
 
     def get_instruction(self, img, header=None):
+        """
+        Get the next instruction, given a new frame
+
+        :param img: frame with objects to detect
+        :param header: from client's request, used to track session ID
+        :return: tuple of objects to visualize and a response object with image, video, and/or speech references
+        """
+
+        # reset if different client
         if header is not None and "task_id" in header:
-            if self.last_id is None:
-                self.last_id = header["task_id"]
-            elif self.last_id != header["task_id"]:
-                self.last_id = header["task_id"]
+            if self.session_id is None:
+                self.session_id = header["task_id"]
+            elif self.session_id != header["task_id"]:
+                self.session_id = header["task_id"]
                 self.current_state = "start"
                 self.history.clear()
                 self.detector.reset()
 
+        # sleep if previous frame set the delay flag
         if self.delay_flag is True:
             time.sleep(4)
             self.delay_flag = False
 
         result = defaultdict(lambda: None)
         result['status'] = "success"
-        self.frame_count += 1
+        self.frame_id += 1
 
         inter = defaultdict(lambda: None)
 
@@ -147,11 +204,11 @@ class Task:
             if inter["next"] is True:
                 self.current_state = "combine_wheel_rim_1"
         elif self.current_state == "combine_wheel_rim_1":
-            inter = self.combine_wheel_rim(img, 1)
+            inter = self.combine_tire_rim(img, 1)
             if inter["next"] is True:
                 self.current_state = "confirm_combine_wheel_rim_1"
         elif self.current_state == "confirm_combine_wheel_rim_1":
-            inter = self.confirm_combine_wheel_rim(img, 1)
+            inter = self.confirm_combine_tire_rim(img, 1)
             if inter["next"] is True:
                 self.current_state = "layout_wheel_rim_2"
         elif self.current_state == "layout_wheel_rim_2":
@@ -159,11 +216,11 @@ class Task:
             if inter["next"] is True:
                 self.current_state = "combine_wheel_rim_2"
         elif self.current_state == "combine_wheel_rim_2":
-            inter = self.combine_wheel_rim(img, 2)
+            inter = self.combine_tire_rim(img, 2)
             if inter["next"] is True:
                 self.current_state = "confirm_combine_wheel_rim_2"
         elif self.current_state == "confirm_combine_wheel_rim_2":
-            inter = self.confirm_combine_wheel_rim(img, 2)
+            inter = self.confirm_combine_tire_rim(img, 2)
             if inter["next"] is True:
                 self.current_state = "acquire_axle_1"
         elif self.current_state == "acquire_axle_1":
@@ -267,20 +324,36 @@ class Task:
             time.sleep(10)
             self.current_state = "start"
 
+        # copy intermediate response to output
         for field in inter.keys():
             if field != "next":
                 result[field] = inter[field]
 
-        exclude = {"frame_marker_left", "frame_marker_right", "frame_horn"}
+        # set up objects with instructions on how to visualize
+        exclude = {"frame_marker_left", "frame_marker_right", "frame_horn"}  # exclude these unused objects
         viz_objects = [obj for obj in self.detector.all_detected_objects() if obj["class_name"] not in exclude]
         for obj in viz_objects:
             if "color" not in obj.keys():
-                obj["color"] = "blue" if inter["good_frame"] else "red"
+                obj["color"] = "blue" if inter["good_frame"] else "red"  # color based on if frame was used or not
 
         return viz_objects, result
     
-    #Subroutine Functions
+    """
+    Helper functions for get_instruction
+    
+    Common patterns:
+    1. We use self.history to detect whether or not it's the first frame processed for a new step. This means we need to
+    give the user guidance via speech/image/video. If it's not the first frame, then we don't give guidance.
+    2. Detect a bunch of different objects, and see if all the conditions (number of detected objects, distances between
+    detected objects, etc.) are met before moving on.
+    3. Simultaneously detecting if any error conditions are met and returning corresponding guidance.
+    4. Setting out["next"] to True as a signal to the get_instruction to advance to the next step
+    5. Setting self.delay_flag to True to pause processing for a short time
+    """
     def intro(self):
+        """
+        Beginning tutorial on how to read the interface
+        """
         out = defaultdict(lambda: None)
         if self.history["intro_1"] is False:
             self.history["intro_1"] = True 
@@ -290,24 +363,42 @@ class Task:
             out["speech"] = "My name is Gabriel and I will be your assistant in building this car model."
         elif self.history["intro_3"] is False:
             self.history["intro_3"] = True
-            out["speech"] = "Here are some tips for our detection process."
+            out["speech"] = "Let me guide you through this interface."
         elif self.history["intro_4"] is False:
             self.history["intro_4"] = True
-            out["speech"] = "Red boxes are objects that we have detected."
-            out["image"] = read_image("red_box_ex.jpg")
+            out["speech"] = "During use, you'll see red or blue boxes around parts of the camera stream."
         elif self.history["intro_5"] is False:
             self.history["intro_5"] = True
-            out["speech"] = "Blue boxes are objects that we are currently processing."
-            out["image"] = read_image("blue_box_ex.jpg")
+            out["speech"] = "These boxes are certain parts or states I'm recognizing."
         elif self.history["intro_6"] is False:
             self.history["intro_6"] = True
-            out["speech"] = "Try to capture all the blue boxes. Good luck."
+            out["speech"] = "Red boxes are bad. Blue boxes are good."
+        elif self.history["intro_7"] is False:
+            self.history["intro_7"] = True
+            out["speech"] = "Red boxes indicate dedicated objects, but that I can't determine anything off of them."
+            out["image"] = read_image("red_box_ex.jpg")
+        elif self.history["intro_8"] is False:
+            self.history["intro_8"] = True
+            out["speech"] = "Blue boxes mean I can determine things, and just need you to hold still."
+            out["image"] = read_image("blue_box_ex.jpg")
+        elif self.history["intro_9"] is False:
+            self.history["intro_9"] = True
+            out["speech"] = "That's it. Looking forward to working with you!"
             out['next'] = True
         self.delay_flag = True
+
         return out
 
 
     def layout_wheel_rim(self, img, count):
+        """
+        Layout two different sets of rims and tires
+
+        Errors:
+        1. Not having two different sets of rims and tires e.g. 2 thin rims
+
+        Completion: two different sets of rims and tires are detected
+        """
         name = "layout_wheels_rims_%s" % count
         out = defaultdict(lambda: None)
         out["good_frame"] = False
@@ -339,8 +430,13 @@ class Task:
 
         return out
 
-    def combine_wheel_rim(self, img, count):
-        name = "combine_wheel_rim_%s" % count
+    def combine_tire_rim(self, img, count):
+        """
+        Combine the layout of tires and rims by coloring the matching pairs together
+
+        Completion: automatically after 10 seconds
+        """
+        name = "combine_tire_rim_%s" % count
         out = defaultdict(lambda: None)
         if self.history[name] is False:
             self.history[name] = True
@@ -353,11 +449,13 @@ class Task:
         thick_rim = self.get_objects_by_categories(img, {"thick_rim_side"})
         thick_wheel = self.get_objects_by_categories(img, {"thick_wheel_side"})
 
+        # hack using time because we need to process each frame, but want to also play for 10 seconds
         if len(thin_rim) == 1 and len(thick_rim) == 1 and len(thin_wheel) == 1 and len(thick_wheel) == 1:
             if not self.time_trigger:
                 self.time_trigger = True
                 self.time = time.time()
 
+        # color matching pairs
         if len(thin_rim) == 1:
             self.detector.color_detected_object({
                 "thin_rim_side": "yellow",
@@ -381,8 +479,15 @@ class Task:
 
         return out
 
-    def confirm_combine_wheel_rim(self, img, count):
-        name = "confirm_combine_wheel_rim_%s" % count
+    def confirm_combine_tire_rim(self, img, count):
+        """
+        Checks that the previous step of combining tire and rims was completed
+
+        Errors: Combining the wrong pairs, via detecting thick rim in thin tire
+
+        Completion: the combined wheels from a birds-eye position
+        """
+        name = "confirm_combine_tire_rim_%s" % count
         out = defaultdict(lambda: None)
         out["good_frame"] = False
         if self.history[name] is False:
@@ -408,6 +513,11 @@ class Task:
         return out
 
     def acquire_axle(self, count):
+        """
+        Get the wheel axle
+
+        Completion: automatically after delay
+        """
         name = "acquire_axle_%s" % count
         out = defaultdict(lambda: None)
         self.delay_flag = True
@@ -424,6 +534,14 @@ class Task:
         return out
 
     def axle_into_wheel(self, img, count):
+        """
+        Insert the axle into the correct type of wheel
+
+        Errors:
+        1. Inserted axle into the wrong wheel
+
+        Completion: the combined wheels from a birds-eye position
+        """
         name = "axle_into_wheel_%s" % count
         out = defaultdict(lambda: None)
         out["good_frame"] = False
@@ -437,6 +555,7 @@ class Task:
             out["speech"] = "Now, insert the axle into one of the %s wheels. Then hold it up like this." % good_str
             return out
 
+        # detects a small area where axle meets wheel, small distinguishing feature
         good = self.get_objects_by_categories(img, {"wheel_in_axle_%s" % good_str})
         bad = self.get_objects_by_categories(img, {"wheel_in_axle_%s" % bad_str})
 
@@ -466,6 +585,12 @@ class Task:
         return out
 
     def acquire_frame(self, img, count):
+        """
+        Get the black frame in a side view
+
+        Completion: frame marker from the side view
+        """
+
         name = "acquire_frame_%s" % count
         out = defaultdict(lambda: None)
         out["good_frame"] = False
@@ -476,6 +601,8 @@ class Task:
             out['video'] = video_url + name + ".mp4"
             return out
 
+        # doesn't matter which side, just that a frame marker is found
+        # TODO: should detect that correct side is shown, but needs more training data
         frame_marker = self.get_objects_by_categories(img, {"frame_marker_right", "frame_marker_left"})
         
         marker_check = False
@@ -488,7 +615,16 @@ class Task:
             out["next"] = True
 
         return out
+
     def insert_green_washer(self, img, count):
+        """
+        Insert the green washer into one of the holes
+
+        Errors:
+        1. Inserting the green washer into the wrong hole (only on same side)
+
+        Completion: state of frame axle hole with green washer inside
+        """
         name = "green_washer_%s" % count
         find = "find_green_washer_%s" % count
         side_str = "left" if count == 1 or count == 2 else "right"
@@ -548,6 +684,11 @@ class Task:
         return out
 
     def insert_gold_washer(self, img, count):
+        """
+        Insert the gold washer into one of the holes
+
+        Completion: state of frame axle hole with gold washer inside
+        """
         name = "gold_washer_%s" % count
         find = "find_gold_washer_%s" % count
         out = defaultdict(lambda: None)
@@ -593,6 +734,14 @@ class Task:
         return out
 
     def insert_pink_gear_front(self, img):
+        """
+        Place the front pink gear into the frame
+
+        Errors:
+        1. Pink gear put in facing the wrong way
+
+        Completion: Pink gear in the frame facing the correct way, birds-eye view
+        """
         out = defaultdict(lambda: None)
         out["good_frame"] = False
         if self.history["insert_pink_gear_front"] is False:
@@ -602,6 +751,7 @@ class Task:
             out['image'] = read_image("pink_gear_1.jpg")
             return out
 
+        # good and bad states were trained on and can be detected
         bad_pink = self.get_objects_by_categories(img, {"front_gear_bad"})
         if len(bad_pink) >= 1:
             out["good_frame"] = True
@@ -624,6 +774,11 @@ class Task:
         return out
 
     def insert_axle(self, img, count):
+        """
+        Insert the wheel axle with wheel through the washers and pink gear, through to other side
+
+        Completion: axle detected inside frame (trained on specific lighting conditions of axle in frame)
+        """
         name = "axle_into_frame_%s" % count
         out = defaultdict(lambda: None)
         out["good_frame"] = False
@@ -636,6 +791,7 @@ class Task:
 
         axles = self.get_objects_by_categories(img, {"axle_in_frame_good"})
 
+        # need to handle 1 and 2 cases because more than one could be visible based on first and second repetition
         if 0 < len(axles) < 3:
             if count == 1 and len(axles) == 1:
                 ax = axles[0]
@@ -654,6 +810,14 @@ class Task:
         return out
 
     def press_wheel(self, img, count):
+        """
+        Press the other wheel into the axle inside the frame
+
+        Errors:
+        1. Pressing the wrong type of wheel
+
+        Completion: both wheels detected from birds-eye view
+        """
         name = "press_wheel_%s" % count
         out = defaultdict(lambda: None)
         out["good_frame"] = False
@@ -668,6 +832,7 @@ class Task:
 
         wheels = self.get_objects_by_categories(img, {"thick_wheel_side", "thin_wheel_side"})
 
+        # need to handle two cases for two iterations (second iteration has front wheels in already)
         if len(wheels) == 2 or len(wheels) == 4:
             out["good_frame"] = True
             if len(wheels) == 2:
@@ -699,6 +864,14 @@ class Task:
         return out
 
     def insert_pink_gear_back(self, img):
+        """
+        Place the back pink gear into the frame
+
+        Errors:
+        1. Pink gear put in facing the wrong way
+
+        Completion: Pink gear in the frame facing the correct way, birds-eye view
+        """
         out = defaultdict(lambda: None)
         out["good_frame"] = False
         if self.history["back_pink_gear_1"] is False:
@@ -709,14 +882,15 @@ class Task:
             return out
 
         gear = self.get_objects_by_categories(img,{"back_pink","pink_back"})
-        
+
+        # traditional image processing. side with more dark pixels == probably where the teeth are
         if len(gear) == 1:
             out["good_frame"] = True
             if self.frame_recs[0].add_and_check_stable(gear[0]):
                 img = img[int(gear[0]['dimensions'][1]):int(gear[0]['dimensions'][3]),int(gear[0]['dimensions'][0]):int(gear[0]['dimensions'][2])]
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
                 
-                #resize
+                # resize (unclear if this matters)
                 scale_percent = 400
                 width = int(img.shape[1] * scale_percent / 100)
                 height = int(img.shape[0] * scale_percent / 100)
@@ -724,7 +898,7 @@ class Task:
                 img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 
 
-                #cut black parts from the up
+                # cut black parts from the up
                 throw_out_cols_cap = 0 
                 for y in range(img.shape[0]):
                     white_pixels = 0
@@ -737,7 +911,7 @@ class Task:
                         throw_out_cols_cap = y
                 img = img[throw_out_cols_cap:,0:img.shape[1]]
 
-                #cut black parts from the down
+                # cut black parts from the down
                 for y in reversed(range(img.shape[0])):
                     white_pixels = 0
                     for x in reversed(range(img.shape[1])):
@@ -749,7 +923,7 @@ class Task:
                         throw_out_cols_cap = y
                 img = img[0:throw_out_cols_cap,0:img.shape[1]]
 
-                #count dark pixels for left and right side of the screen
+                # count dark pixels for left and right side of the screen
                 height = img.shape[0]
                 midpoint = height / 2
 
@@ -778,6 +952,14 @@ class Task:
         return out
 
     def insert_brown_gear_back(self, img):
+        """
+        Place the back brown gear into the frame
+
+        Errors:
+        1. Brown gear put in facing the wrong way
+
+        Completion: Brown gear in the frame facing the correct way, birds-eye view
+        """
         out = defaultdict(lambda: None)
         out["good_frame"] = False
         if self.history["insert_brown_gear_back"] is False:
@@ -789,6 +971,7 @@ class Task:
         
         brown_gear = self.get_objects_by_categories(img, {"brown_good", "brown_bad"})
 
+        # detects the correct state using ML object detection
         if len(brown_gear) == 1:
             out["good_frame"] = True
             if self.frame_recs[0].add_and_check_stable(brown_gear[0]):
@@ -801,6 +984,15 @@ class Task:
         return out
 
     def add_gear_axle(self, img):
+        """
+        Place the gear axle to connect both front and back gear systems
+
+        Errors:
+        1. Gears on gear axle aren't close to the front pink gear (back gear on gear axle) had difficulty getting picked up)
+
+        Completion:
+        1. Gears on gear axle placed close to the front pink gear
+        """
         out = defaultdict(lambda: None)
         out["good_frame"] = False
         if self.history["add_gear_axle"] is False:
@@ -812,11 +1004,10 @@ class Task:
 
         gear_on_axle = self.get_objects_by_categories(img, {"gear_on_axle"})
         front_pink_gear = self.get_objects_by_categories(img, {"front_gear_good"})
-        back_pink_gear = self.get_objects_by_categories(img, {"back_pink"})
-        back_brown_gear = self.get_objects_by_categories(img, {"brown_good"})
 
+        # only checks that the gear on gear axle for the front gear is in, back gear couldn't be detected
+        # TODO make it work for both sides
         front_check = False
-        back_check = False
 
         if 0 < len(gear_on_axle) < 3:
             out["good_frame"] = True
@@ -840,26 +1031,17 @@ class Task:
 
             if front_check:
                 out["next"] = True
-
-            # if len(back_pink_gear) == 1 and len(back_brown_gear) == 1:
-            #     back_pink_check = self.frame_recs[3].add_and_check_stable(back_pink_gear[0])
-            #     back_brown_check = self.frame_recs[4].add_and_check_stable(back_brown_gear[0])
-            #     if right_check and back_pink_check is True and back_brown_check is True and \
-            #         check_gear_axle_back(self.frame_recs[1].averaged_bbox(), self.frame_recs[3].averaged_bbox(),
-            #                              self.frame_recs[4].averaged_bbox()):
-            #         back_check = True
-            # else:
-            #     self.frame_recs[3].staged_clear()
-            #     self.frame_recs[4].staged_clear()
-
-            # if front_check is True and back_check is True:
-            #     out["next"] = True
         else:
             self.all_staged_clear()
 
         return out
 
     def final_check(self, img):
+        """
+        Final check of everything
+
+        Completion: wheels aren't mismatched, gears are facing correct way, gear axle placed correctly
+        """
         out = defaultdict(lambda: None)
         out["good_frame"] = False
         if self.history["final_check_1"] is False:
@@ -868,7 +1050,7 @@ class Task:
             out["speech"] = "Great job! Now, let me do a final check on everything. Please show me a birds-eye view."
             out["image"] = read_image("final_check.jpg")
             return out
-        elif self.history["final_check_2"] is False:
+        elif self.history["final_check_2"] is False:  # check wheels
             wheels = self.get_objects_by_categories(img, {"thin_wheel_side", "thick_wheel_side"})
 
             if len(wheels) == 4:
@@ -903,7 +1085,7 @@ class Task:
             else:
                 self.all_staged_clear()
 
-        elif self.history["final_check_3"] is False:
+        elif self.history["final_check_3"] is False:  # check gears
             gears = self.get_objects_by_categories(img, {"front_gear_good", "front_gear_bad", "back_pink", "brown_bad", "brown_good", "pink_back"})
             
             if len(gears) == 3:
@@ -930,6 +1112,9 @@ class Task:
         return out
 
     def complete(self):
+        """
+        Completed assembly message
+        """
         out = defaultdict(lambda: None)
         if self.history["complete"] is False:
             self.history["complete"] = True
@@ -938,12 +1123,18 @@ class Task:
 
         return out
 
-    #tools
+    # Utility functions
     def clear_states(self):
+        """
+        Clear all frame recorders
+        """
         for rec in self.frame_recs.values():
             rec.clear()
 
     def all_staged_clear(self):
+        """
+        Staged clear all frame recorders
+        """
         for rec in self.frame_recs.values():
             rec.staged_clear()
     
@@ -954,18 +1145,28 @@ class Task:
         self.clutter_count = 0
 
     def clutter_check(self, clutter_limit):
+        """
+        Check whether or not the workspace is cluttered
+        """
         if self.clutter_count == clutter_limit:
             self.clutter_reset()
             return True
         return False
 
 def check_gear_axle_front(gear_on_axle_box, pink_box):
+    """
+    Check that the front gear on the gear axle intersects with the front pink gear
+    """
     intersecting = object_detection.intersecting_bbox(gear_on_axle_box, pink_box)
     # to_right = bbox_center(gear_on_axle_box)[0] > bbox_center(pink_box)[0]
     
     return intersecting
 
 def check_gear_axle_back(gear_on_axle_box, pink_box, brown_box):
+    """
+    Check that the back gear on the gear axle intersects with the brown and pink back gears
+    Unused
+    """
     intersecting = object_detection.intersecting_bbox(gear_on_axle_box, pink_box) and \
                    object_detection.intersecting_bbox(gear_on_axle_box, brown_box)
 
@@ -975,6 +1176,9 @@ def check_gear_axle_back(gear_on_axle_box, pink_box, brown_box):
     return intersecting and between
 
 def separate_two(objects, left_right=True):
+    """
+    Given two objects, return which is on the left and which is on the right
+    """
     obj1 = objects[0]
     obj2 = objects[1]
 
@@ -990,6 +1194,9 @@ def separate_two(objects, left_right=True):
     return one, two
 
 def separate_four_rect(objects):
+    """
+    Given four objects, return which is in the top left, top right, bottom left, bottom right in that order
+    """
     pairwise_x_dist = {}
     pairwise_y_dist = {}
     for i in range(len(objects)):
@@ -1026,6 +1233,9 @@ def bbox_height(dims):
     return dims[3] - dims[1]
 
 def bbox_diff(box1, box2):
+    """
+    Euclidean distance between the centers of two bounding boxes
+    """
     center1 = bbox_center(box1)
     center2 = bbox_center(box2)
 
@@ -1035,6 +1245,9 @@ def bbox_diff(box1, box2):
     return math.sqrt(x_diff**2 + y_diff**2)
 
 def compare(box1, box2, threshold):
+    """
+    Return a string based on which box is the taller box, or "same" if the difference is under a threshold
+    """
     height1 = bbox_height(box1)
     height2 = bbox_height(box2)
 
@@ -1045,19 +1258,30 @@ def compare(box1, box2, threshold):
     return "first" if height1 > height2 else "second"
 
 def read_image(name):
+    """
+    Helper for reading image from a resource directory
+    """
     image_path = os.path.join(resources, name)
     return cv2.imread(image_path)
 
 def get_orientation(side_marker, horn):
+    """
+    Get the orientation of the black frame from a side view
+    Unused for deliverable. Used for state based.
+    """
+    # determine which side is shown, where left and right is determined from a birds-eye view of frame
     side = "left" if side_marker["class_name"] == "frame_marker_left" else "right"
 
     left_obj, right_obj = separate_two([side_marker, horn], True)
     if side == "left":
-        flipped = left_obj["class_name"] == "frame_horn"
+        flipped = left_obj["class_name"] == "frame_horn"  # determine whether or not frame is flipped over
     else:
         flipped = right_obj["class_name"] == "frame_horn"
 
     return side, flipped
 
 def check_dark_pixel(pixel,threshold):
+    """
+    Binary reduction of pixel into whether or not it's a light or dark pixel, based on a threshold
+    """
     return True if pixel <= threshold * 255 else False
