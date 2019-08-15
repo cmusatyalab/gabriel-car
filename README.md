@@ -8,21 +8,35 @@
 
 AAA is a wearable cognitive assistant which guides a user through the steps of building a model car, prompting just-in-time alerts and corrections when a mistake is made. AAA is built off the [Gabriel platform](https://github.com/cmusatyalab/gabriel) and makes use of the [TPOD object detection tool](https://github.com/cmusatyalab/tpod).
 
-##### You are unlikely to be able to run AAA without working with the [CMU Satya Lab](https://github.com/cmusatyalab).
 ##### To run AAA, you will need to setup:
 * A cloudlet server running Gabriel
-* Trained TPOD classifiers
-* Our guidance images and videos
 * A client on an Android device (smartphone/smart glasses)
 
 #### Configuring AAA
+##### Setup Cloudlet Server
 1. Setup a clean install of Python 2.7 (probably a virtual environment)
 2. `pip install -r requirements.txt`
-3. Download [Gabriel](https://github.com/cmusatyalab/gabriel) and `cd <gabriel repo>/server/`
-4. `python setup.py install`
+3. Download the [Gabriel repo](https://github.com/cmusatyalab/gabriel) and `cd <gabriel repo>/server/`
+4. Install the Gabriel modules: `python setup.py install`
 5. Download this repo and `cd <this repo>`
 6. Edit `start_demo.sh` with your server's parameters
-7. Open the repo in Android Studio, build the client, and deploy it to your Android device
+##### Setup Docker/classifiers in the Cloudlet Server
+1. Install [Docker](https://www.docker.com/)
+2. Create an account with the [CMU Satya Lab container registry](https://git.cmusatyalab.org/)
+3. In Docker, [log in](https://docs.docker.com/engine/reference/commandline/login/#login-to-a-self-hosted-registry) to the lab's registry
+4. Download all the trained models by running:
+```
+docker pull registry.cmusatyalab.org/junjuew/container-registry:tpod-image-reu2019-axle_in_frame
+docker pull registry.cmusatyalab.org/junjuew/container-registry:tpod-image-reu2019-all_wheel_2
+docker pull registry.cmusatyalab.org/junjuew/container-registry:tpod-image-reu2019-gear_drive_complete
+docker pull registry.cmusatyalab.org/junjuew/container-registry:tpod-image-reu2019-tire_rim_pairing_2
+docker pull registry.cmusatyalab.org/junjuew/container-registry:tpod-image-reu2019-frame_holes_combined
+docker pull registry.cmusatyalab.org/junjuew/container-registry:tpod-image-reu2019-wheel_axle
+```
+##### Setup Android Client
+1. Open the repo in Android Studio
+2. Build the client
+3. Deploy it to your Android device
 
 #### How to run AAA (after configuration)
 1. Navigate to this repo:
